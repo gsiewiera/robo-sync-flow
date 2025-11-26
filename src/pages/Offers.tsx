@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 import { ShoppingCart } from "lucide-react";
 
 interface Offer {
@@ -24,6 +25,7 @@ const statusColors: Record<string, string> = {
 
 const Offers = () => {
   const [offers, setOffers] = useState<Offer[]>([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchOffers();
@@ -50,7 +52,11 @@ const Offers = () => {
 
         <div className="grid gap-4">
           {offers.map((offer) => (
-            <Card key={offer.id} className="p-6 hover:shadow-lg transition-shadow">
+            <Card
+              key={offer.id}
+              className="p-6 hover:shadow-lg transition-shadow cursor-pointer"
+              onClick={() => navigate(`/offers/${offer.id}`)}
+            >
               <div className="flex items-start justify-between">
                 <div className="flex gap-4">
                   <div className="p-3 bg-accent/10 rounded-lg">
