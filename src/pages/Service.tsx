@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 import { Wrench } from "lucide-react";
 
 interface ServiceTicket {
@@ -31,6 +32,7 @@ const priorityColors: Record<string, string> = {
 
 const Service = () => {
   const [tickets, setTickets] = useState<ServiceTicket[]>([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchTickets();
@@ -57,7 +59,11 @@ const Service = () => {
 
         <div className="grid gap-4">
           {tickets.map((ticket) => (
-            <Card key={ticket.id} className="p-6 hover:shadow-lg transition-shadow">
+            <Card
+              key={ticket.id}
+              className="p-6 hover:shadow-lg transition-shadow cursor-pointer"
+              onClick={() => navigate(`/service/${ticket.id}`)}
+            >
               <div className="flex items-start justify-between">
                 <div className="flex gap-4">
                   <div className="p-3 bg-warning/10 rounded-lg">

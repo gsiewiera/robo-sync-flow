@@ -10,11 +10,16 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Clients from "./pages/Clients";
+import ClientDetail from "./pages/ClientDetail";
 import Robots from "./pages/Robots";
+import RobotDetail from "./pages/RobotDetail";
 import Tasks from "./pages/Tasks";
 import Contracts from "./pages/Contracts";
+import ContractDetail from "./pages/ContractDetail";
 import Offers from "./pages/Offers";
+import OfferDetail from "./pages/OfferDetail";
 import Service from "./pages/Service";
+import ServiceDetail from "./pages/ServiceDetail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -75,10 +80,26 @@ const App = () => (
             }
           />
           <Route
+            path="/clients/:id"
+            element={
+              <ProtectedRoute>
+                <ClientDetail />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/robots"
             element={
               <ProtectedRoute>
                 <Robots />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/robots/:id"
+            element={
+              <ProtectedRoute>
+                <RobotDetail />
               </ProtectedRoute>
             }
           />
@@ -99,6 +120,14 @@ const App = () => (
             }
           />
           <Route
+            path="/contracts/:id"
+            element={
+              <ProtectedRoute>
+                <ContractDetail />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/offers"
             element={
               <ProtectedRoute>
@@ -107,10 +136,26 @@ const App = () => (
             }
           />
           <Route
+            path="/offers/:id"
+            element={
+              <ProtectedRoute>
+                <OfferDetail />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/service"
             element={
               <ProtectedRoute>
                 <Service />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/service/:id"
+            element={
+              <ProtectedRoute>
+                <ServiceDetail />
               </ProtectedRoute>
             }
           />

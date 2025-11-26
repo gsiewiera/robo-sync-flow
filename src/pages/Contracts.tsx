@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 import { FileText } from "lucide-react";
 
 interface Contract {
@@ -25,6 +26,7 @@ const statusColors: Record<string, string> = {
 
 const Contracts = () => {
   const [contracts, setContracts] = useState<Contract[]>([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchContracts();
@@ -51,7 +53,11 @@ const Contracts = () => {
 
         <div className="grid gap-4">
           {contracts.map((contract) => (
-            <Card key={contract.id} className="p-6 hover:shadow-lg transition-shadow">
+            <Card
+              key={contract.id}
+              className="p-6 hover:shadow-lg transition-shadow cursor-pointer"
+              onClick={() => navigate(`/contracts/${contract.id}`)}
+            >
               <div className="flex items-start justify-between">
                 <div className="flex gap-4">
                   <div className="p-3 bg-primary/10 rounded-lg">
