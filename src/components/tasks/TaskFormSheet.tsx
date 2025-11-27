@@ -74,6 +74,8 @@ const taskFormSchema = z.object({
   client_id: z.string().optional(),
   contract_id: z.string().optional(),
   robot_ids: z.array(z.string()).optional(),
+  call_attempted: z.boolean().optional(),
+  call_successful: z.boolean().optional(),
 });
 
 type TaskFormValues = z.infer<typeof taskFormSchema>;
@@ -82,9 +84,11 @@ interface TaskFormSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
+  taskId?: string;
+  mode?: "create" | "view" | "edit";
 }
 
-export const TaskFormSheet = ({ open, onOpenChange, onSuccess }: TaskFormSheetProps) => {
+export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "create" }: TaskFormSheetProps) => {
   const [taskTitles, setTaskTitles] = useState<TaskTitleDictionary[]>([]);
   const [employees, setEmployees] = useState<Profile[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
@@ -94,6 +98,8 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess }: TaskFormSheetPr
   const [filteredRobots, setFilteredRobots] = useState<Robot[]>([]);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isEditing, setIsEditing] = useState(mode === "edit");
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<TaskFormValues>({
@@ -106,6 +112,8 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess }: TaskFormSheetPr
       client_id: undefined,
       contract_id: undefined,
       robot_ids: [],
+      call_attempted: false,
+      call_successful: false,
     },
   });
 
@@ -117,6 +125,15 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess }: TaskFormSheetPr
     fetchRobots();
     checkUserRole();
   }, []);
+
+  useEffect(() => {
+    if (taskId && open) {
+      fetchTaskData();
+    } else if (!taskId) {
+      form.reset();
+      setIsEditing(mode === "edit");
+    }
+  }, [taskId, open, mode]);
 
   // Filter contracts and robots when client changes
   const selectedClientId = form.watch("client_id");
@@ -200,44 +217,139 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess }: TaskFormSheetPr
     }
   };
 
-  const onSubmit = async (values: TaskFormValues) => {
-    setIsSubmitting(true);
+  const fetchTaskData = async () => {
+    if (!taskId) return;
+    
+    setIsLoading(true);
     try {
-      // Insert task
+      // Fetch task data
       const { data: task, error: taskError } = await supabase
         .from("tasks")
-        .insert({
-          title: values.title,
-          description: values.description || null,
-          due_date: values.due_date ? values.due_date.toISOString() : null,
-          status: values.status,
-          assigned_to: values.assigned_to || null,
-          client_id: values.client_id || null,
-          contract_id: values.contract_id || null,
-        })
-        .select()
+        .select("*")
+        .eq("id", taskId)
         .single();
 
       if (taskError) throw taskError;
 
-      // Insert task-robot relationships if robots were selected
-      if (task && values.robot_ids && values.robot_ids.length > 0) {
-        const taskRobots = values.robot_ids.map(robotId => ({
-          task_id: task.id,
-          robot_id: robotId,
-        }));
+      // Fetch task robots
+      const { data: taskRobots, error: robotsError } = await supabase
+        .from("task_robots")
+        .select("robot_id")
+        .eq("task_id", taskId);
 
-        const { error: robotsError } = await supabase
-          .from("task_robots")
-          .insert(taskRobots);
+      if (robotsError) throw robotsError;
 
-        if (robotsError) throw robotsError;
-      }
-
-      toast({
-        title: "Success",
-        description: "Task created successfully",
+      // Set form values
+      form.reset({
+        title: task.title,
+        description: task.description || "",
+        due_date: task.due_date ? new Date(task.due_date) : undefined,
+        status: task.status as TaskFormValues["status"],
+        assigned_to: task.assigned_to || undefined,
+        client_id: task.client_id || undefined,
+        contract_id: task.contract_id || undefined,
+        robot_ids: taskRobots?.map(tr => tr.robot_id) || [],
+        call_attempted: task.call_attempted || false,
+        call_successful: task.call_successful || false,
       });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load task data",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const onSubmit = async (values: TaskFormValues) => {
+    setIsSubmitting(true);
+    try {
+      if (taskId) {
+        // Update existing task
+        const { error: taskError } = await supabase
+          .from("tasks")
+          .update({
+            title: values.title,
+            description: values.description || null,
+            due_date: values.due_date ? values.due_date.toISOString() : null,
+            status: values.status,
+          assigned_to: values.assigned_to || null,
+          client_id: values.client_id || null,
+          contract_id: values.contract_id || null,
+          call_attempted: values.call_attempted || false,
+          call_successful: values.call_successful || false,
+        })
+        .eq("id", taskId);
+
+        if (taskError) throw taskError;
+
+        // Delete existing robot relationships
+        const { error: deleteError } = await supabase
+          .from("task_robots")
+          .delete()
+          .eq("task_id", taskId);
+
+        if (deleteError) throw deleteError;
+
+        // Insert new robot relationships
+        if (values.robot_ids && values.robot_ids.length > 0) {
+          const taskRobots = values.robot_ids.map(robotId => ({
+            task_id: taskId,
+            robot_id: robotId,
+          }));
+
+          const { error: robotsError } = await supabase
+            .from("task_robots")
+            .insert(taskRobots);
+
+          if (robotsError) throw robotsError;
+        }
+
+        toast({
+          title: "Success",
+          description: "Task updated successfully",
+        });
+      } else {
+        // Create new task
+        const { data: task, error: taskError } = await supabase
+          .from("tasks")
+          .insert({
+            title: values.title,
+            description: values.description || null,
+            due_date: values.due_date ? values.due_date.toISOString() : null,
+            status: values.status,
+            assigned_to: values.assigned_to || null,
+            client_id: values.client_id || null,
+            contract_id: values.contract_id || null,
+            call_attempted: values.call_attempted || false,
+            call_successful: values.call_successful || false,
+          })
+          .select()
+          .single();
+
+        if (taskError) throw taskError;
+
+        // Insert task-robot relationships if robots were selected
+        if (task && values.robot_ids && values.robot_ids.length > 0) {
+          const taskRobots = values.robot_ids.map(robotId => ({
+            task_id: task.id,
+            robot_id: robotId,
+          }));
+
+          const { error: robotsError } = await supabase
+            .from("task_robots")
+            .insert(taskRobots);
+
+          if (robotsError) throw robotsError;
+        }
+
+        toast({
+          title: "Success",
+          description: "Task created successfully",
+        });
+      }
 
       form.reset();
       onOpenChange(false);
@@ -245,7 +357,7 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess }: TaskFormSheetPr
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to create task",
+        description: taskId ? "Failed to update task" : "Failed to create task",
         variant: "destructive",
       });
     } finally {
@@ -254,16 +366,30 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess }: TaskFormSheetPr
   };
 
   const canAssignEmployee = userRole === "admin" || userRole === "manager";
+  const isViewMode = mode === "view" && !isEditing;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create New Task</DialogTitle>
+          <DialogTitle>
+            {isViewMode ? "View Task" : taskId ? "Edit Task" : "Create New Task"}
+          </DialogTitle>
           <DialogDescription>
-            Add a new task with details and assignments
+            {isViewMode 
+              ? "Task details and information" 
+              : taskId 
+                ? "Update task details and assignments"
+                : "Add a new task with details and assignments"
+            }
           </DialogDescription>
         </DialogHeader>
+
+        {isLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="text-muted-foreground">Loading...</div>
+          </div>
+        ) : (
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 mt-6">
@@ -273,7 +399,11 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess }: TaskFormSheetPr
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Task</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select 
+                    onValueChange={field.onChange} 
+                    value={field.value}
+                    disabled={isViewMode}
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a task" />
@@ -306,6 +436,7 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess }: TaskFormSheetPr
                       form.setValue("robot_ids", []);
                     }} 
                     value={field.value}
+                    disabled={isViewMode}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -332,7 +463,11 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess }: TaskFormSheetPr
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Contract</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select 
+                      onValueChange={field.onChange} 
+                      value={field.value}
+                      disabled={isViewMode}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select contract (optional)" />
@@ -362,6 +497,7 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess }: TaskFormSheetPr
                     <Textarea
                       placeholder="Enter task description"
                       className="resize-none"
+                      disabled={isViewMode}
                       {...field}
                     />
                   </FormControl>
@@ -381,6 +517,7 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess }: TaskFormSheetPr
                       <FormControl>
                         <Button
                           variant="outline"
+                          disabled={isViewMode}
                           className={cn(
                             "w-full pl-3 text-left font-normal",
                             !field.value && "text-muted-foreground"
@@ -421,6 +558,7 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess }: TaskFormSheetPr
                         <div key={robot.id} className="flex items-center space-x-2">
                           <Checkbox
                             checked={field.value?.includes(robot.id)}
+                            disabled={isViewMode}
                             onCheckedChange={(checked) => {
                               const current = field.value || [];
                               if (checked) {
@@ -453,7 +591,11 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess }: TaskFormSheetPr
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Status</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select 
+                    onValueChange={field.onChange} 
+                    value={field.value}
+                    disabled={isViewMode}
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select status" />
@@ -478,7 +620,11 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess }: TaskFormSheetPr
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Assign To</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select 
+                      onValueChange={field.onChange} 
+                      value={field.value}
+                      disabled={isViewMode}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select employee (optional)" />
@@ -498,21 +644,93 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess }: TaskFormSheetPr
               />
             )}
 
+            <div className="space-y-3">
+              <FormField
+                control={form.control}
+                name="call_attempted"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        disabled={isViewMode}
+                      />
+                    </FormControl>
+                    <FormLabel className="font-normal cursor-pointer">
+                      Call Attempted
+                    </FormLabel>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="call_successful"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        disabled={isViewMode}
+                      />
+                    </FormControl>
+                    <FormLabel className="font-normal cursor-pointer">
+                      Call Successful
+                    </FormLabel>
+                  </FormItem>
+                )}
+              />
+            </div>
+
             <div className="flex gap-3 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-                className="flex-1"
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isSubmitting} className="flex-1">
-                {isSubmitting ? "Creating..." : "Create Task"}
-              </Button>
+              {isViewMode ? (
+                <>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => onOpenChange(false)}
+                    className="flex-1"
+                  >
+                    Close
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={() => setIsEditing(true)}
+                    className="flex-1"
+                  >
+                    Edit Task
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      if (taskId && mode === "view") {
+                        setIsEditing(false);
+                      } else {
+                        onOpenChange(false);
+                      }
+                    }}
+                    className="flex-1"
+                  >
+                    {taskId && mode === "view" ? "Cancel" : "Cancel"}
+                  </Button>
+                  <Button type="submit" disabled={isSubmitting} className="flex-1">
+                    {isSubmitting 
+                      ? (taskId ? "Updating..." : "Creating...") 
+                      : (taskId ? "Update Task" : "Create Task")
+                    }
+                  </Button>
+                </>
+              )}
             </div>
           </form>
         </Form>
+        )}
       </DialogContent>
     </Dialog>
   );
