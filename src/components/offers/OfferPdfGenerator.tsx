@@ -475,12 +475,11 @@ export const OfferPdfGenerator = ({
                     })}
                   </TableCell>
                   <TableCell className="text-right">
-                    <div className="flex gap-2 justify-end flex-wrap">
+                    <div className="flex gap-2 justify-end items-center">
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => previewPDF(version)}
-                        className="shadow-sm"
                       >
                         <Eye className="w-4 h-4 mr-2" />
                         Preview
@@ -489,7 +488,6 @@ export const OfferPdfGenerator = ({
                         variant="outline"
                         size="sm"
                         onClick={() => openEmailDialog(version)}
-                        className="shadow-sm"
                       >
                         <Mail className="w-4 h-4 mr-2" />
                         Email
@@ -498,7 +496,6 @@ export const OfferPdfGenerator = ({
                         variant="default"
                         size="sm"
                         onClick={() => downloadPDF(version)}
-                        className="shadow-sm"
                       >
                         <Download className="w-4 h-4 mr-2" />
                         Download
