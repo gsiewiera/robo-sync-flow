@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { FileText, Download, Loader2, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -49,7 +50,9 @@ export const OfferPdfGenerator = ({
   const [isGenerating, setIsGenerating] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [currentPreviewVersion, setCurrentPreviewVersion] = useState<OfferVersion | null>(null);
   const { toast } = useToast();
+
 
   useEffect(() => {
     fetchVersions();
@@ -317,6 +320,7 @@ export const OfferPdfGenerator = ({
 
       const url = URL.createObjectURL(data);
       setPreviewUrl(url);
+      setCurrentPreviewVersion(version);
       setIsPreviewOpen(true);
     } catch (error: any) {
       toast({
@@ -332,17 +336,28 @@ export const OfferPdfGenerator = ({
       URL.revokeObjectURL(previewUrl);
       setPreviewUrl(null);
     }
+    setCurrentPreviewVersion(null);
     setIsPreviewOpen(false);
   };
 
   return (
-    <Card className="p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-semibold flex items-center gap-2">
-          <FileText className="w-5 h-5" />
-          PDF Versions
-        </h2>
-        <Button onClick={generatePDF} disabled={isGenerating}>
+    <Card className="p-6 bg-card border-border">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-2xl font-semibold flex items-center gap-2 text-foreground">
+            <FileText className="w-6 h-6 text-primary" />
+            PDF Versions
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Generate and manage offer PDF documents
+          </p>
+        </div>
+        <Button 
+          onClick={generatePDF} 
+          disabled={isGenerating}
+          size="lg"
+          className="shadow-sm"
+        >
           {isGenerating ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -358,65 +373,117 @@ export const OfferPdfGenerator = ({
       </div>
 
       {versions.length > 0 ? (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Version</TableHead>
-              <TableHead>Generated</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {versions.map((version) => (
-              <TableRow key={version.id}>
-                <TableCell className="font-medium">v{version.version_number}</TableCell>
-                <TableCell>
-                  {new Date(version.generated_at).toLocaleString()}
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex gap-2 justify-end">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => previewPDF(version)}
-                    >
-                      <Eye className="w-4 h-4 mr-2" />
-                      Preview
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => downloadPDF(version)}
-                    >
-                      <Download className="w-4 h-4 mr-2" />
-                      Download
-                    </Button>
-                  </div>
-                </TableCell>
+        <div className="border border-border rounded-lg overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/50">
+                <TableHead className="font-semibold">Version</TableHead>
+                <TableHead className="font-semibold">Generated Date</TableHead>
+                <TableHead className="text-right font-semibold">Actions</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {versions.map((version, index) => (
+                <TableRow 
+                  key={version.id}
+                  className="hover:bg-muted/30 transition-colors"
+                >
+                  <TableCell className="font-medium">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                        <span className="text-sm font-semibold text-primary">
+                          {version.version_number}
+                        </span>
+                      </div>
+                      <span>Version {version.version_number}</span>
+                      {index === 0 && (
+                        <Badge variant="secondary" className="ml-2">Latest</Badge>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {new Date(version.generated_at).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex gap-2 justify-end">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => previewPDF(version)}
+                        className="shadow-sm"
+                      >
+                        <Eye className="w-4 h-4 mr-2" />
+                        Preview
+                      </Button>
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => downloadPDF(version)}
+                        className="shadow-sm"
+                      >
+                        <Download className="w-4 h-4 mr-2" />
+                        Download
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       ) : (
-        <div className="text-center py-8">
-          <FileText className="w-12 h-12 mx-auto text-muted-foreground mb-2" />
-          <p className="text-muted-foreground">No PDF versions yet</p>
-          <p className="text-sm text-muted-foreground">Click "Generate New PDF" to create the first version</p>
+        <div className="text-center py-12 border-2 border-dashed border-border rounded-lg bg-muted/20">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
+            <FileText className="w-8 h-8 text-primary" />
+          </div>
+          <h3 className="font-semibold text-lg mb-2 text-foreground">No PDF versions yet</h3>
+          <p className="text-sm text-muted-foreground mb-4">
+            Create your first PDF version to share with clients
+          </p>
+          <Button onClick={generatePDF} disabled={isGenerating} variant="outline">
+            <FileText className="w-4 h-4 mr-2" />
+            Generate First PDF
+          </Button>
         </div>
       )}
 
       <Dialog open={isPreviewOpen} onOpenChange={closePreview}>
-        <DialogContent className="max-w-4xl h-[90vh]">
-          <DialogHeader>
-            <DialogTitle>PDF Preview</DialogTitle>
+        <DialogContent className="max-w-[95vw] w-full h-[95vh] p-0 gap-0">
+          <DialogHeader className="px-6 py-4 border-b border-border bg-muted/30">
+            <div className="flex items-center justify-between">
+              <DialogTitle className="text-xl font-semibold">PDF Preview</DialogTitle>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    if (currentPreviewVersion) {
+                      downloadPDF(currentPreviewVersion);
+                    }
+                  }}
+                  disabled={!currentPreviewVersion}
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Download
+                </Button>
+              </div>
+            </div>
           </DialogHeader>
-          {previewUrl && (
-            <iframe
-              src={previewUrl}
-              className="w-full h-full rounded-md"
-              title="PDF Preview"
-            />
-          )}
+          <div className="flex-1 bg-muted/10 p-4 overflow-hidden">
+            {previewUrl && (
+              <iframe
+                src={previewUrl}
+                className="w-full h-full rounded-lg shadow-lg border border-border bg-background"
+                title="PDF Preview"
+              />
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </Card>
