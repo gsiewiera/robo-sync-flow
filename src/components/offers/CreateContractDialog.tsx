@@ -22,6 +22,7 @@ interface CreateContractDialogProps {
   clientId: string;
   offerData: any;
   offerItems: any[];
+  resellerId?: string;
 }
 
 export function CreateContractDialog({
@@ -31,6 +32,7 @@ export function CreateContractDialog({
   clientId,
   offerData,
   offerItems,
+  resellerId,
 }: CreateContractDialogProps) {
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -131,6 +133,7 @@ export function CreateContractDialog({
         .insert([{
           contract_number: contractNumber,
           client_id: clientId,
+          reseller_id: resellerId || null,
           status,
           start_date: startDate || null,
           end_date: endDate || null,

@@ -129,6 +129,7 @@ export type Database = {
           primary_contact_email: string | null
           primary_contact_name: string | null
           primary_contact_phone: string | null
+          reseller_id: string | null
           status: string | null
           updated_at: string | null
           website_url: string | null
@@ -152,6 +153,7 @@ export type Database = {
           primary_contact_email?: string | null
           primary_contact_name?: string | null
           primary_contact_phone?: string | null
+          reseller_id?: string | null
           status?: string | null
           updated_at?: string | null
           website_url?: string | null
@@ -175,6 +177,7 @@ export type Database = {
           primary_contact_email?: string | null
           primary_contact_name?: string | null
           primary_contact_phone?: string | null
+          reseller_id?: string | null
           status?: string | null
           updated_at?: string | null
           website_url?: string | null
@@ -185,6 +188,13 @@ export type Database = {
             columns: ["assigned_salesperson_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clients_reseller_id_fkey"
+            columns: ["reseller_id"]
+            isOneToOne: false
+            referencedRelation: "resellers"
             referencedColumns: ["id"]
           },
         ]
@@ -365,6 +375,7 @@ export type Database = {
           other_services_cost: number | null
           other_services_description: string | null
           payment_model: string | null
+          reseller_id: string | null
           start_date: string | null
           status: Database["public"]["Enums"]["contract_status"] | null
           terms: string | null
@@ -386,6 +397,7 @@ export type Database = {
           other_services_cost?: number | null
           other_services_description?: string | null
           payment_model?: string | null
+          reseller_id?: string | null
           start_date?: string | null
           status?: Database["public"]["Enums"]["contract_status"] | null
           terms?: string | null
@@ -407,6 +419,7 @@ export type Database = {
           other_services_cost?: number | null
           other_services_description?: string | null
           payment_model?: string | null
+          reseller_id?: string | null
           start_date?: string | null
           status?: Database["public"]["Enums"]["contract_status"] | null
           terms?: string | null
@@ -428,6 +441,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contracts_reseller_id_fkey"
+            columns: ["reseller_id"]
+            isOneToOne: false
+            referencedRelation: "resellers"
             referencedColumns: ["id"]
           },
         ]
@@ -723,6 +743,7 @@ export type Database = {
           person_contact: string | null
           prepayment_amount: number | null
           prepayment_percent: number | null
+          reseller_id: string | null
           status: Database["public"]["Enums"]["offer_status"] | null
           total_price: number | null
           updated_at: string | null
@@ -742,6 +763,7 @@ export type Database = {
           person_contact?: string | null
           prepayment_amount?: number | null
           prepayment_percent?: number | null
+          reseller_id?: string | null
           status?: Database["public"]["Enums"]["offer_status"] | null
           total_price?: number | null
           updated_at?: string | null
@@ -761,6 +783,7 @@ export type Database = {
           person_contact?: string | null
           prepayment_amount?: number | null
           prepayment_percent?: number | null
+          reseller_id?: string | null
           status?: Database["public"]["Enums"]["offer_status"] | null
           total_price?: number | null
           updated_at?: string | null
@@ -779,6 +802,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "offers_reseller_id_fkey"
+            columns: ["reseller_id"]
+            isOneToOne: false
+            referencedRelation: "resellers"
             referencedColumns: ["id"]
           },
         ]

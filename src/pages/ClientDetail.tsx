@@ -31,6 +31,7 @@ interface Client {
   billing_person_phone: string | null;
   balance: number | null;
   status: string | null;
+  reseller_id: string | null;
 }
 
 interface Contract {
@@ -108,6 +109,7 @@ const ClientDetail = () => {
   const [clientTags, setClientTags] = useState<any[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
+  const [reseller, setReseller] = useState<{ id: string; name: string } | null>(null);
 
   useEffect(() => {
     if (id) {
@@ -124,6 +126,19 @@ const ClientDetail = () => {
 
     if (clientData) {
       setClient(clientData);
+
+      // Fetch reseller if present
+      if (clientData.reseller_id) {
+        const { data: resellerData } = await supabase
+          .from("resellers")
+          .select("id, name")
+          .eq("id", clientData.reseller_id)
+          .single();
+
+        if (resellerData) {
+          setReseller(resellerData);
+        }
+      }
     }
 
     // Fetch client tags
@@ -253,6 +268,18 @@ const ClientDetail = () => {
           </div>
           <div className="grid md:grid-cols-2 gap-6">
             <div className="space-y-4">
+              {reseller && (
+                <div>
+                  <p className="text-sm text-muted-foreground">Reseller Partner</p>
+                  <Button
+                    variant="link"
+                    className="p-0 h-auto font-medium"
+                    onClick={() => navigate(`/resellers/${reseller.id}`)}
+                  >
+                    {reseller.name}
+                  </Button>
+                </div>
+              )}
               {client.nip && (
                 <div>
                   <p className="text-sm text-muted-foreground">NIP</p>
