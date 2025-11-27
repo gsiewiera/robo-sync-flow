@@ -31,7 +31,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { CalendarIcon, Plus, X } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -45,12 +46,34 @@ interface Profile {
   full_name: string;
 }
 
+interface Client {
+  id: string;
+  name: string;
+}
+
+interface Contract {
+  id: string;
+  contract_number: string;
+  client_id: string;
+}
+
+interface Robot {
+  id: string;
+  type: string;
+  model: string;
+  serial_number: string;
+  client_id: string | null;
+}
+
 const taskFormSchema = z.object({
   title: z.string().min(1, "Task is required"),
   description: z.string().optional(),
   due_date: z.date().optional(),
   status: z.enum(["pending", "in_progress", "completed", "overdue"]),
   assigned_to: z.string().optional(),
+  client_id: z.string().optional(),
+  contract_id: z.string().optional(),
+  robot_ids: z.array(z.string()).optional(),
 });
 
 type TaskFormValues = z.infer<typeof taskFormSchema>;
@@ -64,6 +87,11 @@ interface TaskFormSheetProps {
 export const TaskFormSheet = ({ open, onOpenChange, onSuccess }: TaskFormSheetProps) => {
   const [taskTitles, setTaskTitles] = useState<TaskTitleDictionary[]>([]);
   const [employees, setEmployees] = useState<Profile[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [contracts, setContracts] = useState<Contract[]>([]);
+  const [robots, setRobots] = useState<Robot[]>([]);
+  const [filteredContracts, setFilteredContracts] = useState<Contract[]>([]);
+  const [filteredRobots, setFilteredRobots] = useState<Robot[]>([]);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
@@ -75,14 +103,32 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess }: TaskFormSheetPr
       description: "",
       status: "pending",
       assigned_to: undefined,
+      client_id: undefined,
+      contract_id: undefined,
+      robot_ids: [],
     },
   });
 
   useEffect(() => {
     fetchTaskTitles();
     fetchEmployees();
+    fetchClients();
+    fetchContracts();
+    fetchRobots();
     checkUserRole();
   }, []);
+
+  // Filter contracts and robots when client changes
+  const selectedClientId = form.watch("client_id");
+  useEffect(() => {
+    if (selectedClientId) {
+      setFilteredContracts(contracts.filter(c => c.client_id === selectedClientId));
+      setFilteredRobots(robots.filter(r => r.client_id === selectedClientId));
+    } else {
+      setFilteredContracts([]);
+      setFilteredRobots([]);
+    }
+  }, [selectedClientId, contracts, robots]);
 
   const checkUserRole = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -121,18 +167,72 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess }: TaskFormSheetPr
     }
   };
 
+  const fetchClients = async () => {
+    const { data } = await supabase
+      .from("clients")
+      .select("id, name")
+      .order("name");
+
+    if (data) {
+      setClients(data);
+    }
+  };
+
+  const fetchContracts = async () => {
+    const { data } = await supabase
+      .from("contracts")
+      .select("id, contract_number, client_id")
+      .order("contract_number");
+
+    if (data) {
+      setContracts(data);
+    }
+  };
+
+  const fetchRobots = async () => {
+    const { data } = await supabase
+      .from("robots")
+      .select("id, type, model, serial_number, client_id")
+      .order("serial_number");
+
+    if (data) {
+      setRobots(data);
+    }
+  };
+
   const onSubmit = async (values: TaskFormValues) => {
     setIsSubmitting(true);
     try {
-      const { error } = await supabase.from("tasks").insert({
-        title: values.title,
-        description: values.description || null,
-        due_date: values.due_date ? values.due_date.toISOString() : null,
-        status: values.status,
-        assigned_to: values.assigned_to || null,
-      });
+      // Insert task
+      const { data: task, error: taskError } = await supabase
+        .from("tasks")
+        .insert({
+          title: values.title,
+          description: values.description || null,
+          due_date: values.due_date ? values.due_date.toISOString() : null,
+          status: values.status,
+          assigned_to: values.assigned_to || null,
+          client_id: values.client_id || null,
+          contract_id: values.contract_id || null,
+        })
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (taskError) throw taskError;
+
+      // Insert task-robot relationships if robots were selected
+      if (task && values.robot_ids && values.robot_ids.length > 0) {
+        const taskRobots = values.robot_ids.map(robotId => ({
+          task_id: task.id,
+          robot_id: robotId,
+        }));
+
+        const { error: robotsError } = await supabase
+          .from("task_robots")
+          .insert(taskRobots);
+
+        if (robotsError) throw robotsError;
+      }
 
       toast({
         title: "Success",
@@ -194,6 +294,66 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess }: TaskFormSheetPr
 
             <FormField
               control={form.control}
+              name="client_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Customer</FormLabel>
+                  <Select 
+                    onValueChange={(value) => {
+                      field.onChange(value);
+                      // Reset contract and robots when client changes
+                      form.setValue("contract_id", undefined);
+                      form.setValue("robot_ids", []);
+                    }} 
+                    value={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select customer (optional)" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {clients.map((client) => (
+                        <SelectItem key={client.id} value={client.id}>
+                          {client.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {selectedClientId && (
+              <FormField
+                control={form.control}
+                name="contract_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Contract</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select contract (optional)" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {filteredContracts.map((contract) => (
+                          <SelectItem key={contract.id} value={contract.id}>
+                            {contract.contract_number}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            <FormField
+              control={form.control}
               name="description"
               render={({ field }) => (
                 <FormItem>
@@ -248,6 +408,44 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess }: TaskFormSheetPr
                 </FormItem>
               )}
             />
+
+            {selectedClientId && filteredRobots.length > 0 && (
+              <FormField
+                control={form.control}
+                name="robot_ids"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Robots</FormLabel>
+                    <div className="space-y-2 border rounded-md p-3">
+                      {filteredRobots.map((robot) => (
+                        <div key={robot.id} className="flex items-center space-x-2">
+                          <Checkbox
+                            checked={field.value?.includes(robot.id)}
+                            onCheckedChange={(checked) => {
+                              const current = field.value || [];
+                              if (checked) {
+                                field.onChange([...current, robot.id]);
+                              } else {
+                                field.onChange(current.filter(id => id !== robot.id));
+                              }
+                            }}
+                          />
+                          <label className="text-sm flex-1 cursor-pointer">
+                            <span className="font-medium">{robot.type}</span>
+                            {" - "}
+                            <span>{robot.model}</span>
+                            {" ("}
+                            <span className="text-muted-foreground">{robot.serial_number}</span>
+                            {")"}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             <FormField
               control={form.control}

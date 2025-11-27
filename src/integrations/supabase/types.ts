@@ -405,6 +405,42 @@ export type Database = {
           },
         ]
       }
+      task_robots: {
+        Row: {
+          created_at: string | null
+          id: string
+          robot_id: string
+          task_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          robot_id: string
+          task_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          robot_id?: string
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_robots_robot_id_fkey"
+            columns: ["robot_id"]
+            isOneToOne: false
+            referencedRelation: "robots"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_robots_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       task_title_dictionary: {
         Row: {
           created_at: string | null
@@ -429,6 +465,7 @@ export type Database = {
           call_attempted: boolean | null
           call_successful: boolean | null
           client_id: string | null
+          contract_id: string | null
           created_at: string | null
           description: string | null
           due_date: string | null
@@ -444,6 +481,7 @@ export type Database = {
           call_attempted?: boolean | null
           call_successful?: boolean | null
           client_id?: string | null
+          contract_id?: string | null
           created_at?: string | null
           description?: string | null
           due_date?: string | null
@@ -459,6 +497,7 @@ export type Database = {
           call_attempted?: boolean | null
           call_successful?: boolean | null
           client_id?: string | null
+          contract_id?: string | null
           created_at?: string | null
           description?: string | null
           due_date?: string | null
@@ -482,6 +521,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
             referencedColumns: ["id"]
           },
           {
