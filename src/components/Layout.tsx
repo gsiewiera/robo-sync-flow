@@ -114,13 +114,13 @@ function AppSidebar() {
 export const Layout = ({ children }: LayoutProps) => {
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full">
+      <div className="flex min-h-screen w-full gap-0">
         <AppSidebar />
-        <main className="flex-1 overflow-auto">
-          <div className="sticky top-0 z-10 flex h-14 items-center border-b bg-background pl-0 pr-4">
+        <main className="flex-1 overflow-auto pl-0">
+          <div className="sticky top-0 z-10 flex h-14 items-center border-b bg-background pl-4 pr-4">
             <SidebarTrigger />
           </div>
-          <div className="pl-0 pr-6 pb-6 pt-6 max-w-7xl">
+          <div className="pl-6 pr-6 pb-6 pt-6 max-w-7xl">
             {children}
           </div>
         </main>
