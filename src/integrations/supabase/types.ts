@@ -405,6 +405,24 @@ export type Database = {
           },
         ]
       }
+      task_title_dictionary: {
+        Row: {
+          created_at: string | null
+          id: string
+          title: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          title: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          title?: string
+        }
+        Relationships: []
+      }
       tasks: {
         Row: {
           assigned_to: string | null
