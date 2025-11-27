@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, Download, Loader2 } from "lucide-react";
+import { FileText, Download, Loader2, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import jsPDF from "jspdf";
@@ -14,6 +14,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface OfferVersion {
   id: string;
@@ -41,6 +47,8 @@ export const OfferPdfGenerator = ({
 }: OfferPdfGeneratorProps) => {
   const [versions, setVersions] = useState<OfferVersion[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -193,6 +201,34 @@ export const OfferPdfGenerator = ({
     }
   };
 
+  const previewPDF = async (version: OfferVersion) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from("offer-pdfs")
+        .download(version.file_path);
+
+      if (error) throw error;
+
+      const url = URL.createObjectURL(data);
+      setPreviewUrl(url);
+      setIsPreviewOpen(true);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to preview PDF",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const closePreview = () => {
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
+    }
+    setIsPreviewOpen(false);
+  };
+
   return (
     <Card className="p-6">
       <div className="flex items-center justify-between mb-4">
@@ -232,14 +268,24 @@ export const OfferPdfGenerator = ({
                   {new Date(version.generated_at).toLocaleString()}
                 </TableCell>
                 <TableCell className="text-right">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => downloadPDF(version)}
-                  >
-                    <Download className="w-4 h-4 mr-2" />
-                    Download
-                  </Button>
+                  <div className="flex gap-2 justify-end">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => previewPDF(version)}
+                    >
+                      <Eye className="w-4 h-4 mr-2" />
+                      Preview
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => downloadPDF(version)}
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Download
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
@@ -252,6 +298,21 @@ export const OfferPdfGenerator = ({
           <p className="text-sm text-muted-foreground">Click "Generate New PDF" to create the first version</p>
         </div>
       )}
+
+      <Dialog open={isPreviewOpen} onOpenChange={closePreview}>
+        <DialogContent className="max-w-4xl h-[90vh]">
+          <DialogHeader>
+            <DialogTitle>PDF Preview</DialogTitle>
+          </DialogHeader>
+          {previewUrl && (
+            <iframe
+              src={previewUrl}
+              className="w-full h-full rounded-md"
+              title="PDF Preview"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };
