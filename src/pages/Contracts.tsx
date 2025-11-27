@@ -5,7 +5,14 @@ import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { ArrowUpDown, ArrowUp, ArrowDown, Eye } from "lucide-react";
+import { ArrowUpDown, ArrowUp, ArrowDown, Eye, X } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -44,21 +51,46 @@ const statusColors: Record<string, string> = {
 
 const Contracts = () => {
   const [contracts, setContracts] = useState<Contract[]>([]);
+  const [clients, setClients] = useState<{ id: string; name: string }[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [sortField, setSortField] = useState<"contract_number" | "start_date" | "created_at">("created_at");
+  const [sortField, setSortField] = useState<"contract_number" | "start_date" | "end_date" | "created_at">("created_at");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+  const [filterClient, setFilterClient] = useState<string>("all");
+  const [filterStatus, setFilterStatus] = useState<string | "all">("all");
   const navigate = useNavigate();
   const recordsPerPage = 20;
 
   useEffect(() => {
     fetchContracts();
+    fetchClients();
   }, []);
 
+  const fetchClients = async () => {
+    const { data } = await supabase
+      .from("clients")
+      .select("id, name")
+      .order("name");
+
+    if (data) {
+      setClients(data);
+    }
+  };
+
   const fetchContracts = async () => {
-    const { data, error } = await supabase
+    let query = supabase
       .from("contracts")
       .select("*, clients(name)")
       .order(sortField, { ascending: sortDirection === "asc", nullsFirst: false });
+
+    if (filterClient !== "all") {
+      query = query.eq("client_id", filterClient);
+    }
+
+    if (filterStatus !== "all") {
+      query = query.eq("status", filterStatus as any);
+    }
+
+    const { data, error } = await query;
 
     if (data && !error) {
       setContracts(data);
@@ -68,7 +100,7 @@ const Contracts = () => {
   useEffect(() => {
     fetchContracts();
     setCurrentPage(1);
-  }, [sortField, sortDirection]);
+  }, [sortField, sortDirection, filterClient, filterStatus]);
 
   const indexOfLastRecord = currentPage * recordsPerPage;
   const indexOfFirstRecord = indexOfLastRecord - recordsPerPage;
@@ -79,7 +111,7 @@ const Contracts = () => {
     setCurrentPage(page);
   };
 
-  const handleSort = (field: "contract_number" | "start_date" | "created_at") => {
+  const handleSort = (field: "contract_number" | "start_date" | "end_date" | "created_at") => {
     if (sortField === field) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
@@ -88,7 +120,7 @@ const Contracts = () => {
     }
   };
 
-  const getSortIcon = (field: "contract_number" | "start_date" | "created_at") => {
+  const getSortIcon = (field: "contract_number" | "start_date" | "end_date" | "created_at") => {
     if (sortField !== field) {
       return <ArrowUpDown className="ml-2 h-4 w-4 text-muted-foreground" />;
     }
@@ -97,6 +129,13 @@ const Contracts = () => {
       : <ArrowDown className="ml-2 h-4 w-4" />;
   };
 
+  const clearFilters = () => {
+    setFilterClient("all");
+    setFilterStatus("all");
+  };
+
+  const hasActiveFilters = filterClient !== "all" || filterStatus !== "all";
+
   return (
     <Layout>
       <div className="space-y-6">
@@ -104,6 +143,59 @@ const Contracts = () => {
           <h1 className="text-3xl font-bold text-foreground">Contracts</h1>
           <p className="text-muted-foreground">Manage client contracts and agreements</p>
         </div>
+
+        {/* Filters */}
+        <Card className="p-4">
+          <div className="flex items-center gap-4">
+            <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium mb-2 block">Client</label>
+                <Select value={filterClient} onValueChange={setFilterClient}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All Clients" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Clients</SelectItem>
+                    {clients.map((client) => (
+                      <SelectItem key={client.id} value={client.id}>
+                        {client.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium mb-2 block">Status</label>
+                <Select value={filterStatus} onValueChange={setFilterStatus}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All Statuses" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Statuses</SelectItem>
+                    <SelectItem value="draft">Draft</SelectItem>
+                    <SelectItem value="pending_signature">Pending Signature</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="expired">Expired</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {hasActiveFilters && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearFilters}
+                className="mt-6"
+              >
+                <X className="h-4 w-4 mr-2" />
+                Clear
+              </Button>
+            )}
+          </div>
+        </Card>
 
         <Card>
           <Table>
@@ -133,7 +225,17 @@ const Contracts = () => {
                     {getSortIcon("start_date")}
                   </Button>
                 </TableHead>
-                <TableHead>End Date</TableHead>
+                <TableHead>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleSort("end_date")}
+                    className="h-8 px-2 -ml-2 font-medium hover:bg-transparent"
+                  >
+                    End Date
+                    {getSortIcon("end_date")}
+                  </Button>
+                </TableHead>
                 <TableHead>Monthly Payment</TableHead>
                 <TableHead>
                   <Button
