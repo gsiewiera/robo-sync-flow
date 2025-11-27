@@ -20,6 +20,7 @@ import Offers from "./pages/Offers";
 import OfferDetail from "./pages/OfferDetail";
 import Service from "./pages/Service";
 import ServiceDetail from "./pages/ServiceDetail";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -156,6 +157,14 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <ServiceDetail />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <Settings />
               </ProtectedRoute>
             }
           />
