@@ -106,6 +106,39 @@ export type Database = {
           },
         ]
       }
+      contract_templates: {
+        Row: {
+          contract_type: string
+          created_at: string | null
+          created_by: string | null
+          id: string
+          is_active: boolean
+          template_content: string
+          template_name: string
+          updated_at: string | null
+        }
+        Insert: {
+          contract_type: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          template_content: string
+          template_name: string
+          updated_at?: string | null
+        }
+        Update: {
+          contract_type?: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          template_content?: string
+          template_name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       contracts: {
         Row: {
           billing_schedule: string | null
