@@ -46,6 +46,7 @@ const formSchema = z.object({
   prepayment_type: z.enum(["none", "percent", "amount"]).default("none"),
   prepayment_value: z.number().min(0).optional(),
   status: z.enum(["draft", "sent", "modified", "accepted", "rejected"]).default("draft"),
+  reseller_id: z.string().optional(),
 });
 
 interface RobotSelection {
@@ -111,6 +112,7 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer }: NewOffe
   const [availableLeaseMonths, setAvailableLeaseMonths] = useState<number[]>([]);
   const [robotSelections, setRobotSelections] = useState<RobotSelection[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [resellers, setResellers] = useState<any[]>([]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -127,6 +129,7 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer }: NewOffe
     if (open) {
       fetchClients();
       fetchPricing();
+      fetchResellers();
       if (offer) {
         loadOfferData();
       } else {
@@ -158,6 +161,25 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer }: NewOffe
     }
 
     setClients(data || []);
+  };
+
+  const fetchResellers = async () => {
+    const { data, error } = await supabase
+      .from("resellers")
+      .select("id, name")
+      .eq("status", "active")
+      .order("name");
+
+    if (error) {
+      toast({
+        title: "Error loading resellers",
+        description: error.message,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setResellers(data || []);
   };
 
   const loadOfferData = async () => {
@@ -196,6 +218,7 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer }: NewOffe
       prepayment_type: prepaymentType as "none" | "percent" | "amount",
       prepayment_value: offer.prepayment_percent || offer.prepayment_amount || 0,
       status: offer.status as "draft" | "sent" | "modified" | "accepted" | "rejected",
+      reseller_id: (offer as any).reseller_id || "",
     });
 
     // Populate robot selections
@@ -492,6 +515,7 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer }: NewOffe
         delivery_date: values.delivery_date?.toISOString().split("T")[0],
         deployment_location: values.deployment_location,
         total_price: calculateTotalPrice(),
+        reseller_id: values.reseller_id || null,
       };
 
       if (isEditMode && offer) {
@@ -651,6 +675,32 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer }: NewOffe
                       <FormControl>
                         <Input placeholder="Contact person name" {...field} />
                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="reseller_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Reseller Partner (Optional)</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select reseller" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="">No Reseller</SelectItem>
+                          {resellers.map((reseller) => (
+                            <SelectItem key={reseller.id} value={reseller.id}>
+                              {reseller.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}

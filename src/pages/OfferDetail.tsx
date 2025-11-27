@@ -34,6 +34,7 @@ interface Offer {
   initial_payment: number;
   prepayment_percent?: number;
   prepayment_amount?: number;
+  reseller_id?: string;
 }
 
 interface Client {
@@ -61,6 +62,7 @@ const OfferDetail = () => {
   const navigate = useNavigate();
   const [offer, setOffer] = useState<Offer | null>(null);
   const [client, setClient] = useState<Client | null>(null);
+  const [reseller, setReseller] = useState<{ id: string; name: string } | null>(null);
   const [items, setItems] = useState<OfferItem[]>([]);
   const [isEditSheetOpen, setIsEditSheetOpen] = useState(false);
   const [isContractDialogOpen, setIsContractDialogOpen] = useState(false);
@@ -89,6 +91,19 @@ const OfferDetail = () => {
 
       if (clientData) {
         setClient(clientData);
+      }
+
+      // Fetch reseller if present
+      if (offerData.reseller_id) {
+        const { data: resellerData } = await supabase
+          .from("resellers")
+          .select("id, name")
+          .eq("id", offerData.reseller_id)
+          .single();
+
+        if (resellerData) {
+          setReseller(resellerData);
+        }
       }
     }
 
@@ -171,6 +186,18 @@ const OfferDetail = () => {
                     onClick={() => navigate(`/clients/${client.id}`)}
                   >
                     {client.name}
+                  </Button>
+                </div>
+              )}
+              {reseller && (
+                <div>
+                  <p className="text-sm text-muted-foreground">Reseller Partner</p>
+                  <Button
+                    variant="link"
+                    className="p-0 h-auto font-medium text-lg"
+                    onClick={() => navigate(`/resellers/${reseller.id}`)}
+                  >
+                    {reseller.name}
                   </Button>
                 </div>
               )}
@@ -258,6 +285,7 @@ const OfferDetail = () => {
         clientId={offer.client_id}
         offerData={offer}
         offerItems={items}
+        resellerId={offer.reseller_id}
       />
     </Layout>
   );
