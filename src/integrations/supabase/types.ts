@@ -258,6 +258,51 @@ export type Database = {
         }
         Relationships: []
       }
+      contract_versions: {
+        Row: {
+          contract_id: string
+          file_path: string
+          generated_at: string
+          generated_by: string | null
+          id: string
+          notes: string | null
+          version_number: number
+        }
+        Insert: {
+          contract_id: string
+          file_path: string
+          generated_at?: string
+          generated_by?: string | null
+          id?: string
+          notes?: string | null
+          version_number: number
+        }
+        Update: {
+          contract_id?: string
+          file_path?: string
+          generated_at?: string
+          generated_by?: string | null
+          id?: string
+          notes?: string | null
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_versions_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contract_versions_generated_by_fkey"
+            columns: ["generated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contracts: {
         Row: {
           billing_schedule: string | null

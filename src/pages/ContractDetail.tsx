@@ -6,6 +6,7 @@ import { ArrowLeft, FileText, Calendar, DollarSign, Bot } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useParams, useNavigate } from "react-router-dom";
+import { ContractPdfGenerator } from "@/components/contracts/ContractPdfGenerator";
 
 interface Contract {
   id: string;
@@ -23,6 +24,9 @@ interface Contract {
 interface Client {
   id: string;
   name: string;
+  general_email?: string;
+  primary_contact_email?: string;
+  address?: string;
 }
 
 interface Robot {
@@ -65,7 +69,7 @@ const ContractDetail = () => {
 
       const { data: clientData } = await supabase
         .from("clients")
-        .select("id, name")
+        .select("*")
         .eq("id", contractData.client_id)
         .single();
 
@@ -230,6 +234,14 @@ const ContractDetail = () => {
             )}
           </div>
         </Card>
+
+        <ContractPdfGenerator
+          contractId={contract.id}
+          contractNumber={contract.contract_number}
+          contractData={contract}
+          clientData={client}
+          robotsData={robots}
+        />
       </div>
     </Layout>
   );
