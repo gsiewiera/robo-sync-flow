@@ -253,32 +253,34 @@ const Pricing = () => {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Price Type</TableHead>
-                          <TableHead className="text-right">PLN</TableHead>
-                          <TableHead className="text-right">USD</TableHead>
-                          <TableHead className="text-right">EUR</TableHead>
+                          <TableHead>Currency</TableHead>
+                          <TableHead className="text-right">Net</TableHead>
+                          <TableHead className="text-right">Gross</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         <TableRow>
-                          <TableCell className="font-medium">Net</TableCell>
+                          <TableCell className="font-medium">PLN</TableCell>
                           <TableCell className="text-right">
                             {formatCurrency(pricing.sale_price_pln_net, "PLN")}
                           </TableCell>
                           <TableCell className="text-right">
-                            {formatCurrency(pricing.sale_price_usd_net, "USD")}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {formatCurrency(pricing.sale_price_eur_net, "EUR")}
+                            {formatCurrency(calculateGross(pricing.sale_price_pln_net), "PLN")}
                           </TableCell>
                         </TableRow>
                         <TableRow>
-                          <TableCell className="font-medium">Gross</TableCell>
+                          <TableCell className="font-medium">USD</TableCell>
                           <TableCell className="text-right">
-                            {formatCurrency(calculateGross(pricing.sale_price_pln_net), "PLN")}
+                            {formatCurrency(pricing.sale_price_usd_net, "USD")}
                           </TableCell>
                           <TableCell className="text-right">
                             {formatCurrency(calculateGross(pricing.sale_price_usd_net), "USD")}
+                          </TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell className="font-medium">EUR</TableCell>
+                          <TableCell className="text-right">
+                            {formatCurrency(pricing.sale_price_eur_net, "EUR")}
                           </TableCell>
                           <TableCell className="text-right">
                             {formatCurrency(calculateGross(pricing.sale_price_eur_net), "EUR")}
@@ -296,49 +298,45 @@ const Pricing = () => {
                         <Table>
                           <TableHeader>
                             <TableRow>
-                              <TableHead>Price Type</TableHead>
-                              {pricing.promo_price_pln_net && <TableHead className="text-right">PLN</TableHead>}
-                              {pricing.promo_price_usd_net && <TableHead className="text-right">USD</TableHead>}
-                              {pricing.promo_price_eur_net && <TableHead className="text-right">EUR</TableHead>}
+                              <TableHead>Currency</TableHead>
+                              <TableHead className="text-right">Net</TableHead>
+                              <TableHead className="text-right">Gross</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            <TableRow>
-                              <TableCell className="font-medium">Net</TableCell>
-                              {pricing.promo_price_pln_net && (
+                            {pricing.promo_price_pln_net && (
+                              <TableRow>
+                                <TableCell className="font-medium">PLN</TableCell>
                                 <TableCell className="text-right">
                                   {formatCurrency(pricing.promo_price_pln_net, "PLN")}
                                 </TableCell>
-                              )}
-                              {pricing.promo_price_usd_net && (
-                                <TableCell className="text-right">
-                                  {formatCurrency(pricing.promo_price_usd_net, "USD")}
-                                </TableCell>
-                              )}
-                              {pricing.promo_price_eur_net && (
-                                <TableCell className="text-right">
-                                  {formatCurrency(pricing.promo_price_eur_net, "EUR")}
-                                </TableCell>
-                              )}
-                            </TableRow>
-                            <TableRow>
-                              <TableCell className="font-medium">Gross</TableCell>
-                              {pricing.promo_price_pln_net && (
                                 <TableCell className="text-right">
                                   {formatCurrency(calculateGross(pricing.promo_price_pln_net), "PLN")}
                                 </TableCell>
-                              )}
-                              {pricing.promo_price_usd_net && (
+                              </TableRow>
+                            )}
+                            {pricing.promo_price_usd_net && (
+                              <TableRow>
+                                <TableCell className="font-medium">USD</TableCell>
+                                <TableCell className="text-right">
+                                  {formatCurrency(pricing.promo_price_usd_net, "USD")}
+                                </TableCell>
                                 <TableCell className="text-right">
                                   {formatCurrency(calculateGross(pricing.promo_price_usd_net), "USD")}
                                 </TableCell>
-                              )}
-                              {pricing.promo_price_eur_net && (
+                              </TableRow>
+                            )}
+                            {pricing.promo_price_eur_net && (
+                              <TableRow>
+                                <TableCell className="font-medium">EUR</TableCell>
+                                <TableCell className="text-right">
+                                  {formatCurrency(pricing.promo_price_eur_net, "EUR")}
+                                </TableCell>
                                 <TableCell className="text-right">
                                   {formatCurrency(calculateGross(pricing.promo_price_eur_net), "EUR")}
                                 </TableCell>
-                              )}
-                            </TableRow>
+                              </TableRow>
+                            )}
                           </TableBody>
                         </Table>
                       </>
@@ -353,49 +351,45 @@ const Pricing = () => {
                         <Table>
                           <TableHeader>
                             <TableRow>
-                              <TableHead>Price Type</TableHead>
-                              {pricing.lowest_price_pln_net && <TableHead className="text-right">PLN</TableHead>}
-                              {pricing.lowest_price_usd_net && <TableHead className="text-right">USD</TableHead>}
-                              {pricing.lowest_price_eur_net && <TableHead className="text-right">EUR</TableHead>}
+                              <TableHead>Currency</TableHead>
+                              <TableHead className="text-right">Net</TableHead>
+                              <TableHead className="text-right">Gross</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            <TableRow>
-                              <TableCell className="font-medium">Net</TableCell>
-                              {pricing.lowest_price_pln_net && (
+                            {pricing.lowest_price_pln_net && (
+                              <TableRow>
+                                <TableCell className="font-medium">PLN</TableCell>
                                 <TableCell className="text-right">
                                   {formatCurrency(pricing.lowest_price_pln_net, "PLN")}
                                 </TableCell>
-                              )}
-                              {pricing.lowest_price_usd_net && (
-                                <TableCell className="text-right">
-                                  {formatCurrency(pricing.lowest_price_usd_net, "USD")}
-                                </TableCell>
-                              )}
-                              {pricing.lowest_price_eur_net && (
-                                <TableCell className="text-right">
-                                  {formatCurrency(pricing.lowest_price_eur_net, "EUR")}
-                                </TableCell>
-                              )}
-                            </TableRow>
-                            <TableRow>
-                              <TableCell className="font-medium">Gross</TableCell>
-                              {pricing.lowest_price_pln_net && (
                                 <TableCell className="text-right">
                                   {formatCurrency(calculateGross(pricing.lowest_price_pln_net), "PLN")}
                                 </TableCell>
-                              )}
-                              {pricing.lowest_price_usd_net && (
+                              </TableRow>
+                            )}
+                            {pricing.lowest_price_usd_net && (
+                              <TableRow>
+                                <TableCell className="font-medium">USD</TableCell>
+                                <TableCell className="text-right">
+                                  {formatCurrency(pricing.lowest_price_usd_net, "USD")}
+                                </TableCell>
                                 <TableCell className="text-right">
                                   {formatCurrency(calculateGross(pricing.lowest_price_usd_net), "USD")}
                                 </TableCell>
-                              )}
-                              {pricing.lowest_price_eur_net && (
+                              </TableRow>
+                            )}
+                            {pricing.lowest_price_eur_net && (
+                              <TableRow>
+                                <TableCell className="font-medium">EUR</TableCell>
+                                <TableCell className="text-right">
+                                  {formatCurrency(pricing.lowest_price_eur_net, "EUR")}
+                                </TableCell>
                                 <TableCell className="text-right">
                                   {formatCurrency(calculateGross(pricing.lowest_price_eur_net), "EUR")}
                                 </TableCell>
-                              )}
-                            </TableRow>
+                              </TableRow>
+                            )}
                           </TableBody>
                         </Table>
                       </>
