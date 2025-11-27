@@ -6,7 +6,7 @@ import { ArrowLeft, ShoppingCart, Edit } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useParams, useNavigate } from "react-router-dom";
-import { NewOfferSheet } from "@/components/offers/NewOfferSheet";
+import { NewOfferDialog } from "@/components/offers/NewOfferDialog";
 import {
   Table,
   TableBody,
@@ -225,7 +225,7 @@ const OfferDetail = () => {
         </Card>
       </div>
 
-      <NewOfferSheet
+      <NewOfferDialog
         open={isEditSheetOpen}
         onOpenChange={setIsEditSheetOpen}
         onSuccess={() => {
