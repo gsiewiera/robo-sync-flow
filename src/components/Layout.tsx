@@ -10,6 +10,7 @@ import {
   Wrench,
   DollarSign,
   Package,
+  Building2,
   Settings as SettingsIcon,
   LogOut
 } from "lucide-react";
@@ -40,6 +41,7 @@ const navItems = [
   { icon: CheckSquare, label: "Tasks", path: "/tasks" },
   { icon: ShoppingCart, label: "Offers", path: "/offers" },
   { icon: Users, label: "Clients", path: "/clients" },
+  { icon: Building2, label: "Resellers", path: "/resellers" },
   { icon: FileText, label: "Contracts", path: "/contracts" },
   { icon: Wrench, label: "Service", path: "/service" },
   { icon: Bot, label: "Robots", path: "/robots" },

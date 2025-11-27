@@ -11,6 +11,8 @@ import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Clients from "./pages/Clients";
 import ClientDetail from "./pages/ClientDetail";
+import Resellers from "./pages/Resellers";
+import ResellerDetail from "./pages/ResellerDetail";
 import Robots from "./pages/Robots";
 import RobotDetail from "./pages/RobotDetail";
 import Tasks from "./pages/Tasks";
@@ -87,6 +89,22 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <ClientDetail />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/resellers"
+            element={
+              <ProtectedRoute>
+                <Resellers />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/resellers/:id"
+            element={
+              <ProtectedRoute>
+                <ResellerDetail />
               </ProtectedRoute>
             }
           />
