@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
 
 type Dictionary = {
   robot_models: string[];
@@ -22,9 +23,24 @@ type Dictionary = {
   countries: string[];
 };
 
+const categories = [
+  { key: "robot_models", label: "Robot Models" },
+  { key: "robot_types", label: "Robot Types" },
+  { key: "client_types", label: "Client Types" },
+  { key: "markets", label: "Markets" },
+  { key: "segments", label: "Segments" },
+  { key: "contract_types", label: "Contract Types" },
+  { key: "service_types", label: "Service Types" },
+  { key: "payment_models", label: "Payment Models" },
+  { key: "billing_schedules", label: "Billing Schedules" },
+  { key: "priorities", label: "Priorities" },
+  { key: "countries", label: "Countries" },
+] as const;
+
 export const DictionariesSettings = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [activeCategory, setActiveCategory] = useState<keyof Dictionary>("robot_models");
   const [dictionaries, setDictionaries] = useState<Dictionary>({
     robot_models: ["UR3", "UR5", "UR10", "UR16"],
     robot_types: ["Collaborative", "Industrial", "Mobile", "Delta"],
@@ -72,27 +88,36 @@ export const DictionariesSettings = () => {
     }));
   };
 
-  const DictionaryEditor = ({ category, title }: { category: keyof Dictionary; title: string }) => {
+  const DictionaryEditor = () => {
     const [newValue, setNewValue] = useState("");
+    const currentCategory = categories.find(c => c.key === activeCategory);
 
     return (
-      <div className="space-y-4">
+      <div className="space-y-6">
+        <div>
+          <Label className="text-lg font-semibold">{currentCategory?.label}</Label>
+          <p className="text-sm text-muted-foreground mt-1">
+            Manage {currentCategory?.label.toLowerCase()} options
+          </p>
+        </div>
+
         <div className="flex gap-2">
           <Input
-            placeholder={`Add new ${title.toLowerCase()}`}
+            placeholder={`Add new ${currentCategory?.label.toLowerCase()}`}
             value={newValue}
             onChange={(e) => setNewValue(e.target.value)}
             onKeyPress={(e) => {
               if (e.key === "Enter") {
-                addItem(category, newValue);
+                addItem(activeCategory, newValue);
                 setNewValue("");
               }
             }}
             disabled={!isAdmin}
+            className="flex-1"
           />
           <Button
             onClick={() => {
-              addItem(category, newValue);
+              addItem(activeCategory, newValue);
               setNewValue("");
             }}
             disabled={!isAdmin}
@@ -102,13 +127,13 @@ export const DictionariesSettings = () => {
         </div>
 
         <div className="flex gap-2 flex-wrap">
-          {dictionaries[category].map((item, index) => (
-            <Badge key={index} variant="secondary" className="gap-1">
+          {dictionaries[activeCategory].map((item, index) => (
+            <Badge key={index} variant="secondary" className="gap-2 py-2 px-3 text-sm">
               {item}
               {isAdmin && (
                 <X
-                  className="h-3 w-3 cursor-pointer"
-                  onClick={() => removeItem(category, index)}
+                  className="h-3 w-3 cursor-pointer hover:text-destructive"
+                  onClick={() => removeItem(activeCategory, index)}
                 />
               )}
             </Badge>
@@ -150,99 +175,35 @@ export const DictionariesSettings = () => {
         <CardTitle>Dictionaries</CardTitle>
         <CardDescription>Manage system reference data and lookup values</CardDescription>
       </CardHeader>
-      <CardContent>
-        <Tabs defaultValue="robot_models">
-          <TabsList className="grid w-full grid-cols-4 lg:grid-cols-6">
-            <TabsTrigger value="robot_models">Robot Models</TabsTrigger>
-            <TabsTrigger value="robot_types">Robot Types</TabsTrigger>
-            <TabsTrigger value="client_types">Client Types</TabsTrigger>
-            <TabsTrigger value="markets">Markets</TabsTrigger>
-            <TabsTrigger value="segments">Segments</TabsTrigger>
-            <TabsTrigger value="contract_types">Contract Types</TabsTrigger>
-            <TabsTrigger value="service_types">Service Types</TabsTrigger>
-            <TabsTrigger value="payment_models">Payment</TabsTrigger>
-            <TabsTrigger value="billing_schedules">Billing</TabsTrigger>
-            <TabsTrigger value="priorities">Priorities</TabsTrigger>
-            <TabsTrigger value="countries">Countries</TabsTrigger>
-          </TabsList>
+      <CardContent className="p-0">
+        <div className="flex flex-col md:flex-row min-h-[500px]">
+          {/* Sidebar */}
+          <div className="w-full md:w-64 border-r border-border">
+            <ScrollArea className="h-[500px]">
+              <div className="p-4 space-y-1">
+                {categories.map((category) => (
+                  <button
+                    key={category.key}
+                    onClick={() => setActiveCategory(category.key as keyof Dictionary)}
+                    className={cn(
+                      "w-full text-left px-3 py-2 rounded-md text-sm transition-colors",
+                      activeCategory === category.key
+                        ? "bg-accent text-accent-foreground font-medium"
+                        : "hover:bg-accent/50 text-muted-foreground"
+                    )}
+                  >
+                    {category.label}
+                  </button>
+                ))}
+              </div>
+            </ScrollArea>
+          </div>
 
-          <TabsContent value="robot_models" className="mt-4">
-            <div className="space-y-2">
-              <Label>Robot Models</Label>
-              <DictionaryEditor category="robot_models" title="Robot Model" />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="robot_types" className="mt-4">
-            <div className="space-y-2">
-              <Label>Robot Types</Label>
-              <DictionaryEditor category="robot_types" title="Robot Type" />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="client_types" className="mt-4">
-            <div className="space-y-2">
-              <Label>Client Types</Label>
-              <DictionaryEditor category="client_types" title="Client Type" />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="markets" className="mt-4">
-            <div className="space-y-2">
-              <Label>Markets</Label>
-              <DictionaryEditor category="markets" title="Market" />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="segments" className="mt-4">
-            <div className="space-y-2">
-              <Label>Segments</Label>
-              <DictionaryEditor category="segments" title="Segment" />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="contract_types" className="mt-4">
-            <div className="space-y-2">
-              <Label>Contract Types</Label>
-              <DictionaryEditor category="contract_types" title="Contract Type" />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="service_types" className="mt-4">
-            <div className="space-y-2">
-              <Label>Service Types</Label>
-              <DictionaryEditor category="service_types" title="Service Type" />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="payment_models" className="mt-4">
-            <div className="space-y-2">
-              <Label>Payment Models</Label>
-              <DictionaryEditor category="payment_models" title="Payment Model" />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="billing_schedules" className="mt-4">
-            <div className="space-y-2">
-              <Label>Billing Schedules</Label>
-              <DictionaryEditor category="billing_schedules" title="Billing Schedule" />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="priorities" className="mt-4">
-            <div className="space-y-2">
-              <Label>Service Priorities</Label>
-              <DictionaryEditor category="priorities" title="Priority" />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="countries" className="mt-4">
-            <div className="space-y-2">
-              <Label>Countries</Label>
-              <DictionaryEditor category="countries" title="Country" />
-            </div>
-          </TabsContent>
-        </Tabs>
+          {/* Content Area */}
+          <div className="flex-1 p-6">
+            <DictionaryEditor />
+          </div>
+        </div>
       </CardContent>
     </Card>
   );
