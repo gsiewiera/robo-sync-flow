@@ -256,7 +256,7 @@ export const PricingFormSheet = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{pricing ? "Edit" : "Add"} Pricing</DialogTitle>
           <DialogDescription>
@@ -265,7 +265,7 @@ export const PricingFormSheet = ({
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mt-6">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 mt-4">
             <FormField
               control={form.control}
               name="robot_model"
@@ -297,195 +297,208 @@ export const PricingFormSheet = ({
 
             <Tabs defaultValue="sale" className="w-full">
               <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="sale">Sale Prices</TabsTrigger>
-                <TabsTrigger value="promo">Promo Prices</TabsTrigger>
-                <TabsTrigger value="lowest">Lowest Prices</TabsTrigger>
-                <TabsTrigger value="lease">Lease Pricing</TabsTrigger>
+                <TabsTrigger value="sale">Sale</TabsTrigger>
+                <TabsTrigger value="promo">Promo</TabsTrigger>
+                <TabsTrigger value="lowest">Lowest</TabsTrigger>
+                <TabsTrigger value="lease">Lease</TabsTrigger>
               </TabsList>
 
-              <TabsContent value="sale" className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="sale_price_pln_net"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>PLN (Net)</FormLabel>
-                      <FormControl>
-                        <Input type="number" step="0.01" placeholder="0.00" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="sale_price_usd_net"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>USD (Net)</FormLabel>
-                      <FormControl>
-                        <Input type="number" step="0.01" placeholder="0.00" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="sale_price_eur_net"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>EUR (Net)</FormLabel>
-                      <FormControl>
-                        <Input type="number" step="0.01" placeholder="0.00" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              <TabsContent value="sale" className="space-y-3 mt-4">
+                <div className="grid grid-cols-3 gap-3">
+                  <FormField
+                    control={form.control}
+                    name="sale_price_pln_net"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs">PLN (Net)</FormLabel>
+                        <FormControl>
+                          <Input type="number" step="0.01" placeholder="0.00" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="sale_price_usd_net"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs">USD (Net)</FormLabel>
+                        <FormControl>
+                          <Input type="number" step="0.01" placeholder="0.00" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="sale_price_eur_net"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs">EUR (Net)</FormLabel>
+                        <FormControl>
+                          <Input type="number" step="0.01" placeholder="0.00" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </TabsContent>
 
-              <TabsContent value="promo" className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="promo_price_pln_net"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>PLN (Net) - Optional</FormLabel>
-                      <FormControl>
-                        <Input type="number" step="0.01" placeholder="0.00" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="promo_price_usd_net"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>USD (Net) - Optional</FormLabel>
-                      <FormControl>
-                        <Input type="number" step="0.01" placeholder="0.00" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="promo_price_eur_net"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>EUR (Net) - Optional</FormLabel>
-                      <FormControl>
-                        <Input type="number" step="0.01" placeholder="0.00" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              <TabsContent value="promo" className="space-y-3 mt-4">
+                <p className="text-sm text-muted-foreground">Optional promotional pricing</p>
+                <div className="grid grid-cols-3 gap-3">
+                  <FormField
+                    control={form.control}
+                    name="promo_price_pln_net"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs">PLN (Net)</FormLabel>
+                        <FormControl>
+                          <Input type="number" step="0.01" placeholder="0.00" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="promo_price_usd_net"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs">USD (Net)</FormLabel>
+                        <FormControl>
+                          <Input type="number" step="0.01" placeholder="0.00" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="promo_price_eur_net"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs">EUR (Net)</FormLabel>
+                        <FormControl>
+                          <Input type="number" step="0.01" placeholder="0.00" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </TabsContent>
 
-              <TabsContent value="lowest" className="space-y-4">
-                <p className="text-sm text-muted-foreground mb-4">
-                  These prices are only visible to administrators
+              <TabsContent value="lowest" className="space-y-3 mt-4">
+                <p className="text-sm text-muted-foreground">
+                  Admin-only pricing (not visible to other users)
                 </p>
-                <FormField
-                  control={form.control}
-                  name="lowest_price_pln_net"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>PLN (Net) - Optional</FormLabel>
-                      <FormControl>
-                        <Input type="number" step="0.01" placeholder="0.00" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="lowest_price_usd_net"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>USD (Net) - Optional</FormLabel>
-                      <FormControl>
-                        <Input type="number" step="0.01" placeholder="0.00" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="lowest_price_eur_net"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>EUR (Net) - Optional</FormLabel>
-                      <FormControl>
-                        <Input type="number" step="0.01" placeholder="0.00" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="grid grid-cols-3 gap-3">
+                  <FormField
+                    control={form.control}
+                    name="lowest_price_pln_net"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs">PLN (Net)</FormLabel>
+                        <FormControl>
+                          <Input type="number" step="0.01" placeholder="0.00" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="lowest_price_usd_net"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs">USD (Net)</FormLabel>
+                        <FormControl>
+                          <Input type="number" step="0.01" placeholder="0.00" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="lowest_price_eur_net"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs">EUR (Net)</FormLabel>
+                        <FormControl>
+                          <Input type="number" step="0.01" placeholder="0.00" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </TabsContent>
 
-              <TabsContent value="lease" className="space-y-4">
-                <p className="text-sm text-muted-foreground mb-4">
-                  Set monthly lease prices for different term lengths. All prices are net (excluding VAT).
+              <TabsContent value="lease" className="space-y-3 mt-4">
+                <p className="text-sm text-muted-foreground mb-3">
+                  Monthly lease prices for different term lengths (all net prices)
                 </p>
-                {leaseMonths.map((leaseMonth) => (
-                  <div key={leaseMonth.id} className="space-y-3 pb-4 border-b last:border-b-0">
-                    <h4 className="font-medium">{leaseMonth.months} Months</h4>
-                    <div className="grid grid-cols-3 gap-3">
-                      <FormField
-                        control={form.control}
-                        name={`lease_pricing.${leaseMonth.months}.pln` as any}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>PLN (Net)</FormLabel>
-                            <FormControl>
-                              <Input type="number" step="0.01" placeholder="0.00" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name={`lease_pricing.${leaseMonth.months}.usd` as any}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>USD (Net)</FormLabel>
-                            <FormControl>
-                              <Input type="number" step="0.01" placeholder="0.00" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name={`lease_pricing.${leaseMonth.months}.eur` as any}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>EUR (Net)</FormLabel>
-                            <FormControl>
-                              <Input type="number" step="0.01" placeholder="0.00" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
+                  {leaseMonths.map((leaseMonth) => (
+                    <div key={leaseMonth.id} className="space-y-2 pb-3 border-b last:border-b-0">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-16 h-8 rounded bg-primary/10 flex items-center justify-center">
+                          <span className="text-sm font-semibold text-primary">{leaseMonth.months}mo</span>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2">
+                        <FormField
+                          control={form.control}
+                          name={`lease_pricing.${leaseMonth.months}.pln` as any}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-xs">PLN</FormLabel>
+                              <FormControl>
+                                <Input type="number" step="0.01" placeholder="0.00" className="h-9" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name={`lease_pricing.${leaseMonth.months}.usd` as any}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-xs">USD</FormLabel>
+                              <FormControl>
+                                <Input type="number" step="0.01" placeholder="0.00" className="h-9" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name={`lease_pricing.${leaseMonth.months}.eur` as any}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-xs">EUR</FormLabel>
+                              <FormControl>
+                                <Input type="number" step="0.01" placeholder="0.00" className="h-9" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </TabsContent>
             </Tabs>
 
-            <div className="flex justify-end gap-2 pt-4">
+            <div className="flex justify-end gap-2 pt-2 border-t">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
