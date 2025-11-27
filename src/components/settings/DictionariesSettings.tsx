@@ -8,6 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 type Dictionary = {
   robot_models: string[];
@@ -22,11 +23,13 @@ type Dictionary = {
   priorities: string[];
   countries: string[];
   lease_months: string[];
+  manufacturers: string[];
 };
 
 const categories = [
   { key: "robot_models", label: "Robot Models" },
   { key: "robot_types", label: "Robot Types" },
+  { key: "manufacturers", label: "Manufacturers" },
   { key: "client_types", label: "Client Types" },
   { key: "markets", label: "Markets" },
   { key: "segments", label: "Segments" },
@@ -46,6 +49,7 @@ export const DictionariesSettings = () => {
   const [dictionaries, setDictionaries] = useState<Dictionary>({
     robot_models: ["UR3", "UR5", "UR10", "UR16"],
     robot_types: ["Collaborative", "Industrial", "Mobile", "Delta"],
+    manufacturers: [],
     client_types: ["Enterprise", "SME", "Startup", "Government"],
     markets: ["Manufacturing", "Logistics", "Healthcare", "Automotive"],
     segments: ["Welding", "Assembly", "Packaging", "Quality Control"],
@@ -60,6 +64,7 @@ export const DictionariesSettings = () => {
 
   useEffect(() => {
     checkAdminRole();
+    fetchManufacturers();
   }, []);
 
   const checkAdminRole = async () => {
@@ -76,15 +81,66 @@ export const DictionariesSettings = () => {
     setLoading(false);
   };
 
-  const addItem = (category: keyof Dictionary, value: string) => {
+  const fetchManufacturers = async () => {
+    const { data, error } = await supabase
+      .from("manufacturer_dictionary")
+      .select("manufacturer_name")
+      .order("manufacturer_name");
+
+    if (!error && data) {
+      setDictionaries((prev) => ({
+        ...prev,
+        manufacturers: data.map((m) => m.manufacturer_name),
+      }));
+    }
+  };
+
+  const addItem = async (category: keyof Dictionary, value: string) => {
     if (!value.trim()) return;
+
+    // Handle manufacturers with database
+    if (category === "manufacturers") {
+      const { error } = await supabase
+        .from("manufacturer_dictionary")
+        .insert({ manufacturer_name: value.trim() });
+
+      if (error) {
+        console.error("Error adding manufacturer:", error);
+        toast.error("Failed to add manufacturer");
+        return;
+      }
+      await fetchManufacturers();
+      toast.success("Manufacturer added successfully");
+      return;
+    }
+
+    // Handle other categories (client-side only for now)
     setDictionaries((prev) => ({
       ...prev,
       [category]: [...prev[category], value.trim()],
     }));
   };
 
-  const removeItem = (category: keyof Dictionary, index: number) => {
+  const removeItem = async (category: keyof Dictionary, index: number) => {
+    // Handle manufacturers with database
+    if (category === "manufacturers") {
+      const manufacturerName = dictionaries.manufacturers[index];
+      const { error } = await supabase
+        .from("manufacturer_dictionary")
+        .delete()
+        .eq("manufacturer_name", manufacturerName);
+
+      if (error) {
+        console.error("Error removing manufacturer:", error);
+        toast.error("Failed to remove manufacturer");
+        return;
+      }
+      await fetchManufacturers();
+      toast.success("Manufacturer removed successfully");
+      return;
+    }
+
+    // Handle other categories (client-side only for now)
     setDictionaries((prev) => ({
       ...prev,
       [category]: prev[category].filter((_, i) => i !== index),

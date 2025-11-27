@@ -225,6 +225,24 @@ export type Database = {
           },
         ]
       }
+      manufacturer_dictionary: {
+        Row: {
+          created_at: string | null
+          id: string
+          manufacturer_name: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          manufacturer_name: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          manufacturer_name?: string
+        }
+        Relationships: []
+      }
       meeting_type_dictionary: {
         Row: {
           created_at: string | null
@@ -491,6 +509,7 @@ export type Database = {
           created_at: string | null
           delivery_date: string | null
           id: string
+          manufacturer: string | null
           model: string
           purchase_date: string | null
           serial_number: string
@@ -506,6 +525,7 @@ export type Database = {
           created_at?: string | null
           delivery_date?: string | null
           id?: string
+          manufacturer?: string | null
           model: string
           purchase_date?: string | null
           serial_number: string
@@ -521,6 +541,7 @@ export type Database = {
           created_at?: string | null
           delivery_date?: string | null
           id?: string
+          manufacturer?: string | null
           model?: string
           purchase_date?: string | null
           serial_number?: string
