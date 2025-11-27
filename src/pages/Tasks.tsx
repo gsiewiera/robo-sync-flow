@@ -90,6 +90,8 @@ const Tasks = () => {
   const [clients, setClients] = useState<Client[]>([]);
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | undefined>();
+  const [formMode, setFormMode] = useState<"create" | "view" | "edit">("create");
   const recordsPerPage = 20;
 
   useEffect(() => {
@@ -270,6 +272,24 @@ const Tasks = () => {
     setCurrentPage(page);
   };
 
+  const handleNewTask = () => {
+    setSelectedTaskId(undefined);
+    setFormMode("create");
+    setIsFormOpen(true);
+  };
+
+  const handleViewTask = (taskId: string) => {
+    setSelectedTaskId(taskId);
+    setFormMode("view");
+    setIsFormOpen(true);
+  };
+
+  const handleEditTask = (taskId: string) => {
+    setSelectedTaskId(taskId);
+    setFormMode("edit");
+    setIsFormOpen(true);
+  };
+
   return (
     <Layout>
       <div className="space-y-6">
@@ -278,7 +298,7 @@ const Tasks = () => {
             <h1 className="text-3xl font-bold text-foreground">Tasks</h1>
             <p className="text-muted-foreground">Manage your daily tasks and follow-ups</p>
           </div>
-          <Button size="lg" className="h-11 px-6" onClick={() => setIsFormOpen(true)}>
+          <Button size="lg" className="h-11 px-6" onClick={handleNewTask}>
             New Task
           </Button>
         </div>
@@ -287,6 +307,8 @@ const Tasks = () => {
           open={isFormOpen}
           onOpenChange={setIsFormOpen}
           onSuccess={fetchTasks}
+          taskId={selectedTaskId}
+          mode={formMode}
         />
 
         {/* Filters */}
@@ -530,12 +552,12 @@ const Tasks = () => {
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem>
+                        <DropdownMenuContent align="end" className="bg-background z-50">
+                          <DropdownMenuItem onClick={() => handleViewTask(task.id)}>
                             <Eye className="mr-2 h-4 w-4" />
                             View
                           </DropdownMenuItem>
-                          <DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleEditTask(task.id)}>
                             <Edit className="mr-2 h-4 w-4" />
                             Edit
                           </DropdownMenuItem>
