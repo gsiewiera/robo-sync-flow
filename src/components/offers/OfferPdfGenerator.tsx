@@ -83,6 +83,7 @@ export const OfferPdfGenerator = ({
           "pdf_header_text",
           "pdf_footer_text",
           "pdf_terms_conditions",
+          "pdf_preset",
         ]);
 
       const template: any = {};
@@ -90,6 +91,15 @@ export const OfferPdfGenerator = ({
         const key = item.key.replace("pdf_", "");
         template[key] = item.value;
       });
+
+      // Get preset configuration
+      const presetKey = template.preset || "modern";
+      const PRESETS = {
+        modern: { font_size_title: 24, font_size_header: 14, font_size_body: 10 },
+        classic: { font_size_title: 20, font_size_header: 12, font_size_body: 9 },
+        minimal: { font_size_title: 18, font_size_header: 10, font_size_body: 8 },
+      };
+      const presetConfig = PRESETS[presetKey as keyof typeof PRESETS] || PRESETS.modern;
 
       const doc = new jsPDF();
       const pageWidth = doc.internal.pageSize.width;
@@ -116,7 +126,7 @@ export const OfferPdfGenerator = ({
         doc.setTextColor(0, 0, 0);
       }
 
-      doc.setFontSize(9);
+      doc.setFontSize(presetConfig.font_size_body);
       if (template.company_address) {
         doc.text(template.company_address, 14, yPos);
         yPos += 5;
@@ -131,13 +141,13 @@ export const OfferPdfGenerator = ({
       }
 
       yPos += 10;
-      doc.setFontSize(20);
+      doc.setFontSize(presetConfig.font_size_title);
       doc.setTextColor(rgb[0], rgb[1], rgb[2]);
       doc.text(template.header_text || "OFFER", pageWidth / 2, yPos, { align: "center" });
       doc.setTextColor(0, 0, 0);
       yPos += 15;
       
-      doc.setFontSize(12);
+      doc.setFontSize(presetConfig.font_size_header);
       doc.text(`Offer Number: ${offerNumber}`, 14, yPos);
       yPos += 7;
       doc.text(`Date: ${new Date(offerData.created_at).toLocaleDateString()}`, 14, yPos);
@@ -146,12 +156,12 @@ export const OfferPdfGenerator = ({
       yPos += 10;
 
       // Client Information
-      doc.setFontSize(14);
+      doc.setFontSize(presetConfig.font_size_header);
       doc.setTextColor(rgb[0], rgb[1], rgb[2]);
       doc.text("Client Information", 14, yPos);
       doc.setTextColor(0, 0, 0);
       yPos += 8;
-      doc.setFontSize(10);
+      doc.setFontSize(presetConfig.font_size_body);
       doc.text(`Name: ${clientData?.name || "N/A"}`, 14, yPos);
       yPos += 7;
       if (clientData?.address) {
@@ -183,18 +193,18 @@ export const OfferPdfGenerator = ({
       const finalY = (doc as any).lastAutoTable.finalY || 95;
       const subtotal = itemsData.reduce((sum, item) => sum + item.quantity * item.unit_price, 0);
       
-      doc.setFontSize(12);
+      doc.setFontSize(presetConfig.font_size_header);
       doc.text(`Subtotal: ${subtotal.toFixed(2)} ${offerData.currency || "PLN"}`, pageWidth - 14, finalY + 15, { align: "right" });
       
       if (offerData.total_price) {
-        doc.setFontSize(14);
+        doc.setFontSize(presetConfig.font_size_header + 2);
         doc.text(`Total: ${offerData.total_price.toFixed(2)} ${offerData.currency || "PLN"}`, pageWidth - 14, finalY + 25, { align: "right" });
       }
 
       // Notes
       let notesY = finalY + 40;
       if (offerData.notes) {
-        doc.setFontSize(10);
+        doc.setFontSize(presetConfig.font_size_body);
         doc.text("Notes:", 14, notesY);
         const splitNotes = doc.splitTextToSize(offerData.notes, pageWidth - 28);
         doc.text(splitNotes, 14, notesY + 7);
@@ -203,11 +213,11 @@ export const OfferPdfGenerator = ({
 
       // Terms and conditions
       if (template.terms_conditions) {
-        doc.setFontSize(10);
+        doc.setFontSize(presetConfig.font_size_body);
         doc.setTextColor(rgb[0], rgb[1], rgb[2]);
         doc.text("Terms & Conditions:", 14, notesY);
         doc.setTextColor(0, 0, 0);
-        doc.setFontSize(8);
+        doc.setFontSize(presetConfig.font_size_body - 1);
         const splitTerms = doc.splitTextToSize(template.terms_conditions, pageWidth - 28);
         doc.text(splitTerms, 14, notesY + 7);
         notesY += 7 + splitTerms.length * 4 + 10;
@@ -216,7 +226,7 @@ export const OfferPdfGenerator = ({
       // Footer
       if (template.footer_text) {
         const pageHeight = doc.internal.pageSize.height;
-        doc.setFontSize(9);
+        doc.setFontSize(presetConfig.font_size_body);
         doc.setTextColor(100, 100, 100);
         doc.text(template.footer_text, pageWidth / 2, pageHeight - 15, { align: "center" });
         doc.setTextColor(0, 0, 0);

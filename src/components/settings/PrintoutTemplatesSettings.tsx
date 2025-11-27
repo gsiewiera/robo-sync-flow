@@ -6,7 +6,15 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Upload, FileText } from "lucide-react";
+import { Loader2, Upload, FileText, Palette } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 
 interface TemplateSettings {
   company_name: string;
@@ -18,7 +26,38 @@ interface TemplateSettings {
   header_text: string;
   footer_text: string;
   terms_conditions: string;
+  preset: string;
 }
+
+const TEMPLATE_PRESETS = {
+  modern: {
+    name: "Modern",
+    description: "Clean and contemporary design with bold colors",
+    primary_color: "#3b82f6",
+    header_text: "COMMERCIAL OFFER",
+    footer_text: "Thank you for considering our offer. We look forward to working with you.",
+    font_size_title: 24,
+    font_size_header: 14,
+  },
+  classic: {
+    name: "Classic",
+    description: "Traditional professional layout with conservative styling",
+    primary_color: "#1e40af",
+    header_text: "OFFICIAL QUOTATION",
+    footer_text: "We appreciate your business and look forward to serving you.",
+    font_size_title: 20,
+    font_size_header: 12,
+  },
+  minimal: {
+    name: "Minimal",
+    description: "Simple and elegant with minimal decoration",
+    primary_color: "#64748b",
+    header_text: "Offer",
+    footer_text: "Thank you.",
+    font_size_title: 18,
+    font_size_header: 10,
+  },
+};
 
 export const PrintoutTemplatesSettings = () => {
   const [settings, setSettings] = useState<TemplateSettings>({
@@ -31,6 +70,7 @@ export const PrintoutTemplatesSettings = () => {
     header_text: "",
     footer_text: "",
     terms_conditions: "",
+    preset: "modern",
   });
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -56,6 +96,7 @@ export const PrintoutTemplatesSettings = () => {
           "pdf_header_text",
           "pdf_footer_text",
           "pdf_terms_conditions",
+          "pdf_preset",
         ]);
 
       if (error) throw error;
@@ -76,12 +117,27 @@ export const PrintoutTemplatesSettings = () => {
           header_text: settingsMap.header_text || "",
           footer_text: settingsMap.footer_text || "",
           terms_conditions: settingsMap.terms_conditions || "",
+          preset: settingsMap.preset || "modern",
         });
       }
     } catch (error: any) {
       toast.error(error.message || "Failed to load settings");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const applyPreset = (presetKey: string) => {
+    const preset = TEMPLATE_PRESETS[presetKey as keyof typeof TEMPLATE_PRESETS];
+    if (preset) {
+      setSettings({
+        ...settings,
+        preset: presetKey,
+        primary_color: preset.primary_color,
+        header_text: preset.header_text,
+        footer_text: preset.footer_text,
+      });
+      toast.success(`${preset.name} preset applied`);
     }
   };
 
@@ -160,6 +216,59 @@ export const PrintoutTemplatesSettings = () => {
 
   return (
     <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Palette className="h-5 w-5" />
+            Template Preset
+          </CardTitle>
+          <CardDescription>
+            Choose a design preset for your PDF documents
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-3">
+            {Object.entries(TEMPLATE_PRESETS).map(([key, preset]) => (
+              <Card
+                key={key}
+                className={`cursor-pointer transition-all hover:shadow-md ${
+                  settings.preset === key ? "ring-2 ring-primary" : ""
+                }`}
+                onClick={() => applyPreset(key)}
+              >
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base">{preset.name}</CardTitle>
+                    {settings.preset === key && (
+                      <Badge variant="default">Active</Badge>
+                    )}
+                  </div>
+                  <CardDescription className="text-xs">
+                    {preset.description}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="h-6 w-6 rounded border"
+                        style={{ backgroundColor: preset.primary_color }}
+                      />
+                      <span className="text-xs text-muted-foreground">
+                        {preset.primary_color}
+                      </span>
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      Title: {preset.font_size_title}pt
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
