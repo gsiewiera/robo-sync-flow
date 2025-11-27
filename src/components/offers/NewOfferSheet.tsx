@@ -78,13 +78,30 @@ interface LeasePricing {
   robot_pricing_id: string;
 }
 
+interface OfferData {
+  id: string;
+  client_id: string;
+  person_contact?: string;
+  currency: string;
+  warranty_period: number;
+  delivery_date?: string;
+  deployment_location?: string;
+  initial_payment: number;
+  prepayment_percent?: number;
+  prepayment_amount?: number;
+  offer_number: string;
+  status: string;
+}
+
 interface NewOfferSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
+  offer?: OfferData | null;
 }
 
-export function NewOfferSheet({ open, onOpenChange, onSuccess }: NewOfferSheetProps) {
+export function NewOfferSheet({ open, onOpenChange, onSuccess, offer }: NewOfferSheetProps) {
+  const isEditMode = !!offer;
   const { toast } = useToast();
   const [clients, setClients] = useState<Client[]>([]);
   const [robotPricing, setRobotPricing] = useState<RobotPricing[]>([]);
@@ -107,8 +124,19 @@ export function NewOfferSheet({ open, onOpenChange, onSuccess }: NewOfferSheetPr
     if (open) {
       fetchClients();
       fetchPricing();
+      if (offer) {
+        loadOfferData();
+      } else {
+        form.reset({
+          currency: "PLN",
+          warranty_period: 12,
+          initial_payment: 0,
+          prepayment_type: "none",
+        });
+        setRobotSelections([]);
+      }
     }
-  }, [open]);
+  }, [open, offer]);
 
   const fetchClients = async () => {
     const { data, error } = await supabase
@@ -126,6 +154,57 @@ export function NewOfferSheet({ open, onOpenChange, onSuccess }: NewOfferSheetPr
     }
 
     setClients(data || []);
+  };
+
+  const loadOfferData = async () => {
+    if (!offer) return;
+
+    // Fetch offer items
+    const { data: items, error: itemsError } = await supabase
+      .from("offer_items")
+      .select("*")
+      .eq("offer_id", offer.id);
+
+    if (itemsError) {
+      toast({
+        title: "Error loading offer items",
+        description: itemsError.message,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Populate form with offer data
+    const prepaymentType = offer.prepayment_percent
+      ? "percent"
+      : offer.prepayment_amount
+      ? "amount"
+      : "none";
+
+    form.reset({
+      client_id: offer.client_id,
+      person_contact: offer.person_contact || "",
+      currency: offer.currency as "PLN" | "USD" | "EUR",
+      warranty_period: offer.warranty_period,
+      delivery_date: offer.delivery_date ? new Date(offer.delivery_date) : undefined,
+      deployment_location: offer.deployment_location || "",
+      initial_payment: offer.initial_payment,
+      prepayment_type: prepaymentType as "none" | "percent" | "amount",
+      prepayment_value: offer.prepayment_percent || offer.prepayment_amount || 0,
+    });
+
+    // Populate robot selections
+    const robotSels: RobotSelection[] = items.map((item) => ({
+      id: item.id,
+      robot_model: item.robot_model,
+      contract_type: item.contract_type as "purchase" | "lease",
+      lease_months: item.lease_months || undefined,
+      price: Number(item.unit_price),
+      warranty_months: item.warranty_months || undefined,
+      warranty_price: item.warranty_price || undefined,
+    }));
+
+    setRobotSelections(robotSels);
   };
 
   const fetchPricing = async () => {
@@ -287,9 +366,6 @@ export function NewOfferSheet({ open, onOpenChange, onSuccess }: NewOfferSheetPr
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      // Generate offer number
-      const offerNumber = `OFF-${Date.now()}`;
-      
       // Calculate prepayment
       let prepaymentPercent = null;
       let prepaymentAmount = null;
@@ -299,51 +375,98 @@ export function NewOfferSheet({ open, onOpenChange, onSuccess }: NewOfferSheetPr
         prepaymentAmount = values.prepayment_value;
       }
 
-      // Create offer
-      const { data: offer, error: offerError } = await supabase
-        .from("offers")
-        .insert({
-          client_id: values.client_id,
-          created_by: user.id,
-          offer_number: offerNumber,
-          status: "draft",
-          currency: values.currency,
-          person_contact: values.person_contact,
-          initial_payment: values.initial_payment,
-          prepayment_percent: prepaymentPercent,
-          prepayment_amount: prepaymentAmount,
-          warranty_period: values.warranty_period,
-          delivery_date: values.delivery_date?.toISOString().split("T")[0],
-          deployment_location: values.deployment_location,
-          total_price: calculateTotalPrice(),
-        })
-        .select()
-        .single();
+      const offerData = {
+        client_id: values.client_id,
+        currency: values.currency,
+        person_contact: values.person_contact,
+        initial_payment: values.initial_payment,
+        prepayment_percent: prepaymentPercent,
+        prepayment_amount: prepaymentAmount,
+        warranty_period: values.warranty_period,
+        delivery_date: values.delivery_date?.toISOString().split("T")[0],
+        deployment_location: values.deployment_location,
+        total_price: calculateTotalPrice(),
+      };
 
-      if (offerError) throw offerError;
+      if (isEditMode && offer) {
+        // Update existing offer
+        const { error: offerError } = await supabase
+          .from("offers")
+          .update(offerData)
+          .eq("id", offer.id);
 
-      // Create offer items
-      const offerItems = robotSelections.map((robot) => ({
-        offer_id: offer.id,
-        robot_model: robot.robot_model,
-        quantity: 1,
-        unit_price: robot.price,
-        contract_type: robot.contract_type,
-        lease_months: robot.lease_months,
-        warranty_months: robot.warranty_months,
-        warranty_price: robot.warranty_price || 0,
-      }));
+        if (offerError) throw offerError;
 
-      const { error: itemsError } = await supabase
-        .from("offer_items")
-        .insert(offerItems);
+        // Delete existing offer items
+        const { error: deleteError } = await supabase
+          .from("offer_items")
+          .delete()
+          .eq("offer_id", offer.id);
 
-      if (itemsError) throw itemsError;
+        if (deleteError) throw deleteError;
 
-      toast({
-        title: "Offer created",
-        description: `Offer ${offerNumber} has been created successfully`,
-      });
+        // Create new offer items
+        const offerItems = robotSelections.map((robot) => ({
+          offer_id: offer.id,
+          robot_model: robot.robot_model,
+          quantity: 1,
+          unit_price: robot.price,
+          contract_type: robot.contract_type,
+          lease_months: robot.lease_months,
+          warranty_months: robot.warranty_months,
+          warranty_price: robot.warranty_price || 0,
+        }));
+
+        const { error: itemsError } = await supabase
+          .from("offer_items")
+          .insert(offerItems);
+
+        if (itemsError) throw itemsError;
+
+        toast({
+          title: "Offer updated",
+          description: `Offer ${offer.offer_number} has been updated successfully`,
+        });
+      } else {
+        // Create new offer
+        const offerNumber = `OFF-${Date.now()}`;
+        
+        const { data: newOffer, error: offerError } = await supabase
+          .from("offers")
+          .insert({
+            ...offerData,
+            created_by: user.id,
+            offer_number: offerNumber,
+            status: "draft",
+          })
+          .select()
+          .single();
+
+        if (offerError) throw offerError;
+
+        // Create offer items
+        const offerItems = robotSelections.map((robot) => ({
+          offer_id: newOffer.id,
+          robot_model: robot.robot_model,
+          quantity: 1,
+          unit_price: robot.price,
+          contract_type: robot.contract_type,
+          lease_months: robot.lease_months,
+          warranty_months: robot.warranty_months,
+          warranty_price: robot.warranty_price || 0,
+        }));
+
+        const { error: itemsError } = await supabase
+          .from("offer_items")
+          .insert(offerItems);
+
+        if (itemsError) throw itemsError;
+
+        toast({
+          title: "Offer created",
+          description: `Offer ${offerNumber} has been created successfully`,
+        });
+      }
 
       form.reset();
       setRobotSelections([]);
@@ -364,9 +487,11 @@ export function NewOfferSheet({ open, onOpenChange, onSuccess }: NewOfferSheetPr
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="sm:max-w-[800px] overflow-y-auto">
         <SheetHeader>
-          <SheetTitle>New Offer</SheetTitle>
+          <SheetTitle>{isEditMode ? "Edit Offer" : "New Offer"}</SheetTitle>
           <SheetDescription>
-            Create a new offer with robots, pricing, and delivery details
+            {isEditMode
+              ? "Update offer details, robots, pricing, and delivery information"
+              : "Create a new offer with robots, pricing, and delivery details"}
           </SheetDescription>
         </SheetHeader>
 
@@ -736,7 +861,13 @@ export function NewOfferSheet({ open, onOpenChange, onSuccess }: NewOfferSheetPr
                 Cancel
               </Button>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Creating..." : "Create Offer"}
+                {isSubmitting
+                  ? isEditMode
+                    ? "Updating..."
+                    : "Creating..."
+                  : isEditMode
+                  ? "Update Offer"
+                  : "Create Offer"}
               </Button>
             </div>
           </form>

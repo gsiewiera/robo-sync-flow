@@ -2,10 +2,11 @@ import { Layout } from "@/components/Layout";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ShoppingCart } from "lucide-react";
+import { ArrowLeft, ShoppingCart, Edit } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useParams, useNavigate } from "react-router-dom";
+import { NewOfferSheet } from "@/components/offers/NewOfferSheet";
 import {
   Table,
   TableBody,
@@ -23,6 +24,14 @@ interface Offer {
   notes: string | null;
   created_at: string;
   client_id: string;
+  currency: string;
+  person_contact?: string;
+  warranty_period: number;
+  delivery_date?: string;
+  deployment_location?: string;
+  initial_payment: number;
+  prepayment_percent?: number;
+  prepayment_amount?: number;
 }
 
 interface Client {
@@ -51,6 +60,7 @@ const OfferDetail = () => {
   const [offer, setOffer] = useState<Offer | null>(null);
   const [client, setClient] = useState<Client | null>(null);
   const [items, setItems] = useState<OfferItem[]>([]);
+  const [isEditSheetOpen, setIsEditSheetOpen] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -104,14 +114,20 @@ const OfferDetail = () => {
   return (
     <Layout>
       <div className="space-y-6">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/offers")}>
-            <ArrowLeft className="w-4 h-4" />
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">{offer.offer_number}</h1>
-            <p className="text-muted-foreground">Offer Details</p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="icon" onClick={() => navigate("/offers")}>
+              <ArrowLeft className="w-4 h-4" />
+            </Button>
+            <div>
+              <h1 className="text-3xl font-bold text-foreground">{offer.offer_number}</h1>
+              <p className="text-muted-foreground">Offer Details</p>
+            </div>
           </div>
+          <Button onClick={() => setIsEditSheetOpen(true)}>
+            <Edit className="h-4 w-4 mr-2" />
+            Edit Offer
+          </Button>
         </div>
 
         <Card className="p-6">
@@ -208,6 +224,15 @@ const OfferDetail = () => {
           )}
         </Card>
       </div>
+
+      <NewOfferSheet
+        open={isEditSheetOpen}
+        onOpenChange={setIsEditSheetOpen}
+        onSuccess={() => {
+          fetchOfferData();
+        }}
+        offer={offer}
+      />
     </Layout>
   );
 };

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { ArrowUpDown, ArrowUp, ArrowDown, Eye, ChevronDown, Plus } from "lucide-react";
+import { ArrowUpDown, ArrowUp, ArrowDown, Eye, ChevronDown, Plus, Edit } from "lucide-react";
 import { NewOfferSheet } from "@/components/offers/NewOfferSheet";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -74,6 +74,7 @@ const Offers = () => {
   const [statusFilters, setStatusFilters] = useState<Array<"draft" | "sent" | "modified" | "accepted" | "rejected">>([]);
   const [createdDateFilter, setCreatedDateFilter] = useState<string>("");
   const [isNewOfferOpen, setIsNewOfferOpen] = useState(false);
+  const [editingOffer, setEditingOffer] = useState<any>(null);
   const navigate = useNavigate();
   const recordsPerPage = 20;
 
@@ -222,6 +223,27 @@ const Offers = () => {
   };
 
   const hasActiveFilters = clientFilters.length > 0 || statusFilters.length > 0 || createdDateFilter !== "";
+
+  const handleEditOffer = async (offerId: string) => {
+    const { data: offerData, error } = await supabase
+      .from("offers")
+      .select("*")
+      .eq("id", offerId)
+      .single();
+
+    if (error || !offerData) {
+      console.error("Error fetching offer:", error);
+      return;
+    }
+
+    setEditingOffer(offerData);
+    setIsNewOfferOpen(true);
+  };
+
+  const handleCloseSheet = () => {
+    setIsNewOfferOpen(false);
+    setEditingOffer(null);
+  };
 
   return (
     <Layout>
@@ -415,14 +437,24 @@ const Offers = () => {
                       </TableCell>
                     )}
                     <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0"
-                        onClick={() => navigate(`/offers/${offer.id}`)}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          onClick={() => navigate(`/offers/${offer.id}`)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          onClick={() => handleEditOffer(offer.id)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
@@ -464,10 +496,12 @@ const Offers = () => {
 
       <NewOfferSheet
         open={isNewOfferOpen}
-        onOpenChange={setIsNewOfferOpen}
+        onOpenChange={handleCloseSheet}
         onSuccess={() => {
           fetchOffers();
+          setEditingOffer(null);
         }}
+        offer={editingOffer}
       />
     </Layout>
   );
