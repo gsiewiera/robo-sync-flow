@@ -867,6 +867,78 @@ export type Database = {
         }
         Relationships: []
       }
+      resellers: {
+        Row: {
+          address: string | null
+          assigned_salesperson_id: string | null
+          balance: number | null
+          billing_person_email: string | null
+          billing_person_name: string | null
+          billing_person_phone: string | null
+          city: string | null
+          country: string | null
+          created_at: string
+          general_email: string | null
+          general_phone: string | null
+          id: string
+          name: string
+          nip: string | null
+          postal_code: string | null
+          primary_contact_email: string | null
+          primary_contact_name: string | null
+          primary_contact_phone: string | null
+          status: string | null
+          updated_at: string
+          website_url: string | null
+        }
+        Insert: {
+          address?: string | null
+          assigned_salesperson_id?: string | null
+          balance?: number | null
+          billing_person_email?: string | null
+          billing_person_name?: string | null
+          billing_person_phone?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          general_email?: string | null
+          general_phone?: string | null
+          id?: string
+          name: string
+          nip?: string | null
+          postal_code?: string | null
+          primary_contact_email?: string | null
+          primary_contact_name?: string | null
+          primary_contact_phone?: string | null
+          status?: string | null
+          updated_at?: string
+          website_url?: string | null
+        }
+        Update: {
+          address?: string | null
+          assigned_salesperson_id?: string | null
+          balance?: number | null
+          billing_person_email?: string | null
+          billing_person_name?: string | null
+          billing_person_phone?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          general_email?: string | null
+          general_phone?: string | null
+          id?: string
+          name?: string
+          nip?: string | null
+          postal_code?: string | null
+          primary_contact_email?: string | null
+          primary_contact_name?: string | null
+          primary_contact_phone?: string | null
+          status?: string | null
+          updated_at?: string
+          website_url?: string | null
+        }
+        Relationships: []
+      }
       robot_pricing: {
         Row: {
           created_at: string | null
