@@ -474,31 +474,31 @@ export const OfferPdfGenerator = ({
                       minute: '2-digit'
                     })}
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell>
                     <div className="flex gap-2 justify-end items-center">
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => previewPDF(version)}
                       >
-                        <Eye className="w-4 h-4 mr-2" />
-                        Preview
+                        <Eye className="w-4 h-4" />
+                        <span className="ml-2">Preview</span>
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => openEmailDialog(version)}
                       >
-                        <Mail className="w-4 h-4 mr-2" />
-                        Email
+                        <Mail className="w-4 h-4" />
+                        <span className="ml-2">Email</span>
                       </Button>
                       <Button
                         variant="default"
                         size="sm"
                         onClick={() => downloadPDF(version)}
                       >
-                        <Download className="w-4 h-4 mr-2" />
-                        Download
+                        <Download className="w-4 h-4" />
+                        <span className="ml-2">Download</span>
                       </Button>
                     </div>
                   </TableCell>
