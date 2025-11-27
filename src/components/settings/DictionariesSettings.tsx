@@ -21,6 +21,7 @@ type Dictionary = {
   billing_schedules: string[];
   priorities: string[];
   countries: string[];
+  lease_months: string[];
 };
 
 const categories = [
@@ -35,6 +36,7 @@ const categories = [
   { key: "billing_schedules", label: "Billing Schedules" },
   { key: "priorities", label: "Priorities" },
   { key: "countries", label: "Countries" },
+  { key: "lease_months", label: "Lease Months" },
 ] as const;
 
 export const DictionariesSettings = () => {
@@ -53,6 +55,7 @@ export const DictionariesSettings = () => {
     billing_schedules: ["Monthly", "Quarterly", "Annual", "One-time"],
     priorities: ["low", "medium", "high", "critical"],
     countries: ["Poland", "Germany", "Czech Republic", "Slovakia"],
+    lease_months: ["6", "12", "24", "36", "48"],
   });
 
   useEffect(() => {

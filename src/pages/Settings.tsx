@@ -5,6 +5,7 @@ import { PasswordSettings } from "@/components/settings/PasswordSettings";
 import { ThemeSettings } from "@/components/settings/ThemeSettings";
 import { RoleDisplay } from "@/components/settings/RoleDisplay";
 import { DictionariesSettings } from "@/components/settings/DictionariesSettings";
+import { VatSettings } from "@/components/settings/VatSettings";
 
 const Settings = () => {
   return (
@@ -16,12 +17,13 @@ const Settings = () => {
         </div>
 
         <Tabs defaultValue="profile" className="w-full">
-          <TabsList className="grid w-full grid-cols-5 lg:w-auto">
+          <TabsList className="grid w-full grid-cols-6 lg:w-auto">
             <TabsTrigger value="profile">Profile</TabsTrigger>
             <TabsTrigger value="password">Password</TabsTrigger>
             <TabsTrigger value="theme">Theme</TabsTrigger>
             <TabsTrigger value="roles">Roles</TabsTrigger>
             <TabsTrigger value="dictionaries">Dictionaries</TabsTrigger>
+            <TabsTrigger value="vat">VAT</TabsTrigger>
           </TabsList>
 
           <TabsContent value="profile" className="mt-6">
@@ -42,6 +44,10 @@ const Settings = () => {
 
           <TabsContent value="dictionaries" className="mt-6">
             <DictionariesSettings />
+          </TabsContent>
+
+          <TabsContent value="vat" className="mt-6">
+            <VatSettings />
           </TabsContent>
         </Tabs>
       </div>
