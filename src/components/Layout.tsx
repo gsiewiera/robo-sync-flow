@@ -8,6 +8,7 @@ import {
   FileText, 
   ShoppingCart,
   Wrench,
+  Settings as SettingsIcon,
   LogOut
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -70,7 +71,20 @@ export const Layout = ({ children }: LayoutProps) => {
           })}
         </nav>
 
-        <div className="p-4 border-t border-sidebar-border">
+        <div className="p-4 border-t border-sidebar-border space-y-1">
+          <Link
+            to="/settings"
+            className={cn(
+              "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
+              location.pathname === "/settings"
+                ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+            )}
+          >
+            <SettingsIcon className="w-5 h-5" />
+            <span className="font-medium">Settings</span>
+          </Link>
+          
           <Button
             variant="ghost"
             className="w-full justify-start text-sidebar-foreground/70 hover:text-sidebar-foreground"
