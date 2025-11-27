@@ -14,6 +14,101 @@ export type Database = {
   }
   public: {
     Tables: {
+      client_assigned_tags: {
+        Row: {
+          client_id: string
+          created_at: string | null
+          id: string
+          tag_id: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string | null
+          id?: string
+          tag_id: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string | null
+          id?: string
+          tag_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_assigned_tags_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_assigned_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "client_tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_categories: {
+        Row: {
+          color: string | null
+          created_at: string | null
+          id: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string | null
+          id?: string
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          color?: string | null
+          created_at?: string | null
+          id?: string
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      client_tags: {
+        Row: {
+          category_id: string | null
+          color: string | null
+          created_at: string | null
+          id: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          category_id?: string | null
+          color?: string | null
+          created_at?: string | null
+          id?: string
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          category_id?: string | null
+          color?: string | null
+          created_at?: string | null
+          id?: string
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_tags_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "client_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           address: string | null

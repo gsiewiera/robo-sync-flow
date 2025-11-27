@@ -2,11 +2,18 @@ import { Layout } from "@/components/Layout";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Plus, Search, ArrowUpDown, ArrowUp, ArrowDown, Eye, Edit } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Plus, Search, ArrowUpDown, ArrowUp, ArrowDown, Eye, Edit, ChevronDown } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { ClientFormDialog } from "@/components/clients/ClientFormDialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Table,
   TableBody,
@@ -43,12 +50,47 @@ const Clients = () => {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [isClientDialogOpen, setIsClientDialogOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<any>(null);
+  const [availableTags, setAvailableTags] = useState<any[]>([]);
+  const [selectedTagFilters, setSelectedTagFilters] = useState<string[]>([]);
+  const [clientTags, setClientTags] = useState<Record<string, any[]>>({});
   const navigate = useNavigate();
   const recordsPerPage = 20;
 
   useEffect(() => {
     fetchClients();
+    fetchTags();
+    fetchClientTags();
   }, []);
+
+  const fetchTags = async () => {
+    const { data } = await supabase
+      .from("client_tags")
+      .select("*")
+      .order("name");
+    
+    if (data) {
+      setAvailableTags(data);
+    }
+  };
+
+  const fetchClientTags = async () => {
+    const { data } = await supabase
+      .from("client_assigned_tags")
+      .select("client_id, tag_id, client_tags(*)");
+    
+    if (data) {
+      const tagsMap: Record<string, any[]> = {};
+      data.forEach(item => {
+        if (!tagsMap[item.client_id]) {
+          tagsMap[item.client_id] = [];
+        }
+        if (item.client_tags) {
+          tagsMap[item.client_id].push(item.client_tags);
+        }
+      });
+      setClientTags(tagsMap);
+    }
+  };
 
   const fetchClients = async () => {
     const { data, error } = await supabase
@@ -64,12 +106,34 @@ const Clients = () => {
   useEffect(() => {
     fetchClients();
     setCurrentPage(1);
-  }, [sortField, sortDirection]);
+  }, [sortField, sortDirection, selectedTagFilters]);
 
-  const filteredClients = clients.filter((client) =>
-    client.name.toLowerCase().includes(search.toLowerCase()) ||
-    client.nip?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredClients = clients.filter((client) => {
+    // Search filter
+    const matchesSearch = 
+      client.name.toLowerCase().includes(search.toLowerCase()) ||
+      client.nip?.toLowerCase().includes(search.toLowerCase());
+    
+    // Tag filter
+    const matchesTags = selectedTagFilters.length === 0 || 
+      selectedTagFilters.some(tagId => 
+        clientTags[client.id]?.some(tag => tag.id === tagId)
+      );
+    
+    return matchesSearch && matchesTags;
+  });
+
+  const toggleTagFilter = (tagId: string) => {
+    setSelectedTagFilters(prev =>
+      prev.includes(tagId)
+        ? prev.filter(id => id !== tagId)
+        : [...prev, tagId]
+    );
+  };
+
+  const clearFilters = () => {
+    setSelectedTagFilters([]);
+  };
 
   const indexOfLastRecord = currentPage * recordsPerPage;
   const indexOfFirstRecord = indexOfLastRecord - recordsPerPage;
@@ -113,17 +177,57 @@ const Clients = () => {
         </div>
 
         <Card className="p-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-            <Input
-              placeholder="Search clients by name or NIP..."
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="pl-10"
-            />
+          <div className="flex gap-4 items-center">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+              <Input
+                placeholder="Search clients by name or NIP..."
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="pl-10"
+              />
+            </div>
+            
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="w-[180px] justify-between">
+                  Tags {selectedTagFilters.length > 0 && `(${selectedTagFilters.length})`}
+                  <ChevronDown className="ml-2 h-4 w-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[250px] p-3">
+                <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                  {availableTags.map((tag) => (
+                    <div key={tag.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`filter-tag-${tag.id}`}
+                        checked={selectedTagFilters.includes(tag.id)}
+                        onCheckedChange={() => toggleTagFilter(tag.id)}
+                      />
+                      <label
+                        htmlFor={`filter-tag-${tag.id}`}
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex items-center gap-2"
+                      >
+                        <div
+                          className="w-3 h-3 rounded-full"
+                          style={{ backgroundColor: tag.color }}
+                        />
+                        {tag.name}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
+
+            {selectedTagFilters.length > 0 && (
+              <Button variant="ghost" onClick={clearFilters}>
+                Clear Filters
+              </Button>
+            )}
           </div>
         </Card>
 
@@ -154,6 +258,7 @@ const Clients = () => {
                     {getSortIcon("city")}
                   </Button>
                 </TableHead>
+                <TableHead>Tags</TableHead>
                 <TableHead>Contact</TableHead>
                 <TableHead>
                   <Button
@@ -182,6 +287,19 @@ const Clients = () => {
                     <TableCell className="font-medium">{client.name}</TableCell>
                     <TableCell>{client.nip || "-"}</TableCell>
                     <TableCell>{client.city || "-"}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1">
+                        {clientTags[client.id]?.map((tag) => (
+                          <Badge
+                            key={tag.id}
+                            style={{ backgroundColor: tag.color }}
+                            className="text-white text-xs"
+                          >
+                            {tag.name}
+                          </Badge>
+                        ))}
+                      </div>
+                    </TableCell>
                     <TableCell>
                       <div className="text-sm">
                         {client.primary_contact_name && (
@@ -269,6 +387,7 @@ const Clients = () => {
         }}
         onSuccess={() => {
           fetchClients();
+          fetchClientTags();
           setEditingClient(null);
         }}
         client={editingClient}

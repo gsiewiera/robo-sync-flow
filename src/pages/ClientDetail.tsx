@@ -70,6 +70,7 @@ const ClientDetail = () => {
   const [offers, setOffers] = useState<Offer[]>([]);
   const [robots, setRobots] = useState<Robot[]>([]);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [clientTags, setClientTags] = useState<any[]>([]);
 
   useEffect(() => {
     if (id) {
@@ -86,6 +87,16 @@ const ClientDetail = () => {
 
     if (clientData) {
       setClient(clientData);
+    }
+
+    // Fetch client tags
+    const { data: tagsData } = await supabase
+      .from("client_assigned_tags")
+      .select("client_tags(*)")
+      .eq("client_id", id);
+
+    if (tagsData) {
+      setClientTags(tagsData.map(t => t.client_tags).filter(Boolean));
     }
 
     const { data: contractsData } = await supabase
@@ -148,7 +159,22 @@ const ClientDetail = () => {
         </div>
 
         <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Company Information</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold">Company Information</h2>
+            {clientTags.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {clientTags.map((tag: any) => (
+                  <Badge
+                    key={tag.id}
+                    style={{ backgroundColor: tag.color }}
+                    className="text-white"
+                  >
+                    {tag.name}
+                  </Badge>
+                ))}
+              </div>
+            )}
+          </div>
           <div className="grid md:grid-cols-2 gap-6">
             <div className="space-y-4">
               {client.nip && (
