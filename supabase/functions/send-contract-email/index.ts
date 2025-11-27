@@ -89,6 +89,31 @@ const handler = async (req: Request): Promise<Response> => {
     const emailResult = await emailResponse.json();
     console.log("Email sent successfully:", emailResult);
 
+    // Get authorization header to identify the user
+    const authHeader = req.headers.get("authorization");
+    let userId = null;
+    
+    if (authHeader) {
+      const token = authHeader.replace("Bearer ", "");
+      const { data: { user } } = await supabase.auth.getUser(token);
+      userId = user?.id;
+    }
+
+    // Record email sending history
+    const { error: historyError } = await supabase
+      .from("contract_email_history")
+      .insert({
+        contract_version_id: versionId,
+        sent_to: clientEmail,
+        sent_by: userId,
+        status: "sent",
+        notes: `Sent to ${clientName}`,
+      });
+
+    if (historyError) {
+      console.error("Error recording email history:", historyError);
+    }
+
     return new Response(JSON.stringify({ success: true, data: emailResult }), {
       status: 200,
       headers: {

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Download, Loader2, Eye, Mail } from "lucide-react";
+import { FileText, Download, Loader2, Eye, Mail, History } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import jsPDF from "jspdf";
@@ -33,6 +33,11 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 
 interface ContractVersion {
   id: string;
@@ -40,6 +45,15 @@ interface ContractVersion {
   file_path: string;
   generated_at: string;
   generated_by: string;
+  notes: string | null;
+}
+
+interface EmailHistory {
+  id: string;
+  sent_to: string;
+  sent_at: string;
+  sent_by: string;
+  status: string;
   notes: string | null;
 }
 
@@ -59,6 +73,7 @@ export const ContractPdfGenerator = ({
   robotsData,
 }: ContractPdfGeneratorProps) => {
   const [versions, setVersions] = useState<ContractVersion[]>([]);
+  const [emailHistory, setEmailHistory] = useState<Record<string, EmailHistory[]>>({});
   const [isGenerating, setIsGenerating] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
@@ -67,6 +82,7 @@ export const ContractPdfGenerator = ({
   const [showEmailDialog, setShowEmailDialog] = useState(false);
   const [selectedVersion, setSelectedVersion] = useState<ContractVersion | null>(null);
   const [emailAddress, setEmailAddress] = useState(clientData?.general_email || "");
+  const [expandedVersions, setExpandedVersions] = useState<Record<string, boolean>>({});
   const { toast } = useToast();
 
   useEffect(() => {
@@ -82,6 +98,23 @@ export const ContractPdfGenerator = ({
 
     if (!error && data) {
       setVersions(data);
+      // Fetch email history for each version
+      data.forEach(version => fetchEmailHistory(version.id));
+    }
+  };
+
+  const fetchEmailHistory = async (versionId: string) => {
+    const { data, error } = await supabase
+      .from("contract_email_history")
+      .select("*")
+      .eq("contract_version_id", versionId)
+      .order("sent_at", { ascending: false });
+
+    if (!error && data) {
+      setEmailHistory(prev => ({
+        ...prev,
+        [versionId]: data
+      }));
     }
   };
 
@@ -320,6 +353,9 @@ export const ContractPdfGenerator = ({
         description: `Contract PDF sent to ${emailAddress}`,
       });
 
+      // Refresh email history for this version
+      await fetchEmailHistory(selectedVersion.id);
+      
       setShowEmailDialog(false);
     } catch (error: any) {
       console.error("Email error:", error);
@@ -376,61 +412,119 @@ export const ContractPdfGenerator = ({
             </TableHeader>
             <TableBody>
               {versions.map((version, index) => (
-                <TableRow 
-                  key={version.id}
-                  className="hover:bg-muted/30 transition-colors"
-                >
-                  <TableCell className="font-medium">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                        <span className="text-sm font-semibold text-primary">
-                          {version.version_number}
-                        </span>
+                <>
+                  <TableRow 
+                    key={version.id}
+                    className="hover:bg-muted/30 transition-colors"
+                  >
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                          <span className="text-sm font-semibold text-primary">
+                            {version.version_number}
+                          </span>
+                        </div>
+                        <span>Version {version.version_number}</span>
+                        {index === 0 && (
+                          <Badge variant="secondary" className="ml-2">Latest</Badge>
+                        )}
                       </div>
-                      <span>Version {version.version_number}</span>
-                      {index === 0 && (
-                        <Badge variant="secondary" className="ml-2">Latest</Badge>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {new Date(version.generated_at).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => previewPDF(version)}
-                      className="mr-2"
-                    >
-                      <Eye className="w-4 h-4 mr-2" />
-                      Preview
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => openEmailDialog(version)}
-                      className="mr-2"
-                    >
-                      <Mail className="w-4 h-4 mr-2" />
-                      Email
-                    </Button>
-                    <Button
-                      variant="default"
-                      size="sm"
-                      onClick={() => downloadPDF(version)}
-                    >
-                      <Download className="w-4 h-4 mr-2" />
-                      Download
-                    </Button>
-                  </TableCell>
-                </TableRow>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      <div className="flex flex-col gap-1">
+                        <span>
+                          {new Date(version.generated_at).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </span>
+                        {emailHistory[version.id]?.length > 0 && (
+                          <Collapsible
+                            open={expandedVersions[version.id]}
+                            onOpenChange={(open) => 
+                              setExpandedVersions(prev => ({ ...prev, [version.id]: open }))
+                            }
+                          >
+                            <CollapsibleTrigger asChild>
+                              <Button variant="ghost" size="sm" className="h-6 text-xs p-0 hover:bg-transparent">
+                                <History className="w-3 h-3 mr-1" />
+                                {emailHistory[version.id].length} email{emailHistory[version.id].length !== 1 ? 's' : ''} sent
+                              </Button>
+                            </CollapsibleTrigger>
+                          </Collapsible>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => previewPDF(version)}
+                        className="mr-2"
+                      >
+                        <Eye className="w-4 h-4 mr-2" />
+                        Preview
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openEmailDialog(version)}
+                        className="mr-2"
+                      >
+                        <Mail className="w-4 h-4 mr-2" />
+                        Email
+                      </Button>
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => downloadPDF(version)}
+                      >
+                        <Download className="w-4 h-4 mr-2" />
+                        Download
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                  {expandedVersions[version.id] && emailHistory[version.id]?.length > 0 && (
+                    <TableRow key={`${version.id}-history`}>
+                      <TableCell colSpan={3} className="bg-muted/20 p-4">
+                        <div className="space-y-2">
+                          <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                            <History className="w-4 h-4" />
+                            Sending History
+                          </h4>
+                          <div className="space-y-2">
+                            {emailHistory[version.id].map((history) => (
+                              <div 
+                                key={history.id} 
+                                className="flex items-center justify-between text-sm bg-background p-3 rounded-md border border-border"
+                              >
+                                <div className="flex items-center gap-4">
+                                  <Badge variant="outline" className="text-xs">
+                                    {history.status}
+                                  </Badge>
+                                  <span className="text-muted-foreground">
+                                    Sent to: <span className="text-foreground font-medium">{history.sent_to}</span>
+                                  </span>
+                                </div>
+                                <span className="text-xs text-muted-foreground">
+                                  {new Date(history.sent_at).toLocaleDateString('en-US', {
+                                    month: 'short',
+                                    day: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </>
               ))}
             </TableBody>
           </Table>
