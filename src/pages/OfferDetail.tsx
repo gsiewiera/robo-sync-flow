@@ -2,12 +2,13 @@ import { Layout } from "@/components/Layout";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ShoppingCart, Edit } from "lucide-react";
+import { ArrowLeft, ShoppingCart, Edit, FileText } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useParams, useNavigate } from "react-router-dom";
 import { NewOfferDialog } from "@/components/offers/NewOfferDialog";
 import { OfferPdfGenerator } from "@/components/offers/OfferPdfGenerator";
+import { CreateContractDialog } from "@/components/offers/CreateContractDialog";
 import {
   Table,
   TableBody,
@@ -62,6 +63,7 @@ const OfferDetail = () => {
   const [client, setClient] = useState<Client | null>(null);
   const [items, setItems] = useState<OfferItem[]>([]);
   const [isEditSheetOpen, setIsEditSheetOpen] = useState(false);
+  const [isContractDialogOpen, setIsContractDialogOpen] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -120,15 +122,21 @@ const OfferDetail = () => {
             <Button variant="ghost" size="icon" onClick={() => navigate("/offers")}>
               <ArrowLeft className="w-4 h-4" />
             </Button>
-            <div>
-              <h1 className="text-3xl font-bold text-foreground">{offer.offer_number}</h1>
-              <p className="text-muted-foreground">Offer Details</p>
-            </div>
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">{offer.offer_number}</h1>
+            <p className="text-muted-foreground">Offer Details</p>
           </div>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setIsContractDialogOpen(true)}>
+            <FileText className="h-4 w-4 mr-2" />
+            Create Contract
+          </Button>
           <Button onClick={() => setIsEditSheetOpen(true)}>
             <Edit className="h-4 w-4 mr-2" />
             Edit Offer
           </Button>
+        </div>
         </div>
 
         <Card className="p-6">
@@ -241,6 +249,15 @@ const OfferDetail = () => {
           fetchOfferData();
         }}
         offer={offer}
+      />
+
+      <CreateContractDialog
+        open={isContractDialogOpen}
+        onOpenChange={setIsContractDialogOpen}
+        offerId={offer.id}
+        clientId={offer.client_id}
+        offerData={offer}
+        offerItems={items}
       />
     </Layout>
   );
