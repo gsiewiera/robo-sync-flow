@@ -477,6 +477,7 @@ export const OfferPdfGenerator = ({
                   <TableCell>
                     <div className="flex gap-2 justify-end items-center">
                       <Button
+                        key={`preview-${version.id}`}
                         variant="outline"
                         size="sm"
                         onClick={() => previewPDF(version)}
@@ -485,6 +486,7 @@ export const OfferPdfGenerator = ({
                         <span className="ml-2">Preview</span>
                       </Button>
                       <Button
+                        key={`email-${version.id}`}
                         variant="outline"
                         size="sm"
                         onClick={() => openEmailDialog(version)}
@@ -493,6 +495,7 @@ export const OfferPdfGenerator = ({
                         <span className="ml-2">Email</span>
                       </Button>
                       <Button
+                        key={`download-${version.id}`}
                         variant="default"
                         size="sm"
                         onClick={() => downloadPDF(version)}
