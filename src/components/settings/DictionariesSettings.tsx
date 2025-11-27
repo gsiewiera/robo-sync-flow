@@ -11,6 +11,11 @@ import { supabase } from "@/integrations/supabase/client";
 type Dictionary = {
   robot_models: string[];
   robot_types: string[];
+  client_types: string[];
+  markets: string[];
+  segments: string[];
+  contract_types: string[];
+  service_types: string[];
   payment_models: string[];
   billing_schedules: string[];
   priorities: string[];
@@ -23,6 +28,11 @@ export const DictionariesSettings = () => {
   const [dictionaries, setDictionaries] = useState<Dictionary>({
     robot_models: ["UR3", "UR5", "UR10", "UR16"],
     robot_types: ["Collaborative", "Industrial", "Mobile", "Delta"],
+    client_types: ["Enterprise", "SME", "Startup", "Government"],
+    markets: ["Manufacturing", "Logistics", "Healthcare", "Automotive"],
+    segments: ["Welding", "Assembly", "Packaging", "Quality Control"],
+    contract_types: ["Service Agreement", "Maintenance Contract", "Full Support", "On-Demand"],
+    service_types: ["Preventive Maintenance", "Repair", "Upgrade", "Training", "Consultation"],
     payment_models: ["Lease", "Purchase", "Subscription", "Pay-per-use"],
     billing_schedules: ["Monthly", "Quarterly", "Annual", "One-time"],
     priorities: ["low", "medium", "high", "critical"],
@@ -142,9 +152,14 @@ export const DictionariesSettings = () => {
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="robot_models">
-          <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6">
-            <TabsTrigger value="robot_models">Models</TabsTrigger>
-            <TabsTrigger value="robot_types">Types</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-4 lg:grid-cols-6">
+            <TabsTrigger value="robot_models">Robot Models</TabsTrigger>
+            <TabsTrigger value="robot_types">Robot Types</TabsTrigger>
+            <TabsTrigger value="client_types">Client Types</TabsTrigger>
+            <TabsTrigger value="markets">Markets</TabsTrigger>
+            <TabsTrigger value="segments">Segments</TabsTrigger>
+            <TabsTrigger value="contract_types">Contract Types</TabsTrigger>
+            <TabsTrigger value="service_types">Service Types</TabsTrigger>
             <TabsTrigger value="payment_models">Payment</TabsTrigger>
             <TabsTrigger value="billing_schedules">Billing</TabsTrigger>
             <TabsTrigger value="priorities">Priorities</TabsTrigger>
@@ -162,6 +177,41 @@ export const DictionariesSettings = () => {
             <div className="space-y-2">
               <Label>Robot Types</Label>
               <DictionaryEditor category="robot_types" title="Robot Type" />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="client_types" className="mt-4">
+            <div className="space-y-2">
+              <Label>Client Types</Label>
+              <DictionaryEditor category="client_types" title="Client Type" />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="markets" className="mt-4">
+            <div className="space-y-2">
+              <Label>Markets</Label>
+              <DictionaryEditor category="markets" title="Market" />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="segments" className="mt-4">
+            <div className="space-y-2">
+              <Label>Segments</Label>
+              <DictionaryEditor category="segments" title="Segment" />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="contract_types" className="mt-4">
+            <div className="space-y-2">
+              <Label>Contract Types</Label>
+              <DictionaryEditor category="contract_types" title="Contract Type" />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="service_types" className="mt-4">
+            <div className="space-y-2">
+              <Label>Service Types</Label>
+              <DictionaryEditor category="service_types" title="Service Type" />
             </div>
           </TabsContent>
 
