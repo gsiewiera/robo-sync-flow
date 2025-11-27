@@ -5,7 +5,17 @@ import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { ArrowUpDown, ArrowUp, ArrowDown, Eye } from "lucide-react";
+import { ArrowUpDown, ArrowUp, ArrowDown, Eye, ChevronDown } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  ColumnVisibilityToggle,
+  ColumnConfig,
+} from "@/components/ui/column-visibility-toggle";
 import {
   Table,
   TableBody,
@@ -29,8 +39,21 @@ interface Offer {
   status: string;
   total_price: number | null;
   created_at: string;
-  clients: { name: string } | null;
+  clients: { name: string; id: string } | null;
 }
+
+interface Client {
+  id: string;
+  name: string;
+}
+
+const COLUMN_CONFIG: ColumnConfig[] = [
+  { key: "offer_number", label: "Offer Number", defaultVisible: true },
+  { key: "client", label: "Client", defaultVisible: true },
+  { key: "status", label: "Status", defaultVisible: true },
+  { key: "total_price", label: "Total Price", defaultVisible: true },
+  { key: "created_at", label: "Created", defaultVisible: true },
+];
 
 const statusColors: Record<string, string> = {
   draft: "bg-muted text-muted-foreground",
@@ -42,31 +65,102 @@ const statusColors: Record<string, string> = {
 
 const Offers = () => {
   const [offers, setOffers] = useState<Offer[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState<"offer_number" | "total_price" | "created_at">("created_at");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+  const [clientFilters, setClientFilters] = useState<string[]>([]);
+  const [statusFilters, setStatusFilters] = useState<Array<"draft" | "sent" | "modified" | "accepted" | "rejected">>([]);
+  const [createdDateFilter, setCreatedDateFilter] = useState<string>("");
   const navigate = useNavigate();
   const recordsPerPage = 20;
 
+  // Column visibility state with localStorage
+  const [visibleColumns, setVisibleColumns] = useState<string[]>(() => {
+    const saved = localStorage.getItem("offers-visible-columns");
+    return saved ? JSON.parse(saved) : COLUMN_CONFIG.filter(c => c.defaultVisible).map(c => c.key);
+  });
+
   useEffect(() => {
     fetchOffers();
+    fetchClients();
   }, []);
 
-  const fetchOffers = async () => {
+  useEffect(() => {
+    localStorage.setItem("offers-visible-columns", JSON.stringify(visibleColumns));
+  }, [visibleColumns]);
+
+  const fetchClients = async () => {
     const { data, error } = await supabase
-      .from("offers")
-      .select("*, clients(name)")
-      .order(sortField, { ascending: sortDirection === "asc", nullsFirst: false });
+      .from("clients")
+      .select("id, name")
+      .order("name");
 
     if (data && !error) {
-      setOffers(data);
+      setClients(data);
+    }
+  };
+
+  const fetchOffers = async () => {
+    let query = supabase
+      .from("offers")
+      .select("*, clients(name, id)")
+      .order(sortField, { ascending: sortDirection === "asc", nullsFirst: false });
+
+    // Apply client filters
+    if (clientFilters.length > 0) {
+      query = query.in("client_id", clientFilters);
+    }
+
+    // Apply status filters
+    if (statusFilters.length > 0) {
+      query = query.in("status", statusFilters);
+    }
+
+    // Apply created date filter
+    if (createdDateFilter) {
+      const startOfDay = new Date(createdDateFilter);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(createdDateFilter);
+      endOfDay.setHours(23, 59, 59, 999);
+      query = query.gte("created_at", startOfDay.toISOString()).lte("created_at", endOfDay.toISOString());
+    }
+
+    const { data, error } = await supabase.from("offers").select("*, clients(name, id)").order(sortField, { ascending: sortDirection === "asc", nullsFirst: false });
+
+    if (data && !error) {
+      let filteredData = data;
+
+      // Apply client filters
+      if (clientFilters.length > 0) {
+        filteredData = filteredData.filter((offer) =>
+          offer.clients && clientFilters.includes(offer.clients.id)
+        );
+      }
+
+      // Apply status filters
+      if (statusFilters.length > 0) {
+        filteredData = filteredData.filter((offer) =>
+          statusFilters.includes(offer.status)
+        );
+      }
+
+      // Apply created date filter
+      if (createdDateFilter) {
+        filteredData = filteredData.filter((offer) => {
+          const offerDate = new Date(offer.created_at).toISOString().split("T")[0];
+          return offerDate === createdDateFilter;
+        });
+      }
+
+      setOffers(filteredData);
     }
   };
 
   useEffect(() => {
     fetchOffers();
     setCurrentPage(1);
-  }, [sortField, sortDirection]);
+  }, [sortField, sortDirection, clientFilters, statusFilters, createdDateFilter]);
 
   const indexOfLastRecord = currentPage * recordsPerPage;
   const indexOfFirstRecord = indexOfLastRecord - recordsPerPage;
@@ -95,6 +189,38 @@ const Offers = () => {
       : <ArrowDown className="ml-2 h-4 w-4" />;
   };
 
+  const toggleClientFilter = (clientId: string) => {
+    setClientFilters((prev) =>
+      prev.includes(clientId)
+        ? prev.filter((id) => id !== clientId)
+        : [...prev, clientId]
+    );
+  };
+
+  const toggleStatusFilter = (status: "draft" | "sent" | "modified" | "accepted" | "rejected") => {
+    setStatusFilters((prev) =>
+      prev.includes(status)
+        ? prev.filter((s) => s !== status)
+        : [...prev, status]
+    );
+  };
+
+  const clearFilters = () => {
+    setClientFilters([]);
+    setStatusFilters([]);
+    setCreatedDateFilter("");
+  };
+
+  const toggleColumn = (columnKey: string) => {
+    setVisibleColumns((prev) =>
+      prev.includes(columnKey)
+        ? prev.filter((key) => key !== columnKey)
+        : [...prev, columnKey]
+    );
+  };
+
+  const hasActiveFilters = clientFilters.length > 0 || statusFilters.length > 0 || createdDateFilter !== "";
+
   return (
     <Layout>
       <div className="space-y-6">
@@ -103,73 +229,183 @@ const Offers = () => {
           <p className="text-muted-foreground">Track sales opportunities and proposals</p>
         </div>
 
+        {/* Filters */}
+        <Card className="p-4">
+          <div className="flex flex-wrap gap-4 items-center justify-between">
+            <div className="flex flex-wrap gap-4">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="h-10 w-[200px] justify-between">
+                    Client {clientFilters.length > 0 && `(${clientFilters.length})`}
+                    <ChevronDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[200px] p-3 bg-background z-50" align="start">
+                  <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                    {clients.map((client) => (
+                      <div key={client.id} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`client-${client.id}`}
+                          checked={clientFilters.includes(client.id)}
+                          onCheckedChange={() => toggleClientFilter(client.id)}
+                        />
+                        <label
+                          htmlFor={`client-${client.id}`}
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                        >
+                          {client.name}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
+
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="h-10 w-[180px] justify-between">
+                    Status {statusFilters.length > 0 && `(${statusFilters.length})`}
+                    <ChevronDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[180px] p-3 bg-background z-50" align="start">
+                  <div className="space-y-2">
+                    {([
+                      { value: "draft" as const, label: "Draft" },
+                      { value: "sent" as const, label: "Sent" },
+                      { value: "modified" as const, label: "Modified" },
+                      { value: "accepted" as const, label: "Accepted" },
+                      { value: "rejected" as const, label: "Rejected" },
+                    ]).map((status) => (
+                      <div key={status.value} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`status-${status.value}`}
+                          checked={statusFilters.includes(status.value)}
+                          onCheckedChange={() => toggleStatusFilter(status.value)}
+                        />
+                        <label
+                          htmlFor={`status-${status.value}`}
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                        >
+                          {status.label}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
+
+              <div className="flex items-center gap-2">
+                <label htmlFor="created-date" className="text-sm font-medium text-foreground">
+                  Created:
+                </label>
+                <input
+                  id="created-date"
+                  type="date"
+                  value={createdDateFilter}
+                  onChange={(e) => setCreatedDateFilter(e.target.value)}
+                  className="h-10 px-3 rounded-md border border-input bg-background text-sm"
+                />
+              </div>
+
+              {hasActiveFilters && (
+                <Button variant="ghost" onClick={clearFilters} className="h-10">
+                  Clear Filters
+                </Button>
+              )}
+            </div>
+
+            <ColumnVisibilityToggle
+              columns={COLUMN_CONFIG}
+              visibleColumns={visibleColumns}
+              onToggleColumn={toggleColumn}
+            />
+          </div>
+        </Card>
+
         <Card>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleSort("offer_number")}
-                    className="h-8 px-2 -ml-2 font-medium hover:bg-transparent"
-                  >
-                    Offer Number
-                    {getSortIcon("offer_number")}
-                  </Button>
-                </TableHead>
-                <TableHead>Client</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleSort("total_price")}
-                    className="h-8 px-2 -ml-2 font-medium hover:bg-transparent"
-                  >
-                    Total Price
-                    {getSortIcon("total_price")}
-                  </Button>
-                </TableHead>
-                <TableHead>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleSort("created_at")}
-                    className="h-8 px-2 -ml-2 font-medium hover:bg-transparent"
-                  >
-                    Created
-                    {getSortIcon("created_at")}
-                  </Button>
-                </TableHead>
+                {visibleColumns.includes("offer_number") && (
+                  <TableHead>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleSort("offer_number")}
+                      className="h-8 px-2 -ml-2 font-medium hover:bg-transparent"
+                    >
+                      Offer Number
+                      {getSortIcon("offer_number")}
+                    </Button>
+                  </TableHead>
+                )}
+                {visibleColumns.includes("client") && <TableHead>Client</TableHead>}
+                {visibleColumns.includes("status") && <TableHead>Status</TableHead>}
+                {visibleColumns.includes("total_price") && (
+                  <TableHead>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleSort("total_price")}
+                      className="h-8 px-2 -ml-2 font-medium hover:bg-transparent"
+                    >
+                      Total Price
+                      {getSortIcon("total_price")}
+                    </Button>
+                  </TableHead>
+                )}
+                {visibleColumns.includes("created_at") && (
+                  <TableHead>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleSort("created_at")}
+                      className="h-8 px-2 -ml-2 font-medium hover:bg-transparent"
+                    >
+                      Created
+                      {getSortIcon("created_at")}
+                    </Button>
+                  </TableHead>
+                )}
                 <TableHead className="w-20">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {currentRecords.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={visibleColumns.length + 1} className="text-center py-8 text-muted-foreground">
                     No offers found
                   </TableCell>
                 </TableRow>
               ) : (
                 currentRecords.map((offer) => (
                   <TableRow key={offer.id} className="h-12">
-                    <TableCell className="font-medium">{offer.offer_number}</TableCell>
-                    <TableCell>{offer.clients?.name || "-"}</TableCell>
-                    <TableCell>
-                      <Badge className={statusColors[offer.status]}>
-                        {offer.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {offer.total_price
-                        ? `${offer.total_price.toFixed(2)} PLN`
-                        : "-"}
-                    </TableCell>
-                    <TableCell>
-                      {new Date(offer.created_at).toLocaleDateString()}
-                    </TableCell>
+                    {visibleColumns.includes("offer_number") && (
+                      <TableCell className="font-medium">{offer.offer_number}</TableCell>
+                    )}
+                    {visibleColumns.includes("client") && (
+                      <TableCell>{offer.clients?.name || "-"}</TableCell>
+                    )}
+                    {visibleColumns.includes("status") && (
+                      <TableCell>
+                        <Badge className={statusColors[offer.status]}>
+                          {offer.status}
+                        </Badge>
+                      </TableCell>
+                    )}
+                    {visibleColumns.includes("total_price") && (
+                      <TableCell>
+                        {offer.total_price
+                          ? `${offer.total_price.toFixed(2)} PLN`
+                          : "-"}
+                      </TableCell>
+                    )}
+                    {visibleColumns.includes("created_at") && (
+                      <TableCell>
+                        {new Date(offer.created_at).toLocaleDateString()}
+                      </TableCell>
+                    )}
                     <TableCell>
                       <Button
                         variant="ghost"
