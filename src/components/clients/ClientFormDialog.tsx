@@ -23,6 +23,14 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import { X } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const formSchema = z.object({
   name: z.string().trim().min(1, "Company name is required").max(255, "Name must be less than 255 characters"),
@@ -59,6 +67,8 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
   const isEditMode = !!client;
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [availableTags, setAvailableTags] = useState<any[]>([]);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -82,44 +92,81 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
   });
 
   useEffect(() => {
-    if (open && client) {
-      form.reset({
-        name: client.name || "",
-        nip: client.nip || "",
-        address: client.address || "",
-        city: client.city || "",
-        postal_code: client.postal_code || "",
-        country: client.country || "Poland",
-        general_email: client.general_email || "",
-        general_phone: client.general_phone || "",
-        website_url: client.website_url || "",
-        primary_contact_name: client.primary_contact_name || "",
-        primary_contact_email: client.primary_contact_email || "",
-        primary_contact_phone: client.primary_contact_phone || "",
-        billing_person_name: client.billing_person_name || "",
-        billing_person_email: client.billing_person_email || "",
-        billing_person_phone: client.billing_person_phone || "",
-      });
-    } else if (open && !client) {
-      form.reset({
-        name: "",
-        nip: "",
-        address: "",
-        city: "",
-        postal_code: "",
-        country: "Poland",
-        general_email: "",
-        general_phone: "",
-        website_url: "",
-        primary_contact_name: "",
-        primary_contact_email: "",
-        primary_contact_phone: "",
-        billing_person_name: "",
-        billing_person_email: "",
-        billing_person_phone: "",
-      });
+    if (open) {
+      fetchTags();
+      if (client) {
+        fetchClientTags();
+        form.reset({
+          name: client.name || "",
+          nip: client.nip || "",
+          address: client.address || "",
+          city: client.city || "",
+          postal_code: client.postal_code || "",
+          country: client.country || "Poland",
+          general_email: client.general_email || "",
+          general_phone: client.general_phone || "",
+          website_url: client.website_url || "",
+          primary_contact_name: client.primary_contact_name || "",
+          primary_contact_email: client.primary_contact_email || "",
+          primary_contact_phone: client.primary_contact_phone || "",
+          billing_person_name: client.billing_person_name || "",
+          billing_person_email: client.billing_person_email || "",
+          billing_person_phone: client.billing_person_phone || "",
+        });
+      } else {
+        setSelectedTags([]);
+        form.reset({
+          name: "",
+          nip: "",
+          address: "",
+          city: "",
+          postal_code: "",
+          country: "Poland",
+          general_email: "",
+          general_phone: "",
+          website_url: "",
+          primary_contact_name: "",
+          primary_contact_email: "",
+          primary_contact_phone: "",
+          billing_person_name: "",
+          billing_person_email: "",
+          billing_person_phone: "",
+        });
+      }
     }
   }, [open, client]);
+
+  const fetchTags = async () => {
+    const { data } = await supabase
+      .from("client_tags")
+      .select("*")
+      .order("name");
+    
+    if (data) {
+      setAvailableTags(data);
+    }
+  };
+
+  const fetchClientTags = async () => {
+    if (!client?.id) return;
+    
+    const { data } = await supabase
+      .from("client_assigned_tags")
+      .select("tag_id")
+      .eq("client_id", client.id);
+    
+    if (data) {
+      setSelectedTags(data.map(t => t.tag_id));
+    }
+  };
+
+  const toggleTag = (tagId: string) => {
+    setSelectedTags(prev =>
+      prev.includes(tagId)
+        ? prev.filter(id => id !== tagId)
+        : [...prev, tagId]
+    );
+  };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsSubmitting(true);
@@ -151,6 +198,23 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
 
         if (error) throw error;
 
+        // Update tags
+        // First delete existing tags
+        await supabase
+          .from("client_assigned_tags")
+          .delete()
+          .eq("client_id", client.id);
+
+        // Then insert new tags
+        if (selectedTags.length > 0) {
+          await supabase
+            .from("client_assigned_tags")
+            .insert(selectedTags.map(tagId => ({
+              client_id: client.id,
+              tag_id: tagId,
+            })));
+        }
+
         toast({
           title: "Client updated",
           description: `${values.name} has been updated successfully`,
@@ -158,14 +222,26 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
       } else {
         const { data: session } = await supabase.auth.getSession();
         
-        const { error } = await supabase
+        const { data: newClient, error } = await supabase
           .from("clients")
           .insert({
             ...clientData,
             assigned_salesperson_id: session?.session?.user?.id,
-          });
+          })
+          .select()
+          .single();
 
         if (error) throw error;
+
+        // Insert tags
+        if (selectedTags.length > 0 && newClient) {
+          await supabase
+            .from("client_assigned_tags")
+            .insert(selectedTags.map(tagId => ({
+              client_id: newClient.id,
+              tag_id: tagId,
+            })));
+        }
 
         toast({
           title: "Client created",
@@ -174,6 +250,7 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
       }
 
       form.reset();
+      setSelectedTags([]);
       onSuccess?.();
       onOpenChange(false);
     } catch (error: any) {
@@ -445,6 +522,71 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
                       </FormItem>
                     )}
                   />
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Tags */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold">Tags</h3>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        Add Tags
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[300px] p-3">
+                      <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                        {availableTags.map((tag) => (
+                          <div key={tag.id} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`tag-${tag.id}`}
+                              checked={selectedTags.includes(tag.id)}
+                              onCheckedChange={() => toggleTag(tag.id)}
+                            />
+                            <label
+                              htmlFor={`tag-${tag.id}`}
+                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex items-center gap-2"
+                            >
+                              <div
+                                className="w-3 h-3 rounded-full"
+                                style={{ backgroundColor: tag.color }}
+                              />
+                              {tag.name}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                
+                <div className="flex flex-wrap gap-2">
+                  {selectedTags.map((tagId) => {
+                    const tag = availableTags.find(t => t.id === tagId);
+                    if (!tag) return null;
+                    return (
+                      <Badge
+                        key={tag.id}
+                        style={{ backgroundColor: tag.color }}
+                        className="text-white"
+                      >
+                        {tag.name}
+                        <button
+                          type="button"
+                          onClick={() => toggleTag(tag.id)}
+                          className="ml-1 hover:bg-black/20 rounded-full p-0.5"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    );
+                  })}
+                  {selectedTags.length === 0 && (
+                    <p className="text-sm text-muted-foreground">No tags selected</p>
+                  )}
                 </div>
               </div>
 
