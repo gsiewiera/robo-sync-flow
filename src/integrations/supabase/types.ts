@@ -488,6 +488,42 @@ export type Database = {
           },
         ]
       }
+      items: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          item_type: string
+          name: string
+          price_net: number
+          updated_at: string
+          vat_rate: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          item_type: string
+          name: string
+          price_net?: number
+          updated_at?: string
+          vat_rate?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          item_type?: string
+          name?: string
+          price_net?: number
+          updated_at?: string
+          vat_rate?: number
+        }
+        Relationships: []
+      }
       lease_month_dictionary: {
         Row: {
           created_at: string | null
