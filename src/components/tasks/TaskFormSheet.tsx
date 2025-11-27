@@ -74,7 +74,7 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess }: TaskFormSheetPr
       title: "",
       description: "",
       status: "pending",
-      assigned_to: "",
+      assigned_to: undefined,
     },
   });
 
@@ -280,14 +280,13 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess }: TaskFormSheetPr
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Assign To</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select employee" />
+                          <SelectValue placeholder="Select employee (optional)" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">Unassigned</SelectItem>
                         {employees.map((employee) => (
                           <SelectItem key={employee.id} value={employee.id}>
                             {employee.full_name}
