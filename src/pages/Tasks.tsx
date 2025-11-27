@@ -2,7 +2,8 @@ import { Layout } from "@/components/Layout";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Circle, MoreHorizontal, Eye, Edit, Trash } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { CheckCircle, Circle, MoreHorizontal, Eye, Edit, Trash, Filter, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -27,15 +28,28 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Task {
   id: string;
   title: string;
   description: string | null;
-  status: string;
+  status: "pending" | "in_progress" | "completed" | "overdue";
   due_date: string | null;
   call_attempted: boolean;
   call_successful: boolean;
+  assigned_to: string | null;
+}
+
+interface Profile {
+  id: string;
+  full_name: string;
 }
 
 const statusColors: Record<string, string> = {
@@ -48,21 +62,93 @@ const statusColors: Record<string, string> = {
 const Tasks = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [forToday, setForToday] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [assignedToFilter, setAssignedToFilter] = useState<string>("all");
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [employees, setEmployees] = useState<Profile[]>([]);
   const recordsPerPage = 20;
 
   useEffect(() => {
-    fetchTasks();
+    checkUserRole();
+    fetchEmployees();
   }, []);
 
+  useEffect(() => {
+    fetchTasks();
+    setCurrentPage(1);
+  }, [forToday, searchTerm, statusFilter, assignedToFilter]);
+
+  const checkUserRole = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .single();
+
+    if (data) {
+      setUserRole(data.role);
+    }
+  };
+
+  const fetchEmployees = async () => {
+    const { data } = await supabase
+      .from("profiles")
+      .select("id, full_name")
+      .order("full_name");
+
+    if (data) {
+      setEmployees(data);
+    }
+  };
+
   const fetchTasks = async () => {
-    const { data, error } = await supabase
+    let query = supabase
       .from("tasks")
-      .select("*")
-      .order("due_date", { ascending: true });
+      .select("*");
+
+    // Apply filters
+    if (forToday) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      
+      query = query
+        .gte("due_date", today.toISOString())
+        .lt("due_date", tomorrow.toISOString());
+    }
+
+    if (searchTerm) {
+      query = query.ilike("title", `%${searchTerm}%`);
+    }
+
+    if (statusFilter !== "all") {
+      query = query.eq("status", statusFilter as Task["status"]);
+    }
+
+    if (assignedToFilter !== "all") {
+      query = query.eq("assigned_to", assignedToFilter);
+    }
+
+    query = query.order("due_date", { ascending: true });
+
+    const { data, error } = await query;
 
     if (data && !error) {
       setTasks(data);
     }
+  };
+
+  const clearFilters = () => {
+    setForToday(false);
+    setSearchTerm("");
+    setStatusFilter("all");
+    setAssignedToFilter("all");
   };
 
   const handleMarkComplete = async (taskId: string) => {
@@ -93,6 +179,63 @@ const Tasks = () => {
           <h1 className="text-3xl font-bold text-foreground">Tasks</h1>
           <p className="text-muted-foreground">Manage your daily tasks and follow-ups</p>
         </div>
+
+        {/* Filters */}
+        <Card className="p-4">
+          <div className="flex flex-wrap gap-4">
+            <Button
+              variant={forToday ? "default" : "outline"}
+              onClick={() => setForToday(!forToday)}
+              className="h-10"
+            >
+              <Filter className="mr-2 h-4 w-4" />
+              For Today
+            </Button>
+
+            <Input
+              placeholder="Search tasks..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="max-w-xs"
+            />
+
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Statuses</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="in_progress">In Progress</SelectItem>
+                <SelectItem value="completed">Completed</SelectItem>
+                <SelectItem value="overdue">Overdue</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {(userRole === "admin" || userRole === "manager") && (
+              <Select value={assignedToFilter} onValueChange={setAssignedToFilter}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Employee" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Employees</SelectItem>
+                  {employees.map((employee) => (
+                    <SelectItem key={employee.id} value={employee.id}>
+                      {employee.full_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+
+            {(forToday || searchTerm || statusFilter !== "all" || assignedToFilter !== "all") && (
+              <Button variant="ghost" onClick={clearFilters} className="h-10">
+                <X className="mr-2 h-4 w-4" />
+                Clear Filters
+              </Button>
+            )}
+          </div>
+        </Card>
 
         <Card>
           <Table>
