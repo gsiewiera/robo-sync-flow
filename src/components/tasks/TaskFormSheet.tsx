@@ -74,8 +74,6 @@ const taskFormSchema = z.object({
   client_id: z.string().optional(),
   contract_id: z.string().optional(),
   robot_ids: z.array(z.string()).optional(),
-  call_attempted: z.boolean().optional(),
-  call_successful: z.boolean().optional(),
 });
 
 type TaskFormValues = z.infer<typeof taskFormSchema>;
@@ -112,8 +110,6 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
       client_id: undefined,
       contract_id: undefined,
       robot_ids: [],
-      call_attempted: false,
-      call_successful: false,
     },
   });
 
@@ -249,8 +245,6 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
         client_id: task.client_id || undefined,
         contract_id: task.contract_id || undefined,
         robot_ids: taskRobots?.map(tr => tr.robot_id) || [],
-        call_attempted: task.call_attempted || false,
-        call_successful: task.call_successful || false,
       });
     } catch (error) {
       toast({
@@ -278,8 +272,6 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
           assigned_to: values.assigned_to || null,
           client_id: values.client_id || null,
           contract_id: values.contract_id || null,
-          call_attempted: values.call_attempted || false,
-          call_successful: values.call_successful || false,
         })
         .eq("id", taskId);
 
@@ -323,8 +315,6 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
             assigned_to: values.assigned_to || null,
             client_id: values.client_id || null,
             contract_id: values.contract_id || null,
-            call_attempted: values.call_attempted || false,
-            call_successful: values.call_successful || false,
           })
           .select()
           .single();
@@ -457,132 +447,77 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
             />
 
             {selectedClientId && (
-              <FormField
-                control={form.control}
-                name="contract_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Contract</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange} 
-                      value={field.value}
-                      disabled={isViewMode}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select contract (optional)" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {filteredContracts.map((contract) => (
-                          <SelectItem key={contract.id} value={contract.id}>
-                            {contract.contract_number}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
-
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Enter task description"
-                      className="resize-none"
-                      disabled={isViewMode}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="due_date"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Due Date</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant="outline"
+              <>
+                {filteredContracts.length > 0 && (
+                  <FormField
+                    control={form.control}
+                    name="contract_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Contract</FormLabel>
+                        <Select 
+                          onValueChange={field.onChange} 
+                          value={field.value}
                           disabled={isViewMode}
-                          className={cn(
-                            "w-full pl-3 text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
                         >
-                          {field.value ? (
-                            format(field.value, "PPP")
-                          ) : (
-                            <span>Pick a date</span>
-                          )}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {selectedClientId && filteredRobots.length > 0 && (
-              <FormField
-                control={form.control}
-                name="robot_ids"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Robots</FormLabel>
-                    <div className="space-y-2 border rounded-md p-3">
-                      {filteredRobots.map((robot) => (
-                        <div key={robot.id} className="flex items-center space-x-2">
-                          <Checkbox
-                            checked={field.value?.includes(robot.id)}
-                            disabled={isViewMode}
-                            onCheckedChange={(checked) => {
-                              const current = field.value || [];
-                              if (checked) {
-                                field.onChange([...current, robot.id]);
-                              } else {
-                                field.onChange(current.filter(id => id !== robot.id));
-                              }
-                            }}
-                          />
-                          <label className="text-sm flex-1 cursor-pointer">
-                            <span className="font-medium">{robot.type}</span>
-                            {" - "}
-                            <span>{robot.model}</span>
-                            {" ("}
-                            <span className="text-muted-foreground">{robot.serial_number}</span>
-                            {")"}
-                          </label>
-                        </div>
-                      ))}
-                    </div>
-                    <FormMessage />
-                  </FormItem>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select contract (optional)" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {filteredContracts.map((contract) => (
+                              <SelectItem key={contract.id} value={contract.id}>
+                                {contract.contract_number}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 )}
-              />
+
+                {filteredRobots.length > 0 && (
+                  <FormField
+                    control={form.control}
+                    name="robot_ids"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Robots (Select one or more)</FormLabel>
+                        <div className="space-y-2 border rounded-md p-3 max-h-[200px] overflow-y-auto">
+                          {filteredRobots.map((robot) => (
+                            <div key={robot.id} className="flex items-center space-x-2">
+                              <Checkbox
+                                checked={field.value?.includes(robot.id)}
+                                disabled={isViewMode}
+                                onCheckedChange={(checked) => {
+                                  const current = field.value || [];
+                                  if (checked) {
+                                    field.onChange([...current, robot.id]);
+                                  } else {
+                                    field.onChange(current.filter(id => id !== robot.id));
+                                  }
+                                }}
+                              />
+                              <label className="text-sm flex-1 cursor-pointer">
+                                <span className="font-medium">{robot.type}</span>
+                                {" - "}
+                                <span>{robot.model}</span>
+                                {" ("}
+                                <span className="text-muted-foreground">{robot.serial_number}</span>
+                                {")"}
+                              </label>
+                            </div>
+                          ))}
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+              </>
             )}
 
             <FormField
@@ -643,46 +578,6 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
                 )}
               />
             )}
-
-            <div className="space-y-3">
-              <FormField
-                control={form.control}
-                name="call_attempted"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        disabled={isViewMode}
-                      />
-                    </FormControl>
-                    <FormLabel className="font-normal cursor-pointer">
-                      Call Attempted
-                    </FormLabel>
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="call_successful"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        disabled={isViewMode}
-                      />
-                    </FormControl>
-                    <FormLabel className="font-normal cursor-pointer">
-                      Call Successful
-                    </FormLabel>
-                  </FormItem>
-                )}
-              />
-            </div>
 
             <div className="flex gap-3 pt-4">
               {isViewMode ? (
