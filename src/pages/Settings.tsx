@@ -1,5 +1,10 @@
 import { Layout } from "@/components/Layout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ProfileSettings } from "@/components/settings/ProfileSettings";
+import { PasswordSettings } from "@/components/settings/PasswordSettings";
+import { ThemeSettings } from "@/components/settings/ThemeSettings";
+import { RoleDisplay } from "@/components/settings/RoleDisplay";
+import { DictionariesSettings } from "@/components/settings/DictionariesSettings";
 
 const Settings = () => {
   return (
@@ -10,15 +15,35 @@ const Settings = () => {
           <p className="text-muted-foreground">Manage your account and application preferences</p>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Account Settings</CardTitle>
-            <CardDescription>Update your account information</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">Settings configuration coming soon...</p>
-          </CardContent>
-        </Card>
+        <Tabs defaultValue="profile" className="w-full">
+          <TabsList className="grid w-full grid-cols-5 lg:w-auto">
+            <TabsTrigger value="profile">Profile</TabsTrigger>
+            <TabsTrigger value="password">Password</TabsTrigger>
+            <TabsTrigger value="theme">Theme</TabsTrigger>
+            <TabsTrigger value="roles">Roles</TabsTrigger>
+            <TabsTrigger value="dictionaries">Dictionaries</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="profile" className="mt-6">
+            <ProfileSettings />
+          </TabsContent>
+
+          <TabsContent value="password" className="mt-6">
+            <PasswordSettings />
+          </TabsContent>
+
+          <TabsContent value="theme" className="mt-6">
+            <ThemeSettings />
+          </TabsContent>
+
+          <TabsContent value="roles" className="mt-6">
+            <RoleDisplay />
+          </TabsContent>
+
+          <TabsContent value="dictionaries" className="mt-6">
+            <DictionariesSettings />
+          </TabsContent>
+        </Tabs>
       </div>
     </Layout>
   );
