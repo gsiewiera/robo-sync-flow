@@ -3,10 +3,11 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Mail, Phone, MapPin, FileText, ShoppingCart, Bot } from "lucide-react";
+import { ArrowLeft, Mail, Phone, MapPin, FileText, ShoppingCart, Bot, Globe, Edit } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useParams, useNavigate } from "react-router-dom";
+import { ClientFormDialog } from "@/components/clients/ClientFormDialog";
 
 interface Client {
   id: string;
@@ -16,9 +17,15 @@ interface Client {
   city: string | null;
   postal_code: string | null;
   country: string | null;
+  general_email: string | null;
+  general_phone: string | null;
+  website_url: string | null;
   primary_contact_name: string | null;
   primary_contact_email: string | null;
   primary_contact_phone: string | null;
+  billing_person_name: string | null;
+  billing_person_email: string | null;
+  billing_person_phone: string | null;
 }
 
 interface Contract {
@@ -62,6 +69,7 @@ const ClientDetail = () => {
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [offers, setOffers] = useState<Offer[]>([]);
   const [robots, setRobots] = useState<Robot[]>([]);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -123,14 +131,20 @@ const ClientDetail = () => {
   return (
     <Layout>
       <div className="space-y-6">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/clients")}>
-            <ArrowLeft className="w-4 h-4" />
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">{client.name}</h1>
-            <p className="text-muted-foreground">Client Details</p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="icon" onClick={() => navigate("/clients")}>
+              <ArrowLeft className="w-4 h-4" />
+            </Button>
+            <div>
+              <h1 className="text-3xl font-bold text-foreground">{client.name}</h1>
+              <p className="text-muted-foreground">Client Details</p>
+            </div>
           </div>
+          <Button onClick={() => setIsEditDialogOpen(true)}>
+            <Edit className="h-4 w-4 mr-2" />
+            Edit Client
+          </Button>
         </div>
 
         <Card className="p-6">
@@ -158,9 +172,51 @@ const ClientDetail = () => {
               )}
             </div>
             <div className="space-y-4">
+              {client.general_email && (
+                <div className="flex gap-2">
+                  <Mail className="w-4 h-4 text-muted-foreground mt-1" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Company Email</p>
+                    <p className="font-medium">{client.general_email}</p>
+                  </div>
+                </div>
+              )}
+              {client.general_phone && (
+                <div className="flex gap-2">
+                  <Phone className="w-4 h-4 text-muted-foreground mt-1" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Company Phone</p>
+                    <p className="font-medium">{client.general_phone}</p>
+                  </div>
+                </div>
+              )}
+              {client.website_url && (
+                <div className="flex gap-2">
+                  <Globe className="w-4 h-4 text-muted-foreground mt-1" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Website</p>
+                    <a 
+                      href={client.website_url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="font-medium text-primary hover:underline"
+                    >
+                      {client.website_url}
+                    </a>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </Card>
+
+        <div className="grid md:grid-cols-2 gap-6">
+          <Card className="p-6">
+            <h3 className="text-lg font-semibold mb-4">Contact Person</h3>
+            <div className="space-y-4">
               {client.primary_contact_name && (
                 <div>
-                  <p className="text-sm text-muted-foreground">Contact Person</p>
+                  <p className="text-sm text-muted-foreground">Name</p>
                   <p className="font-medium">{client.primary_contact_name}</p>
                 </div>
               )}
@@ -183,8 +239,38 @@ const ClientDetail = () => {
                 </div>
               )}
             </div>
-          </div>
-        </Card>
+          </Card>
+
+          <Card className="p-6">
+            <h3 className="text-lg font-semibold mb-4">Billing Contact</h3>
+            <div className="space-y-4">
+              {client.billing_person_name && (
+                <div>
+                  <p className="text-sm text-muted-foreground">Name</p>
+                  <p className="font-medium">{client.billing_person_name}</p>
+                </div>
+              )}
+              {client.billing_person_email && (
+                <div className="flex gap-2">
+                  <Mail className="w-4 h-4 text-muted-foreground mt-1" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Email</p>
+                    <p className="font-medium">{client.billing_person_email}</p>
+                  </div>
+                </div>
+              )}
+              {client.billing_person_phone && (
+                <div className="flex gap-2">
+                  <Phone className="w-4 h-4 text-muted-foreground mt-1" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Phone</p>
+                    <p className="font-medium">{client.billing_person_phone}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </Card>
+        </div>
 
         <Tabs defaultValue="contracts" className="w-full">
           <TabsList>
@@ -298,6 +384,13 @@ const ClientDetail = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      <ClientFormDialog
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        onSuccess={fetchClientData}
+        client={client}
+      />
     </Layout>
   );
 };
