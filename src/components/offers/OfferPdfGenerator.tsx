@@ -475,7 +475,7 @@ export const OfferPdfGenerator = ({
                     })}
                   </TableCell>
                   <TableCell className="text-right">
-                    <div className="flex gap-2 justify-end">
+                    <div className="flex gap-2 justify-end flex-wrap">
                       <Button
                         variant="outline"
                         size="sm"
