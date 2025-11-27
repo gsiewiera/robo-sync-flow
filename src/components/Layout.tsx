@@ -9,6 +9,7 @@ import {
   ShoppingCart,
   Wrench,
   DollarSign,
+  Package,
   Settings as SettingsIcon,
   LogOut
 } from "lucide-react";
@@ -42,6 +43,7 @@ const navItems = [
   { icon: FileText, label: "Contracts", path: "/contracts" },
   { icon: Wrench, label: "Service", path: "/service" },
   { icon: Bot, label: "Robots", path: "/robots" },
+  { icon: Package, label: "Items", path: "/items" },
   { icon: DollarSign, label: "Pricing", path: "/pricing" },
 ];
 
