@@ -1,10 +1,27 @@
 import { Layout } from "@/components/Layout";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { FileText } from "lucide-react";
+import { ArrowUpDown, ArrowUp, ArrowDown, Eye } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 interface Contract {
   id: string;
@@ -13,6 +30,7 @@ interface Contract {
   start_date: string | null;
   end_date: string | null;
   monthly_payment: number | null;
+  created_at: string | null;
   clients: { name: string } | null;
 }
 
@@ -26,7 +44,11 @@ const statusColors: Record<string, string> = {
 
 const Contracts = () => {
   const [contracts, setContracts] = useState<Contract[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [sortField, setSortField] = useState<"contract_number" | "start_date" | "created_at">("created_at");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const navigate = useNavigate();
+  const recordsPerPage = 20;
 
   useEffect(() => {
     fetchContracts();
@@ -36,11 +58,43 @@ const Contracts = () => {
     const { data, error } = await supabase
       .from("contracts")
       .select("*, clients(name)")
-      .order("created_at", { ascending: false });
+      .order(sortField, { ascending: sortDirection === "asc", nullsFirst: false });
 
     if (data && !error) {
       setContracts(data);
     }
+  };
+
+  useEffect(() => {
+    fetchContracts();
+    setCurrentPage(1);
+  }, [sortField, sortDirection]);
+
+  const indexOfLastRecord = currentPage * recordsPerPage;
+  const indexOfFirstRecord = indexOfLastRecord - recordsPerPage;
+  const currentRecords = contracts.slice(indexOfFirstRecord, indexOfLastRecord);
+  const totalPages = Math.ceil(contracts.length / recordsPerPage);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handleSort = (field: "contract_number" | "start_date" | "created_at") => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDirection("asc");
+    }
+  };
+
+  const getSortIcon = (field: "contract_number" | "start_date" | "created_at") => {
+    if (sortField !== field) {
+      return <ArrowUpDown className="ml-2 h-4 w-4 text-muted-foreground" />;
+    }
+    return sortDirection === "asc" 
+      ? <ArrowUp className="ml-2 h-4 w-4" />
+      : <ArrowDown className="ml-2 h-4 w-4" />;
   };
 
   return (
@@ -51,57 +105,132 @@ const Contracts = () => {
           <p className="text-muted-foreground">Manage client contracts and agreements</p>
         </div>
 
-        <div className="grid gap-4">
-          {contracts.map((contract) => (
-            <Card
-              key={contract.id}
-              className="p-6 hover:shadow-lg transition-shadow cursor-pointer"
-              onClick={() => navigate(`/contracts/${contract.id}`)}
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex gap-4">
-                  <div className="p-3 bg-primary/10 rounded-lg">
-                    <FileText className="w-6 h-6 text-primary" />
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-3">
-                      <h3 className="text-lg font-semibold">{contract.contract_number}</h3>
+        <Card>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleSort("contract_number")}
+                    className="h-8 px-2 -ml-2 font-medium hover:bg-transparent"
+                  >
+                    Contract Number
+                    {getSortIcon("contract_number")}
+                  </Button>
+                </TableHead>
+                <TableHead>Client</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleSort("start_date")}
+                    className="h-8 px-2 -ml-2 font-medium hover:bg-transparent"
+                  >
+                    Start Date
+                    {getSortIcon("start_date")}
+                  </Button>
+                </TableHead>
+                <TableHead>End Date</TableHead>
+                <TableHead>Monthly Payment</TableHead>
+                <TableHead>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleSort("created_at")}
+                    className="h-8 px-2 -ml-2 font-medium hover:bg-transparent"
+                  >
+                    Created
+                    {getSortIcon("created_at")}
+                  </Button>
+                </TableHead>
+                <TableHead className="w-20">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {currentRecords.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                    No contracts found
+                  </TableCell>
+                </TableRow>
+              ) : (
+                currentRecords.map((contract) => (
+                  <TableRow key={contract.id} className="h-12">
+                    <TableCell className="font-medium">{contract.contract_number}</TableCell>
+                    <TableCell>{contract.clients?.name || "-"}</TableCell>
+                    <TableCell>
                       <Badge className={statusColors[contract.status]}>
                         {contract.status.replace("_", " ")}
                       </Badge>
-                    </div>
-                    {contract.clients && (
-                      <p className="text-sm text-muted-foreground">
-                        Client: {contract.clients.name}
-                      </p>
-                    )}
-                    <div className="flex gap-4 text-sm text-muted-foreground">
-                      {contract.start_date && (
-                        <span>Start: {new Date(contract.start_date).toLocaleDateString()}</span>
-                      )}
-                      {contract.end_date && (
-                        <span>End: {new Date(contract.end_date).toLocaleDateString()}</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                {contract.monthly_payment && (
-                  <div className="text-right">
-                    <p className="text-2xl font-bold text-primary">
-                      {contract.monthly_payment.toFixed(2)} PLN
-                    </p>
-                    <p className="text-sm text-muted-foreground">per month</p>
-                  </div>
-                )}
-              </div>
-            </Card>
-          ))}
-        </div>
+                    </TableCell>
+                    <TableCell>
+                      {contract.start_date
+                        ? new Date(contract.start_date).toLocaleDateString()
+                        : "-"}
+                    </TableCell>
+                    <TableCell>
+                      {contract.end_date
+                        ? new Date(contract.end_date).toLocaleDateString()
+                        : "-"}
+                    </TableCell>
+                    <TableCell>
+                      {contract.monthly_payment
+                        ? `${contract.monthly_payment.toFixed(2)} PLN`
+                        : "-"}
+                    </TableCell>
+                    <TableCell>
+                      {contract.created_at
+                        ? new Date(contract.created_at).toLocaleDateString()
+                        : "-"}
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        onClick={() => navigate(`/contracts/${contract.id}`)}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </Card>
 
-        {contracts.length === 0 && (
-          <Card className="p-12 text-center">
-            <p className="text-muted-foreground">No contracts found</p>
-          </Card>
+        {totalPages > 1 && (
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                  className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <PaginationItem key={page}>
+                  <PaginationLink
+                    onClick={() => handlePageChange(page)}
+                    isActive={currentPage === page}
+                    className="cursor-pointer"
+                  >
+                    {page}
+                  </PaginationLink>
+                </PaginationItem>
+              ))}
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                  className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
         )}
       </div>
     </Layout>
