@@ -56,7 +56,7 @@ function AppSidebar() {
   };
 
   return (
-    <Sidebar collapsible="icon" className="w-32 data-[state=collapsed]:w-14 [&>div:first-child]:w-0">
+    <Sidebar collapsible="icon" className="w-32 data-[state=collapsed]:w-14 [&_.peer]:hidden [&>div.peer+div]:left-0">
       <SidebarContent>
         <div className="p-3 border-b border-sidebar-border">
           <h1 className="text-lg font-bold text-sidebar-foreground">
