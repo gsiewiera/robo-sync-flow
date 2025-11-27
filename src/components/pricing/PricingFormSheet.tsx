@@ -41,7 +41,24 @@ const formSchema = z.object({
   lowest_price_pln_net: z.string().optional(),
   lowest_price_usd_net: z.string().optional(),
   lowest_price_eur_net: z.string().optional(),
+  lease_pricing: z.record(z.object({
+    pln: z.string().optional(),
+    usd: z.string().optional(),
+    eur: z.string().optional(),
+  })).optional(),
 });
+
+interface LeaseMonth {
+  id: string;
+  months: number;
+}
+
+interface LeasePricing {
+  months: number;
+  price_pln_net: number;
+  price_usd_net: number;
+  price_eur_net: number;
+}
 
 interface PricingFormSheetProps {
   open: boolean;
@@ -57,6 +74,8 @@ export const PricingFormSheet = ({
   onSuccess,
 }: PricingFormSheetProps) => {
   const [robotModels, setRobotModels] = useState<string[]>([]);
+  const [leaseMonths, setLeaseMonths] = useState<LeaseMonth[]>([]);
+  const [existingLeaseData, setExistingLeaseData] = useState<LeasePricing[]>([]);
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -72,14 +91,45 @@ export const PricingFormSheet = ({
       lowest_price_pln_net: "",
       lowest_price_usd_net: "",
       lowest_price_eur_net: "",
+      lease_pricing: {},
     },
   });
 
   useEffect(() => {
-    // For now, using hardcoded robot models
-    // In the future, this could be fetched from a dictionary table
     setRobotModels(["UR3", "UR5", "UR10", "UR16", "Dobot MG400", "Fanuc CRX-10iA"]);
+    fetchLeaseMonths();
   }, []);
+
+  const fetchLeaseMonths = async () => {
+    const { data, error } = await supabase
+      .from("lease_month_dictionary")
+      .select("*")
+      .order("months");
+
+    if (!error && data) {
+      setLeaseMonths(data);
+    }
+  };
+
+  const fetchLeasePricing = async (pricingId: string) => {
+    const { data, error } = await supabase
+      .from("lease_pricing")
+      .select("*")
+      .eq("robot_pricing_id", pricingId);
+
+    if (!error && data) {
+      setExistingLeaseData(data);
+      const leaseObj: Record<string, any> = {};
+      data.forEach((item: LeasePricing) => {
+        leaseObj[item.months.toString()] = {
+          pln: item.price_pln_net.toString(),
+          usd: item.price_usd_net.toString(),
+          eur: item.price_eur_net.toString(),
+        };
+      });
+      form.setValue("lease_pricing", leaseObj);
+    }
+  };
 
   useEffect(() => {
     if (pricing) {
@@ -94,7 +144,9 @@ export const PricingFormSheet = ({
         lowest_price_pln_net: pricing.lowest_price_pln_net?.toString() || "",
         lowest_price_usd_net: pricing.lowest_price_usd_net?.toString() || "",
         lowest_price_eur_net: pricing.lowest_price_eur_net?.toString() || "",
+        lease_pricing: {},
       });
+      fetchLeasePricing(pricing.id);
     } else {
       form.reset({
         robot_model: "",
@@ -107,7 +159,9 @@ export const PricingFormSheet = ({
         lowest_price_pln_net: "",
         lowest_price_usd_net: "",
         lowest_price_eur_net: "",
+        lease_pricing: {},
       });
+      setExistingLeaseData([]);
     }
   }, [pricing, form]);
 
@@ -125,6 +179,7 @@ export const PricingFormSheet = ({
       lowest_price_eur_net: values.lowest_price_eur_net ? parseFloat(values.lowest_price_eur_net) : null,
     };
 
+    let robotPricingId: string;
     let error;
 
     if (pricing) {
@@ -132,10 +187,16 @@ export const PricingFormSheet = ({
         .from("robot_pricing")
         .update(pricingData)
         .eq("id", pricing.id));
+      robotPricingId = pricing.id;
     } else {
-      ({ error } = await supabase
+      const { data, error: insertError } = await supabase
         .from("robot_pricing")
-        .insert([pricingData]));
+        .insert([pricingData])
+        .select()
+        .single();
+      
+      error = insertError;
+      if (data) robotPricingId = data.id;
     }
 
     if (error) {
@@ -145,6 +206,44 @@ export const PricingFormSheet = ({
         variant: "destructive",
       });
       return;
+    }
+
+    // Handle lease pricing
+    if (robotPricingId && values.lease_pricing) {
+      // Delete existing lease pricing
+      await supabase
+        .from("lease_pricing")
+        .delete()
+        .eq("robot_pricing_id", robotPricingId);
+
+      // Insert new lease pricing
+      const leasePricingRecords = [];
+      for (const [months, prices] of Object.entries(values.lease_pricing)) {
+        if (prices.pln || prices.usd || prices.eur) {
+          leasePricingRecords.push({
+            robot_pricing_id: robotPricingId,
+            months: parseInt(months),
+            price_pln_net: prices.pln ? parseFloat(prices.pln) : 0,
+            price_usd_net: prices.usd ? parseFloat(prices.usd) : 0,
+            price_eur_net: prices.eur ? parseFloat(prices.eur) : 0,
+          });
+        }
+      }
+
+      if (leasePricingRecords.length > 0) {
+        const { error: leaseError } = await supabase
+          .from("lease_pricing")
+          .insert(leasePricingRecords);
+
+        if (leaseError) {
+          toast({
+            title: "Warning",
+            description: "Pricing saved but lease pricing failed to update",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
     }
 
     toast({
@@ -197,10 +296,11 @@ export const PricingFormSheet = ({
             />
 
             <Tabs defaultValue="sale" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="sale">Sale Prices</TabsTrigger>
                 <TabsTrigger value="promo">Promo Prices</TabsTrigger>
                 <TabsTrigger value="lowest">Lowest Prices</TabsTrigger>
+                <TabsTrigger value="lease">Lease Pricing</TabsTrigger>
               </TabsList>
 
               <TabsContent value="sale" className="space-y-4">
@@ -330,6 +430,58 @@ export const PricingFormSheet = ({
                     </FormItem>
                   )}
                 />
+              </TabsContent>
+
+              <TabsContent value="lease" className="space-y-4">
+                <p className="text-sm text-muted-foreground mb-4">
+                  Set monthly lease prices for different term lengths. All prices are net (excluding VAT).
+                </p>
+                {leaseMonths.map((leaseMonth) => (
+                  <div key={leaseMonth.id} className="space-y-3 pb-4 border-b last:border-b-0">
+                    <h4 className="font-medium">{leaseMonth.months} Months</h4>
+                    <div className="grid grid-cols-3 gap-3">
+                      <FormField
+                        control={form.control}
+                        name={`lease_pricing.${leaseMonth.months}.pln` as any}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>PLN (Net)</FormLabel>
+                            <FormControl>
+                              <Input type="number" step="0.01" placeholder="0.00" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name={`lease_pricing.${leaseMonth.months}.usd` as any}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>USD (Net)</FormLabel>
+                            <FormControl>
+                              <Input type="number" step="0.01" placeholder="0.00" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name={`lease_pricing.${leaseMonth.months}.eur` as any}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>EUR (Net)</FormLabel>
+                            <FormControl>
+                              <Input type="number" step="0.01" placeholder="0.00" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+                ))}
               </TabsContent>
             </Tabs>
 

@@ -53,6 +53,7 @@ interface LeasePricing {
 const Pricing = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [pricings, setPricings] = useState<RobotPricing[]>([]);
+  const [leasePricingData, setLeasePricingData] = useState<Record<string, LeasePricing[]>>({});
   const [loading, setLoading] = useState(true);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editingPricing, setEditingPricing] = useState<RobotPricing | null>(null);
@@ -107,6 +108,23 @@ const Pricing = () => {
       });
     } else {
       setPricings(data || []);
+      
+      // Fetch lease pricing for each robot pricing
+      if (data) {
+        const leaseData: Record<string, LeasePricing[]> = {};
+        for (const pricing of data) {
+          const { data: leaseRecords } = await supabase
+            .from("lease_pricing")
+            .select("*")
+            .eq("robot_pricing_id", pricing.id)
+            .order("months");
+          
+          if (leaseRecords) {
+            leaseData[pricing.id] = leaseRecords;
+          }
+        }
+        setLeasePricingData(leaseData);
+      }
     }
     setLoading(false);
   };
@@ -364,12 +382,51 @@ const Pricing = () => {
                     )}
                   </div>
 
-                  {/* Lease Section - placeholder for now */}
+                  {/* Lease Section */}
                   <div>
                     <h4 className="font-semibold mb-3">Lease Options</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Lease pricing options will be displayed here
-                    </p>
+                    {leasePricingData[pricing.id] && leasePricingData[pricing.id].length > 0 ? (
+                      <div className="space-y-4">
+                        {leasePricingData[pricing.id].map((lease) => (
+                          <div key={lease.id} className="border-b pb-3 last:border-b-0">
+                            <h5 className="font-medium mb-2">{lease.months} Months</h5>
+                            <div className="space-y-1 text-sm">
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">PLN:</span>
+                                <div className="text-right">
+                                  <div>{formatCurrency(lease.price_pln_net, "PLN")} / month (net)</div>
+                                  <div className="text-xs text-muted-foreground">
+                                    {formatCurrency(calculateGross(lease.price_pln_net), "PLN")} / month (gross)
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">USD:</span>
+                                <div className="text-right">
+                                  <div>{formatCurrency(lease.price_usd_net, "USD")} / month (net)</div>
+                                  <div className="text-xs text-muted-foreground">
+                                    {formatCurrency(calculateGross(lease.price_usd_net), "USD")} / month (gross)
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">EUR:</span>
+                                <div className="text-right">
+                                  <div>{formatCurrency(lease.price_eur_net, "EUR")} / month (net)</div>
+                                  <div className="text-xs text-muted-foreground">
+                                    {formatCurrency(calculateGross(lease.price_eur_net), "EUR")} / month (gross)
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        No lease options configured
+                      </p>
+                    )}
                   </div>
                 </div>
               </CardContent>
