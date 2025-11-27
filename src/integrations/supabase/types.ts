@@ -290,6 +290,51 @@ export type Database = {
           },
         ]
       }
+      offer_versions: {
+        Row: {
+          file_path: string
+          generated_at: string
+          generated_by: string | null
+          id: string
+          notes: string | null
+          offer_id: string
+          version_number: number
+        }
+        Insert: {
+          file_path: string
+          generated_at?: string
+          generated_by?: string | null
+          id?: string
+          notes?: string | null
+          offer_id: string
+          version_number: number
+        }
+        Update: {
+          file_path?: string
+          generated_at?: string
+          generated_by?: string | null
+          id?: string
+          notes?: string | null
+          offer_id?: string
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_generated_by"
+            columns: ["generated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_offer"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "offers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       offers: {
         Row: {
           client_id: string

@@ -7,6 +7,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useParams, useNavigate } from "react-router-dom";
 import { NewOfferDialog } from "@/components/offers/NewOfferDialog";
+import { OfferPdfGenerator } from "@/components/offers/OfferPdfGenerator";
 import {
   Table,
   TableBody,
@@ -223,6 +224,14 @@ const OfferDetail = () => {
             </div>
           )}
         </Card>
+
+        <OfferPdfGenerator
+          offerId={offer.id}
+          offerNumber={offer.offer_number}
+          offerData={offer}
+          clientData={client}
+          itemsData={items}
+        />
       </div>
 
       <NewOfferDialog
