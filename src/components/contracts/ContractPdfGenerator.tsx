@@ -184,6 +184,35 @@ export const ContractPdfGenerator = ({
       }
       yPos += 10;
 
+      // Financial Summary
+      doc.setFontSize(14);
+      doc.setTextColor(59, 130, 246);
+      doc.text("Financial Summary", 14, yPos);
+      doc.setTextColor(0, 0, 0);
+      yPos += 8;
+      doc.setFontSize(10);
+      doc.text(`Total Purchase Value: ${(contractData.total_purchase_value || 0).toFixed(2)} PLN`, 14, yPos);
+      yPos += 7;
+      doc.text(`Total Monthly Contracted: ${(contractData.total_monthly_contracted || 0).toFixed(2)} PLN`, 14, yPos);
+      yPos += 10;
+
+      // Additional Services
+      doc.setFontSize(12);
+      doc.setTextColor(59, 130, 246);
+      doc.text("Additional Services", 14, yPos);
+      doc.setTextColor(0, 0, 0);
+      yPos += 8;
+      doc.setFontSize(10);
+      doc.text(`Warranty: ${(contractData.warranty_cost || 0).toFixed(2)} PLN`, 14, yPos);
+      yPos += 7;
+      doc.text(`Implementation: ${(contractData.implementation_cost || 0).toFixed(2)} PLN`, 14, yPos);
+      yPos += 7;
+      if (contractData.other_services_cost && contractData.other_services_cost > 0) {
+        doc.text(`${contractData.other_services_description || 'Other Services'}: ${contractData.other_services_cost.toFixed(2)} PLN`, 14, yPos);
+        yPos += 7;
+      }
+      yPos += 10;
+
       // Robots Table
       if (robotsData.length > 0) {
         const tableData = robotsData.map((robot) => [

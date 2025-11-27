@@ -19,6 +19,12 @@ interface Contract {
   billing_schedule: string | null;
   terms: string | null;
   client_id: string;
+  total_purchase_value?: number | null;
+  total_monthly_contracted?: number | null;
+  warranty_cost?: number | null;
+  implementation_cost?: number | null;
+  other_services_cost?: number | null;
+  other_services_description?: string | null;
 }
 
 interface Client {
@@ -202,6 +208,48 @@ const ContractDetail = () => {
               <p className="text-sm whitespace-pre-wrap">{contract.terms}</p>
             </div>
           )}
+
+          <div className="mt-6 pt-6 border-t">
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <DollarSign className="w-5 h-5 text-muted-foreground" />
+              Financial Summary
+            </h3>
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="space-y-3">
+                <div>
+                  <p className="text-sm text-muted-foreground">Total Purchase Value</p>
+                  <p className="text-2xl font-bold text-primary">
+                    {(contract.total_purchase_value || 0).toFixed(2)} PLN
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Total Monthly Contracted</p>
+                  <p className="text-2xl font-bold text-primary">
+                    {(contract.total_monthly_contracted || 0).toFixed(2)} PLN
+                  </p>
+                </div>
+              </div>
+              <div className="space-y-3">
+                <h4 className="font-medium text-sm text-muted-foreground">Additional Services</h4>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-sm">Warranty:</span>
+                    <span className="font-medium">{(contract.warranty_cost || 0).toFixed(2)} PLN</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm">Implementation:</span>
+                    <span className="font-medium">{(contract.implementation_cost || 0).toFixed(2)} PLN</span>
+                  </div>
+                  {(contract.other_services_cost && contract.other_services_cost > 0) && (
+                    <div className="flex justify-between">
+                      <span className="text-sm">{contract.other_services_description || 'Other Services'}:</span>
+                      <span className="font-medium">{contract.other_services_cost.toFixed(2)} PLN</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
         </Card>
 
         <Card className="p-6">
