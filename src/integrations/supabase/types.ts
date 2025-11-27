@@ -189,6 +189,54 @@ export type Database = {
           },
         ]
       }
+      contract_email_history: {
+        Row: {
+          contract_version_id: string
+          created_at: string
+          id: string
+          notes: string | null
+          sent_at: string
+          sent_by: string | null
+          sent_to: string
+          status: string
+        }
+        Insert: {
+          contract_version_id: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          sent_at?: string
+          sent_by?: string | null
+          sent_to: string
+          status?: string
+        }
+        Update: {
+          contract_version_id?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          sent_at?: string
+          sent_by?: string | null
+          sent_to?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_email_history_contract_version_id_fkey"
+            columns: ["contract_version_id"]
+            isOneToOne: false
+            referencedRelation: "contract_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contract_email_history_sent_by_fkey"
+            columns: ["sent_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contract_robots: {
         Row: {
           contract_id: string | null
