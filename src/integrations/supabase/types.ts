@@ -360,12 +360,18 @@ export type Database = {
           created_by: string | null
           end_date: string | null
           id: string
+          implementation_cost: number | null
           monthly_payment: number | null
+          other_services_cost: number | null
+          other_services_description: string | null
           payment_model: string | null
           start_date: string | null
           status: Database["public"]["Enums"]["contract_status"] | null
           terms: string | null
+          total_monthly_contracted: number | null
+          total_purchase_value: number | null
           updated_at: string | null
+          warranty_cost: number | null
         }
         Insert: {
           billing_schedule?: string | null
@@ -375,12 +381,18 @@ export type Database = {
           created_by?: string | null
           end_date?: string | null
           id?: string
+          implementation_cost?: number | null
           monthly_payment?: number | null
+          other_services_cost?: number | null
+          other_services_description?: string | null
           payment_model?: string | null
           start_date?: string | null
           status?: Database["public"]["Enums"]["contract_status"] | null
           terms?: string | null
+          total_monthly_contracted?: number | null
+          total_purchase_value?: number | null
           updated_at?: string | null
+          warranty_cost?: number | null
         }
         Update: {
           billing_schedule?: string | null
@@ -390,12 +402,18 @@ export type Database = {
           created_by?: string | null
           end_date?: string | null
           id?: string
+          implementation_cost?: number | null
           monthly_payment?: number | null
+          other_services_cost?: number | null
+          other_services_description?: string | null
           payment_model?: string | null
           start_date?: string | null
           status?: Database["public"]["Enums"]["contract_status"] | null
           terms?: string | null
+          total_monthly_contracted?: number | null
+          total_purchase_value?: number | null
           updated_at?: string | null
+          warranty_cost?: number | null
         }
         Relationships: [
           {

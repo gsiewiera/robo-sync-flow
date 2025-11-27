@@ -43,6 +43,12 @@ export function CreateContractDialog({
   const [paymentModel, setPaymentModel] = useState("");
   const [billingSchedule, setBillingSchedule] = useState("");
   const [terms, setTerms] = useState("");
+  const [totalPurchaseValue, setTotalPurchaseValue] = useState("");
+  const [totalMonthlyContracted, setTotalMonthlyContracted] = useState("");
+  const [warrantyCost, setWarrantyCost] = useState("");
+  const [implementationCost, setImplementationCost] = useState("");
+  const [otherServicesCost, setOtherServicesCost] = useState("");
+  const [otherServicesDescription, setOtherServicesDescription] = useState("");
 
   useEffect(() => {
     if (open && offerItems.length > 0) {
@@ -132,6 +138,12 @@ export function CreateContractDialog({
           payment_model: paymentModel,
           billing_schedule: billingSchedule,
           terms,
+          total_purchase_value: totalPurchaseValue ? parseFloat(totalPurchaseValue) : 0,
+          total_monthly_contracted: totalMonthlyContracted ? parseFloat(totalMonthlyContracted) : 0,
+          warranty_cost: warrantyCost ? parseFloat(warrantyCost) : 0,
+          implementation_cost: implementationCost ? parseFloat(implementationCost) : 0,
+          other_services_cost: otherServicesCost ? parseFloat(otherServicesCost) : 0,
+          other_services_description: otherServicesDescription || null,
           created_by: session?.session?.user?.id,
         }])
         .select()
@@ -273,6 +285,85 @@ export function CreateContractDialog({
               rows={4}
               placeholder="Enter contract terms and conditions"
             />
+          </div>
+
+          <div className="space-y-4 pt-4 border-t">
+            <h3 className="font-semibold">Financial Summary</h3>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="totalPurchaseValue">Total Purchase Value</Label>
+                <Input
+                  id="totalPurchaseValue"
+                  type="number"
+                  step="0.01"
+                  value={totalPurchaseValue}
+                  onChange={(e) => setTotalPurchaseValue(e.target.value)}
+                  placeholder="0.00"
+                />
+              </div>
+              <div>
+                <Label htmlFor="totalMonthlyContracted">Total Monthly Contracted</Label>
+                <Input
+                  id="totalMonthlyContracted"
+                  type="number"
+                  step="0.01"
+                  value={totalMonthlyContracted}
+                  onChange={(e) => setTotalMonthlyContracted(e.target.value)}
+                  placeholder="0.00"
+                />
+              </div>
+            </div>
+
+            <h4 className="font-medium text-sm">Additional Services</h4>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="warrantyCost">Warranty Cost</Label>
+                <Input
+                  id="warrantyCost"
+                  type="number"
+                  step="0.01"
+                  value={warrantyCost}
+                  onChange={(e) => setWarrantyCost(e.target.value)}
+                  placeholder="0.00"
+                />
+              </div>
+              <div>
+                <Label htmlFor="implementationCost">Implementation Cost</Label>
+                <Input
+                  id="implementationCost"
+                  type="number"
+                  step="0.01"
+                  value={implementationCost}
+                  onChange={(e) => setImplementationCost(e.target.value)}
+                  placeholder="0.00"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="otherServicesCost">Other Services Cost</Label>
+                <Input
+                  id="otherServicesCost"
+                  type="number"
+                  step="0.01"
+                  value={otherServicesCost}
+                  onChange={(e) => setOtherServicesCost(e.target.value)}
+                  placeholder="0.00"
+                />
+              </div>
+              <div>
+                <Label htmlFor="otherServicesDescription">Other Services Description</Label>
+                <Input
+                  id="otherServicesDescription"
+                  value={otherServicesDescription}
+                  onChange={(e) => setOtherServicesDescription(e.target.value)}
+                  placeholder="Describe other services"
+                />
+              </div>
+            </div>
           </div>
 
           <div className="flex justify-end gap-2 pt-4">
