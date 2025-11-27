@@ -44,6 +44,8 @@ interface Task {
   call_attempted: boolean;
   call_successful: boolean;
   assigned_to: string | null;
+  client_id: string | null;
+  contract_id: string | null;
 }
 
 interface Profile {
@@ -54,6 +56,16 @@ interface Profile {
 interface TaskTitleDictionary {
   id: string;
   title: string;
+}
+
+interface Client {
+  id: string;
+  name: string;
+}
+
+interface Contract {
+  id: string;
+  contract_number: string;
 }
 
 const statusColors: Record<string, string> = {
@@ -70,9 +82,13 @@ const Tasks = () => {
   const [titleFilters, setTitleFilters] = useState<string[]>([]);
   const [statusFilters, setStatusFilters] = useState<string[]>([]);
   const [assignedToFilters, setAssignedToFilters] = useState<string[]>([]);
+  const [clientFilters, setClientFilters] = useState<string[]>([]);
+  const [contractFilters, setContractFilters] = useState<string[]>([]);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [employees, setEmployees] = useState<Profile[]>([]);
   const [taskTitles, setTaskTitles] = useState<TaskTitleDictionary[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [contracts, setContracts] = useState<Contract[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const recordsPerPage = 20;
 
@@ -80,12 +96,14 @@ const Tasks = () => {
     checkUserRole();
     fetchEmployees();
     fetchTaskTitles();
+    fetchClients();
+    fetchContracts();
   }, []);
 
   useEffect(() => {
     fetchTasks();
     setCurrentPage(1);
-  }, [forToday, titleFilters, statusFilters, assignedToFilters]);
+  }, [forToday, titleFilters, statusFilters, assignedToFilters, clientFilters, contractFilters]);
 
   const checkUserRole = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -124,6 +142,28 @@ const Tasks = () => {
     }
   };
 
+  const fetchClients = async () => {
+    const { data } = await supabase
+      .from("clients")
+      .select("id, name")
+      .order("name");
+
+    if (data) {
+      setClients(data);
+    }
+  };
+
+  const fetchContracts = async () => {
+    const { data } = await supabase
+      .from("contracts")
+      .select("id, contract_number")
+      .order("contract_number");
+
+    if (data) {
+      setContracts(data);
+    }
+  };
+
   const fetchTasks = async () => {
     let query = supabase
       .from("tasks")
@@ -153,6 +193,14 @@ const Tasks = () => {
       query = query.in("assigned_to", assignedToFilters);
     }
 
+    if (clientFilters.length > 0) {
+      query = query.in("client_id", clientFilters);
+    }
+
+    if (contractFilters.length > 0) {
+      query = query.in("contract_id", contractFilters);
+    }
+
     query = query.order("due_date", { ascending: true });
 
     const { data, error } = await query;
@@ -167,6 +215,8 @@ const Tasks = () => {
     setTitleFilters([]);
     setStatusFilters([]);
     setAssignedToFilters([]);
+    setClientFilters([]);
+    setContractFilters([]);
   };
 
   const toggleTitleFilter = (title: string) => {
@@ -184,6 +234,18 @@ const Tasks = () => {
   const toggleAssignedToFilter = (employeeId: string) => {
     setAssignedToFilters(prev =>
       prev.includes(employeeId) ? prev.filter(e => e !== employeeId) : [...prev, employeeId]
+    );
+  };
+
+  const toggleClientFilter = (clientId: string) => {
+    setClientFilters(prev =>
+      prev.includes(clientId) ? prev.filter(c => c !== clientId) : [...prev, clientId]
+    );
+  };
+
+  const toggleContractFilter = (contractId: string) => {
+    setContractFilters(prev =>
+      prev.includes(contractId) ? prev.filter(c => c !== contractId) : [...prev, contractId]
     );
   };
 
@@ -330,7 +392,63 @@ const Tasks = () => {
               </Popover>
             )}
 
-            {(forToday || titleFilters.length > 0 || statusFilters.length > 0 || assignedToFilters.length > 0) && (
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="h-10 w-[200px] justify-between">
+                  Customer {clientFilters.length > 0 && `(${clientFilters.length})`}
+                  <ChevronDown className="ml-2 h-4 w-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[200px] p-3 bg-background z-50" align="start">
+                <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                  {clients.map((client) => (
+                    <div key={client.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`client-${client.id}`}
+                        checked={clientFilters.includes(client.id)}
+                        onCheckedChange={() => toggleClientFilter(client.id)}
+                      />
+                      <label
+                        htmlFor={`client-${client.id}`}
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      >
+                        {client.name}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
+
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="h-10 w-[200px] justify-between">
+                  Contract {contractFilters.length > 0 && `(${contractFilters.length})`}
+                  <ChevronDown className="ml-2 h-4 w-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[200px] p-3 bg-background z-50" align="start">
+                <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                  {contracts.map((contract) => (
+                    <div key={contract.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`contract-${contract.id}`}
+                        checked={contractFilters.includes(contract.id)}
+                        onCheckedChange={() => toggleContractFilter(contract.id)}
+                      />
+                      <label
+                        htmlFor={`contract-${contract.id}`}
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      >
+                        {contract.contract_number}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
+
+            {(forToday || titleFilters.length > 0 || statusFilters.length > 0 || assignedToFilters.length > 0 || clientFilters.length > 0 || contractFilters.length > 0) && (
               <Button variant="ghost" onClick={clearFilters} className="h-10">
                 <X className="mr-2 h-4 w-4" />
                 Clear Filters
