@@ -22,12 +22,12 @@ interface LayoutProps {
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
-  { icon: Users, label: "Clients", path: "/clients" },
-  { icon: Bot, label: "Robots", path: "/robots" },
   { icon: CheckSquare, label: "Tasks", path: "/tasks" },
-  { icon: FileText, label: "Contracts", path: "/contracts" },
   { icon: ShoppingCart, label: "Offers", path: "/offers" },
+  { icon: Users, label: "Clients", path: "/clients" },
+  { icon: FileText, label: "Contracts", path: "/contracts" },
   { icon: Wrench, label: "Service", path: "/service" },
+  { icon: Bot, label: "Robots", path: "/robots" },
 ];
 
 export const Layout = ({ children }: LayoutProps) => {
