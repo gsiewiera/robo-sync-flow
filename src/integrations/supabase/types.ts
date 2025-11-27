@@ -245,28 +245,40 @@ export type Database = {
       }
       offer_items: {
         Row: {
+          contract_type: string | null
           created_at: string | null
           id: string
+          lease_months: number | null
           offer_id: string | null
           quantity: number
           robot_model: string
           unit_price: number
+          warranty_months: number | null
+          warranty_price: number | null
         }
         Insert: {
+          contract_type?: string | null
           created_at?: string | null
           id?: string
+          lease_months?: number | null
           offer_id?: string | null
           quantity?: number
           robot_model: string
           unit_price: number
+          warranty_months?: number | null
+          warranty_price?: number | null
         }
         Update: {
+          contract_type?: string | null
           created_at?: string | null
           id?: string
+          lease_months?: number | null
           offer_id?: string | null
           quantity?: number
           robot_model?: string
           unit_price?: number
+          warranty_months?: number | null
+          warranty_price?: number | null
         }
         Relationships: [
           {
@@ -283,34 +295,58 @@ export type Database = {
           client_id: string
           created_at: string | null
           created_by: string | null
+          currency: string | null
+          delivery_date: string | null
+          deployment_location: string | null
           id: string
+          initial_payment: number | null
           notes: string | null
           offer_number: string
+          person_contact: string | null
+          prepayment_amount: number | null
+          prepayment_percent: number | null
           status: Database["public"]["Enums"]["offer_status"] | null
           total_price: number | null
           updated_at: string | null
+          warranty_period: number | null
         }
         Insert: {
           client_id: string
           created_at?: string | null
           created_by?: string | null
+          currency?: string | null
+          delivery_date?: string | null
+          deployment_location?: string | null
           id?: string
+          initial_payment?: number | null
           notes?: string | null
           offer_number: string
+          person_contact?: string | null
+          prepayment_amount?: number | null
+          prepayment_percent?: number | null
           status?: Database["public"]["Enums"]["offer_status"] | null
           total_price?: number | null
           updated_at?: string | null
+          warranty_period?: number | null
         }
         Update: {
           client_id?: string
           created_at?: string | null
           created_by?: string | null
+          currency?: string | null
+          delivery_date?: string | null
+          deployment_location?: string | null
           id?: string
+          initial_payment?: number | null
           notes?: string | null
           offer_number?: string
+          person_contact?: string | null
+          prepayment_amount?: number | null
+          prepayment_percent?: number | null
           status?: Database["public"]["Enums"]["offer_status"] | null
           total_price?: number | null
           updated_at?: string | null
+          warranty_period?: number | null
         }
         Relationships: [
           {
