@@ -70,25 +70,98 @@ export const OfferPdfGenerator = ({
   const generatePDF = async () => {
     setIsGenerating(true);
     try {
+      // Fetch template settings
+      const { data: templateData } = await supabase
+        .from("system_settings")
+        .select("key, value")
+        .in("key", [
+          "pdf_company_name",
+          "pdf_company_address",
+          "pdf_company_phone",
+          "pdf_company_email",
+          "pdf_primary_color",
+          "pdf_header_text",
+          "pdf_footer_text",
+          "pdf_terms_conditions",
+        ]);
+
+      const template: any = {};
+      templateData?.forEach((item) => {
+        const key = item.key.replace("pdf_", "");
+        template[key] = item.value;
+      });
+
       const doc = new jsPDF();
       const pageWidth = doc.internal.pageSize.width;
+      const primaryColor = template.primary_color || "#3b82f6";
+      const hexToRgb = (hex: string): [number, number, number] => {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result
+          ? [
+              parseInt(result[1], 16),
+              parseInt(result[2], 16),
+              parseInt(result[3], 16),
+            ]
+          : [59, 130, 246];
+      };
+      const rgb = hexToRgb(primaryColor);
       
-      // Header
+      // Header with company info
+      let yPos = 20;
+      if (template.company_name) {
+        doc.setFontSize(16);
+        doc.setTextColor(rgb[0], rgb[1], rgb[2]);
+        doc.text(template.company_name, 14, yPos);
+        yPos += 7;
+        doc.setTextColor(0, 0, 0);
+      }
+
+      doc.setFontSize(9);
+      if (template.company_address) {
+        doc.text(template.company_address, 14, yPos);
+        yPos += 5;
+      }
+      if (template.company_phone) {
+        doc.text(`Phone: ${template.company_phone}`, 14, yPos);
+        yPos += 5;
+      }
+      if (template.company_email) {
+        doc.text(`Email: ${template.company_email}`, 14, yPos);
+        yPos += 5;
+      }
+
+      yPos += 10;
       doc.setFontSize(20);
-      doc.text("OFFER", pageWidth / 2, 20, { align: "center" });
+      doc.setTextColor(rgb[0], rgb[1], rgb[2]);
+      doc.text(template.header_text || "OFFER", pageWidth / 2, yPos, { align: "center" });
+      doc.setTextColor(0, 0, 0);
+      yPos += 15;
       
       doc.setFontSize(12);
-      doc.text(`Offer Number: ${offerNumber}`, 14, 35);
-      doc.text(`Date: ${new Date(offerData.created_at).toLocaleDateString()}`, 14, 42);
-      doc.text(`Status: ${offerData.status.toUpperCase()}`, 14, 49);
+      doc.text(`Offer Number: ${offerNumber}`, 14, yPos);
+      yPos += 7;
+      doc.text(`Date: ${new Date(offerData.created_at).toLocaleDateString()}`, 14, yPos);
+      yPos += 7;
+      doc.text(`Status: ${offerData.status.toUpperCase()}`, 14, yPos);
+      yPos += 10;
 
       // Client Information
       doc.setFontSize(14);
-      doc.text("Client Information", 14, 62);
+      doc.setTextColor(rgb[0], rgb[1], rgb[2]);
+      doc.text("Client Information", 14, yPos);
+      doc.setTextColor(0, 0, 0);
+      yPos += 8;
       doc.setFontSize(10);
-      doc.text(`Name: ${clientData?.name || "N/A"}`, 14, 70);
-      if (clientData?.address) doc.text(`Address: ${clientData.address}`, 14, 77);
-      if (clientData?.city) doc.text(`City: ${clientData.city}`, 14, 84);
+      doc.text(`Name: ${clientData?.name || "N/A"}`, 14, yPos);
+      yPos += 7;
+      if (clientData?.address) {
+        doc.text(`Address: ${clientData.address}`, 14, yPos);
+        yPos += 7;
+      }
+      if (clientData?.city) {
+        doc.text(`City: ${clientData.city}`, 14, yPos);
+        yPos += 7;
+      }
 
       // Items Table
       const tableData = itemsData.map((item) => [
@@ -99,11 +172,11 @@ export const OfferPdfGenerator = ({
       ]);
 
       autoTable(doc, {
-        startY: 95,
+        startY: yPos + 5,
         head: [["Robot Model", "Quantity", "Unit Price", "Total"]],
         body: tableData,
         theme: "grid",
-        headStyles: { fillColor: [59, 130, 246] },
+        headStyles: { fillColor: rgb },
       });
 
       // Totals
@@ -119,11 +192,34 @@ export const OfferPdfGenerator = ({
       }
 
       // Notes
+      let notesY = finalY + 40;
       if (offerData.notes) {
         doc.setFontSize(10);
-        doc.text("Notes:", 14, finalY + 40);
+        doc.text("Notes:", 14, notesY);
         const splitNotes = doc.splitTextToSize(offerData.notes, pageWidth - 28);
-        doc.text(splitNotes, 14, finalY + 47);
+        doc.text(splitNotes, 14, notesY + 7);
+        notesY += 7 + splitNotes.length * 5 + 10;
+      }
+
+      // Terms and conditions
+      if (template.terms_conditions) {
+        doc.setFontSize(10);
+        doc.setTextColor(rgb[0], rgb[1], rgb[2]);
+        doc.text("Terms & Conditions:", 14, notesY);
+        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(8);
+        const splitTerms = doc.splitTextToSize(template.terms_conditions, pageWidth - 28);
+        doc.text(splitTerms, 14, notesY + 7);
+        notesY += 7 + splitTerms.length * 4 + 10;
+      }
+
+      // Footer
+      if (template.footer_text) {
+        const pageHeight = doc.internal.pageSize.height;
+        doc.setFontSize(9);
+        doc.setTextColor(100, 100, 100);
+        doc.text(template.footer_text, pageWidth / 2, pageHeight - 15, { align: "center" });
+        doc.setTextColor(0, 0, 0);
       }
 
       // Convert PDF to blob
