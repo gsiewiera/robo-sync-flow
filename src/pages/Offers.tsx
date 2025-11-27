@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { ArrowUpDown, ArrowUp, ArrowDown, Eye, ChevronDown } from "lucide-react";
+import { ArrowUpDown, ArrowUp, ArrowDown, Eye, ChevronDown, Plus } from "lucide-react";
+import { NewOfferSheet } from "@/components/offers/NewOfferSheet";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Popover,
@@ -72,6 +73,7 @@ const Offers = () => {
   const [clientFilters, setClientFilters] = useState<string[]>([]);
   const [statusFilters, setStatusFilters] = useState<Array<"draft" | "sent" | "modified" | "accepted" | "rejected">>([]);
   const [createdDateFilter, setCreatedDateFilter] = useState<string>("");
+  const [isNewOfferOpen, setIsNewOfferOpen] = useState(false);
   const navigate = useNavigate();
   const recordsPerPage = 20;
 
@@ -224,9 +226,15 @@ const Offers = () => {
   return (
     <Layout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Offers</h1>
-          <p className="text-muted-foreground">Track sales opportunities and proposals</p>
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Offers</h1>
+            <p className="text-muted-foreground">Track sales opportunities and proposals</p>
+          </div>
+          <Button onClick={() => setIsNewOfferOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            New Offer
+          </Button>
         </div>
 
         {/* Filters */}
@@ -453,6 +461,14 @@ const Offers = () => {
           </Pagination>
         )}
       </div>
+
+      <NewOfferSheet
+        open={isNewOfferOpen}
+        onOpenChange={setIsNewOfferOpen}
+        onSuccess={() => {
+          fetchOffers();
+        }}
+      />
     </Layout>
   );
 };
