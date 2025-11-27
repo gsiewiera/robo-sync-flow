@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { CheckCircle, Circle, MoreHorizontal, Eye, Edit, Filter, X, ChevronDown } from "lucide-react";
+import { CheckCircle, Circle, MoreHorizontal, Eye, Edit, Filter, X, ChevronDown, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { TaskFormSheet } from "@/components/tasks/TaskFormSheet";
@@ -85,6 +85,8 @@ const Tasks = () => {
   const [assignedToFilters, setAssignedToFilters] = useState<string[]>([]);
   const [clientFilters, setClientFilters] = useState<string[]>([]);
   const [contractFilters, setContractFilters] = useState<string[]>([]);
+  const [sortField, setSortField] = useState<"due_date" | "created_at">("due_date");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [userRole, setUserRole] = useState<string | null>(null);
   const [employees, setEmployees] = useState<Profile[]>([]);
   const [taskTitles, setTaskTitles] = useState<TaskTitleDictionary[]>([]);
@@ -106,7 +108,7 @@ const Tasks = () => {
   useEffect(() => {
     fetchTasks();
     setCurrentPage(1);
-  }, [forToday, titleFilters, statusFilters, assignedToFilters, clientFilters, contractFilters]);
+  }, [forToday, titleFilters, statusFilters, assignedToFilters, clientFilters, contractFilters, sortField, sortDirection]);
 
   const checkUserRole = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -204,7 +206,7 @@ const Tasks = () => {
       query = query.in("contract_id", contractFilters);
     }
 
-    query = query.order("due_date", { ascending: true });
+    query = query.order(sortField, { ascending: sortDirection === "asc", nullsFirst: false });
 
     const { data, error } = await query;
 
@@ -289,6 +291,26 @@ const Tasks = () => {
     setSelectedTaskId(taskId);
     setFormMode("edit");
     setIsFormOpen(true);
+  };
+
+  const handleSort = (field: "due_date" | "created_at") => {
+    if (sortField === field) {
+      // Toggle direction if same field
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      // Set new field with ascending direction
+      setSortField(field);
+      setSortDirection("asc");
+    }
+  };
+
+  const getSortIcon = (field: "due_date" | "created_at") => {
+    if (sortField !== field) {
+      return <ArrowUpDown className="ml-2 h-4 w-4 text-muted-foreground" />;
+    }
+    return sortDirection === "asc" 
+      ? <ArrowUp className="ml-2 h-4 w-4" />
+      : <ArrowDown className="ml-2 h-4 w-4" />;
   };
 
   return (
@@ -487,8 +509,28 @@ const Tasks = () => {
                 <TableHead className="w-12"></TableHead>
                 <TableHead>Title</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Due Date</TableHead>
-                <TableHead>Created</TableHead>
+                <TableHead>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleSort("due_date")}
+                    className="h-8 px-2 -ml-2 font-medium hover:bg-transparent"
+                  >
+                    Due Date
+                    {getSortIcon("due_date")}
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleSort("created_at")}
+                    className="h-8 px-2 -ml-2 font-medium hover:bg-transparent"
+                  >
+                    Created
+                    {getSortIcon("created_at")}
+                  </Button>
+                </TableHead>
                 <TableHead>Call Status</TableHead>
                 <TableHead className="w-20">Actions</TableHead>
               </TableRow>
