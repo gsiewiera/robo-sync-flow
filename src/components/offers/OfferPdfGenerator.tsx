@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Download, Loader2, Eye } from "lucide-react";
+import { FileText, Download, Loader2, Eye, Mail } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import jsPDF from "jspdf";
@@ -21,6 +21,18 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface OfferVersion {
   id: string;
@@ -51,6 +63,10 @@ export const OfferPdfGenerator = ({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [currentPreviewVersion, setCurrentPreviewVersion] = useState<OfferVersion | null>(null);
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
+  const [showEmailDialog, setShowEmailDialog] = useState(false);
+  const [selectedVersion, setSelectedVersion] = useState<OfferVersion | null>(null);
+  const [emailAddress, setEmailAddress] = useState(clientData?.general_email || "");
   const { toast } = useToast();
 
 
@@ -340,6 +356,54 @@ export const OfferPdfGenerator = ({
     setIsPreviewOpen(false);
   };
 
+  const openEmailDialog = (version: OfferVersion) => {
+    setSelectedVersion(version);
+    setEmailAddress(clientData?.general_email || clientData?.primary_contact_email || "");
+    setShowEmailDialog(true);
+  };
+
+  const sendEmail = async () => {
+    if (!selectedVersion || !emailAddress) {
+      toast({
+        title: "Error",
+        description: "Please provide an email address",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSendingEmail(true);
+    try {
+      const { error } = await supabase.functions.invoke("send-offer-email", {
+        body: {
+          offerNumber,
+          versionId: selectedVersion.id,
+          clientEmail: emailAddress,
+          clientName: clientData?.name || "Client",
+          filePath: selectedVersion.file_path,
+        },
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Email Sent",
+        description: `Offer PDF sent to ${emailAddress}`,
+      });
+
+      setShowEmailDialog(false);
+    } catch (error: any) {
+      console.error("Email error:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to send email",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSendingEmail(false);
+    }
+  };
+
   return (
     <Card className="p-6 bg-card border-border">
       <div className="flex items-center justify-between mb-6">
@@ -422,6 +486,15 @@ export const OfferPdfGenerator = ({
                         Preview
                       </Button>
                       <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openEmailDialog(version)}
+                        className="shadow-sm"
+                      >
+                        <Mail className="w-4 h-4 mr-2" />
+                        Email
+                      </Button>
+                      <Button
                         variant="default"
                         size="sm"
                         onClick={() => downloadPDF(version)}
@@ -486,6 +559,47 @@ export const OfferPdfGenerator = ({
           </div>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={showEmailDialog} onOpenChange={setShowEmailDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Send Offer via Email</AlertDialogTitle>
+            <AlertDialogDescription>
+              Enter the email address where you want to send this offer PDF.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="py-4">
+            <Label htmlFor="email">Email Address</Label>
+            <Input
+              id="email"
+              type="email"
+              value={emailAddress}
+              onChange={(e) => setEmailAddress(e.target.value)}
+              placeholder="client@example.com"
+              className="mt-2"
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isSendingEmail}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={sendEmail}
+              disabled={isSendingEmail || !emailAddress}
+            >
+              {isSendingEmail ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                <>
+                  <Mail className="w-4 h-4 mr-2" />
+                  Send Email
+                </>
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 };
