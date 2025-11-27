@@ -120,7 +120,7 @@ export const Layout = ({ children }: LayoutProps) => {
           <div className="sticky top-0 z-10 flex h-14 items-center border-b bg-background px-4">
             <SidebarTrigger />
           </div>
-          <div className="container mx-auto p-6 max-w-7xl">
+          <div className="p-6 max-w-7xl">
             {children}
           </div>
         </main>
