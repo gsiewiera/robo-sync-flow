@@ -46,6 +46,7 @@ interface Task {
   assigned_to: string | null;
   client_id: string | null;
   contract_id: string | null;
+  created_at: string | null;
 }
 
 interface Profile {
@@ -487,6 +488,7 @@ const Tasks = () => {
                 <TableHead>Title</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Due Date</TableHead>
+                <TableHead>Created</TableHead>
                 <TableHead>Call Status</TableHead>
                 <TableHead className="w-20">Actions</TableHead>
               </TableRow>
@@ -494,7 +496,7 @@ const Tasks = () => {
             <TableBody>
               {currentRecords.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                     No tasks found
                   </TableCell>
                 </TableRow>
@@ -531,6 +533,11 @@ const Tasks = () => {
                     <TableCell>
                       {task.due_date
                         ? new Date(task.due_date).toLocaleDateString()
+                        : "-"}
+                    </TableCell>
+                    <TableCell>
+                      {task.created_at
+                        ? new Date(task.created_at).toLocaleDateString()
                         : "-"}
                     </TableCell>
                     <TableCell>

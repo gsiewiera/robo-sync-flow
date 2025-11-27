@@ -119,6 +119,7 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isEditing, setIsEditing] = useState(mode === "edit");
   const [isLoading, setIsLoading] = useState(false);
+  const [taskCreatedAt, setTaskCreatedAt] = useState<string | null>(null);
   const { toast } = useToast();
 
   const form = useForm<TaskFormValues>({
@@ -157,6 +158,7 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
       fetchTaskData();
     } else if (!taskId) {
       form.reset();
+      setTaskCreatedAt(null);
       setIsEditing(mode === "edit");
     }
   }, [taskId, open, mode]);
@@ -289,9 +291,18 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
         .from("tasks")
         .select("*")
         .eq("id", taskId)
-        .single();
+        .maybeSingle();
 
       if (taskError) throw taskError;
+
+      if (!task) {
+        toast({
+          title: "Error",
+          description: "Task not found",
+          variant: "destructive",
+        });
+        return;
+      }
 
       // Fetch task robots
       const { data: taskRobots, error: robotsError } = await supabase
@@ -319,6 +330,11 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
         reminder_date_time: task.reminder_date_time ? new Date(task.reminder_date_time) : undefined,
         notes: task.notes || "",
       });
+
+      // Store created_at for display
+      if (task.created_at) {
+        setTaskCreatedAt(task.created_at);
+      }
     } catch (error) {
       toast({
         title: "Error",
@@ -463,17 +479,28 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>
-            {isViewMode ? "View Task" : taskId ? "Edit Task" : "Create New Task"}
-          </DialogTitle>
-          <DialogDescription>
-            {isViewMode 
-              ? "Task details and information" 
-              : taskId 
-                ? "Update task details and assignments"
-                : "Add a new task with details and assignments"
-            }
-          </DialogDescription>
+          <div className="flex items-start justify-between">
+            <div>
+              <DialogTitle>
+                {isViewMode ? "View Task" : taskId ? "Edit Task" : "Create New Task"}
+              </DialogTitle>
+              <DialogDescription>
+                {isViewMode 
+                  ? "Task details and information" 
+                  : taskId 
+                    ? "Update task details and assignments"
+                    : "Add a new task with details and assignments"
+                }
+              </DialogDescription>
+            </div>
+            {taskCreatedAt && (
+              <div className="text-right text-sm text-muted-foreground">
+                <div className="font-medium">Created</div>
+                <div>{new Date(taskCreatedAt).toLocaleDateString()}</div>
+                <div className="text-xs">{new Date(taskCreatedAt).toLocaleTimeString()}</div>
+              </div>
+            )}
+          </div>
         </DialogHeader>
 
         {isLoading ? (
