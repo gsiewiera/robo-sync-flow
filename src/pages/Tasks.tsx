@@ -52,6 +52,11 @@ interface Profile {
   full_name: string;
 }
 
+interface TaskTitleDictionary {
+  id: string;
+  title: string;
+}
+
 const statusColors: Record<string, string> = {
   pending: "bg-muted text-muted-foreground",
   in_progress: "bg-primary text-primary-foreground",
@@ -63,22 +68,24 @@ const Tasks = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [forToday, setForToday] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [titleFilter, setTitleFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [assignedToFilter, setAssignedToFilter] = useState<string>("all");
   const [userRole, setUserRole] = useState<string | null>(null);
   const [employees, setEmployees] = useState<Profile[]>([]);
+  const [taskTitles, setTaskTitles] = useState<TaskTitleDictionary[]>([]);
   const recordsPerPage = 20;
 
   useEffect(() => {
     checkUserRole();
     fetchEmployees();
+    fetchTaskTitles();
   }, []);
 
   useEffect(() => {
     fetchTasks();
     setCurrentPage(1);
-  }, [forToday, searchTerm, statusFilter, assignedToFilter]);
+  }, [forToday, titleFilter, statusFilter, assignedToFilter]);
 
   const checkUserRole = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -106,6 +113,17 @@ const Tasks = () => {
     }
   };
 
+  const fetchTaskTitles = async () => {
+    const { data } = await supabase
+      .from("task_title_dictionary")
+      .select("id, title")
+      .order("title");
+
+    if (data) {
+      setTaskTitles(data);
+    }
+  };
+
   const fetchTasks = async () => {
     let query = supabase
       .from("tasks")
@@ -123,8 +141,8 @@ const Tasks = () => {
         .lt("due_date", tomorrow.toISOString());
     }
 
-    if (searchTerm) {
-      query = query.ilike("title", `%${searchTerm}%`);
+    if (titleFilter !== "all") {
+      query = query.eq("title", titleFilter);
     }
 
     if (statusFilter !== "all") {
@@ -146,7 +164,7 @@ const Tasks = () => {
 
   const clearFilters = () => {
     setForToday(false);
-    setSearchTerm("");
+    setTitleFilter("all");
     setStatusFilter("all");
     setAssignedToFilter("all");
   };
@@ -192,18 +210,25 @@ const Tasks = () => {
               For Today
             </Button>
 
-            <Input
-              placeholder="Search tasks..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="max-w-xs"
-            />
+            <Select value={titleFilter} onValueChange={setTitleFilter}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Task" />
+              </SelectTrigger>
+              <SelectContent className="bg-background">
+                <SelectItem value="all">All Tasks</SelectItem>
+                {taskTitles.map((taskTitle) => (
+                  <SelectItem key={taskTitle.id} value={taskTitle.title}>
+                    {taskTitle.title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-background">
                 <SelectItem value="all">All Statuses</SelectItem>
                 <SelectItem value="pending">Pending</SelectItem>
                 <SelectItem value="in_progress">In Progress</SelectItem>
@@ -217,7 +242,7 @@ const Tasks = () => {
                 <SelectTrigger className="w-[200px]">
                   <SelectValue placeholder="Employee" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-background">
                   <SelectItem value="all">All Employees</SelectItem>
                   {employees.map((employee) => (
                     <SelectItem key={employee.id} value={employee.id}>
@@ -228,7 +253,7 @@ const Tasks = () => {
               </Select>
             )}
 
-            {(forToday || searchTerm || statusFilter !== "all" || assignedToFilter !== "all") && (
+            {(forToday || titleFilter !== "all" || statusFilter !== "all" || assignedToFilter !== "all") && (
               <Button variant="ghost" onClick={clearFilters} className="h-10">
                 <X className="mr-2 h-4 w-4" />
                 Clear Filters
