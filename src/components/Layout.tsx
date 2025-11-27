@@ -8,6 +8,7 @@ import {
   FileText, 
   ShoppingCart,
   Wrench,
+  DollarSign,
   Settings as SettingsIcon,
   LogOut
 } from "lucide-react";
@@ -41,6 +42,7 @@ const navItems = [
   { icon: FileText, label: "Contracts", path: "/contracts" },
   { icon: Wrench, label: "Service", path: "/service" },
   { icon: Bot, label: "Robots", path: "/robots" },
+  { icon: DollarSign, label: "Pricing", path: "/pricing" },
 ];
 
 function AppSidebar() {

@@ -169,6 +169,62 @@ export type Database = {
           },
         ]
       }
+      lease_month_dictionary: {
+        Row: {
+          created_at: string | null
+          id: string
+          months: number
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          months: number
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          months?: number
+        }
+        Relationships: []
+      }
+      lease_pricing: {
+        Row: {
+          created_at: string | null
+          id: string
+          months: number
+          price_eur_net: number
+          price_pln_net: number
+          price_usd_net: number
+          robot_pricing_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          months: number
+          price_eur_net: number
+          price_pln_net: number
+          price_usd_net: number
+          robot_pricing_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          months?: number
+          price_eur_net?: number
+          price_pln_net?: number
+          price_usd_net?: number
+          robot_pricing_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lease_pricing_robot_pricing_id_fkey"
+            columns: ["robot_pricing_id"]
+            isOneToOne: false
+            referencedRelation: "robot_pricing"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       meeting_type_dictionary: {
         Row: {
           created_at: string | null
@@ -300,6 +356,54 @@ export type Database = {
         }
         Relationships: []
       }
+      robot_pricing: {
+        Row: {
+          created_at: string | null
+          id: string
+          lowest_price_eur_net: number | null
+          lowest_price_pln_net: number | null
+          lowest_price_usd_net: number | null
+          promo_price_eur_net: number | null
+          promo_price_pln_net: number | null
+          promo_price_usd_net: number | null
+          robot_model: string
+          sale_price_eur_net: number
+          sale_price_pln_net: number
+          sale_price_usd_net: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          lowest_price_eur_net?: number | null
+          lowest_price_pln_net?: number | null
+          lowest_price_usd_net?: number | null
+          promo_price_eur_net?: number | null
+          promo_price_pln_net?: number | null
+          promo_price_usd_net?: number | null
+          robot_model: string
+          sale_price_eur_net: number
+          sale_price_pln_net: number
+          sale_price_usd_net: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          lowest_price_eur_net?: number | null
+          lowest_price_pln_net?: number | null
+          lowest_price_usd_net?: number | null
+          promo_price_eur_net?: number | null
+          promo_price_pln_net?: number | null
+          promo_price_usd_net?: number | null
+          robot_model?: string
+          sale_price_eur_net?: number
+          sale_price_pln_net?: number
+          sale_price_usd_net?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       robots: {
         Row: {
           client_id: string | null
@@ -422,6 +526,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      system_settings: {
+        Row: {
+          created_at: string | null
+          id: string
+          key: string
+          updated_at: string | null
+          value: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          key: string
+          updated_at?: string | null
+          value: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          key?: string
+          updated_at?: string | null
+          value?: string
+        }
+        Relationships: []
       }
       task_robots: {
         Row: {
