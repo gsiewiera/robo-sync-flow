@@ -6,8 +6,12 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Bot, FileText, ShoppingCart, TrendingUp, Wrench, CalendarIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { format } from "date-fns";
+import { format, eachDayOfInterval } from "date-fns";
 import { cn } from "@/lib/utils";
+import { RobotsSoldChart } from "@/components/dashboard/RobotsSoldChart";
+import { ServiceTicketsChart } from "@/components/dashboard/ServiceTicketsChart";
+import { OpportunitiesChart } from "@/components/dashboard/OpportunitiesChart";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type DateFilter = "this_month" | "last_month" | "ytd" | "custom";
 
@@ -28,6 +32,12 @@ interface Stats {
   awaitingImplementation: number;
 }
 
+interface ChartData {
+  robotsSold: Array<{ date: string; count: number }>;
+  serviceTickets: Array<{ date: string; open: number; closed: number }>;
+  opportunities: Array<{ date: string; count: number }>;
+}
+
 const Dashboard = () => {
   const [activeFilter, setActiveFilter] = useState<DateFilter>("this_month");
   const [customDateRange, setCustomDateRange] = useState<DateRange>({
@@ -45,6 +55,12 @@ const Dashboard = () => {
     implementedRobots: 0,
     awaitingImplementation: 0,
   });
+  const [chartData, setChartData] = useState<ChartData>({
+    robotsSold: [],
+    serviceTickets: [],
+    opportunities: [],
+  });
+  const [isLoading, setIsLoading] = useState(true);
 
   const getDateRange = (): { start: string; end: string } => {
     const now = new Date();
@@ -78,7 +94,11 @@ const Dashboard = () => {
 
   useEffect(() => {
     const fetchStats = async () => {
+      setIsLoading(true);
       const { start, end } = getDateRange();
+      const startDate = new Date(start);
+      const endDate = new Date(end);
+      const dateRange = eachDayOfInterval({ start: startDate, end: endDate });
 
       // Fetch open opportunities (offers in sent status)
       const { count: openOpportunities } = await supabase
@@ -161,6 +181,64 @@ const Dashboard = () => {
         implementedRobots: implementedRobots || 0,
         awaitingImplementation: awaitingImplementation || 0,
       });
+
+      // Fetch time-series data for charts
+      const robotsSoldByDate = await Promise.all(
+        dateRange.map(async (date) => {
+          const dateStr = date.toISOString().split('T')[0];
+          const { count } = await supabase
+            .from("robots")
+            .select("*", { count: "exact", head: true })
+            .not("client_id", "is", null)
+            .gte("delivery_date", dateStr)
+            .lt("delivery_date", new Date(date.getTime() + 86400000).toISOString());
+          return { date: dateStr, count: count || 0 };
+        })
+      );
+
+      const serviceTicketsByDate = await Promise.all(
+        dateRange.map(async (date) => {
+          const dateStr = date.toISOString().split('T')[0];
+          const nextDay = new Date(date.getTime() + 86400000).toISOString();
+          
+          const { count: openCount } = await supabase
+            .from("service_tickets")
+            .select("*", { count: "exact", head: true })
+            .in("status", ["open", "in_progress"])
+            .gte("created_at", dateStr)
+            .lt("created_at", nextDay);
+
+          const { count: closedCount } = await supabase
+            .from("service_tickets")
+            .select("*", { count: "exact", head: true })
+            .in("status", ["resolved", "closed"])
+            .gte("resolved_at", dateStr)
+            .lt("resolved_at", nextDay);
+
+          return { date: dateStr, open: openCount || 0, closed: closedCount || 0 };
+        })
+      );
+
+      const opportunitiesByDate = await Promise.all(
+        dateRange.map(async (date) => {
+          const dateStr = date.toISOString().split('T')[0];
+          const { count } = await supabase
+            .from("offers")
+            .select("*", { count: "exact", head: true })
+            .eq("status", "sent")
+            .gte("created_at", dateStr)
+            .lt("created_at", new Date(date.getTime() + 86400000).toISOString());
+          return { date: dateStr, count: count || 0 };
+        })
+      );
+
+      setChartData({
+        robotsSold: robotsSoldByDate,
+        serviceTickets: serviceTicketsByDate,
+        opportunities: opportunitiesByDate,
+      });
+
+      setIsLoading(false);
     };
 
     fetchStats();
@@ -258,6 +336,27 @@ const Dashboard = () => {
               </Card>
             );
           })}
+        </div>
+
+        {/* Charts Section */}
+        <div className="space-y-6">
+          {isLoading ? (
+            <>
+              <Skeleton className="h-[350px] w-full" />
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <Skeleton className="h-[350px] w-full" />
+                <Skeleton className="h-[350px] w-full" />
+              </div>
+            </>
+          ) : (
+            <>
+              <RobotsSoldChart data={chartData.robotsSold} />
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <ServiceTicketsChart data={chartData.serviceTickets} />
+                <OpportunitiesChart data={chartData.opportunities} />
+              </div>
+            </>
+          )}
         </div>
       </div>
     </Layout>
