@@ -56,13 +56,13 @@ function AppSidebar() {
   };
 
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar collapsible="icon" className="w-32 data-[state=collapsed]:w-14">
       <SidebarContent>
-        <div className="p-6 border-b border-sidebar-border">
-          <h1 className="text-xl font-bold text-sidebar-foreground">
+        <div className="p-3 border-b border-sidebar-border">
+          <h1 className="text-lg font-bold text-sidebar-foreground">
             {open ? "RoboCRM" : "RC"}
           </h1>
-          {open && <p className="text-sm text-sidebar-foreground/60">Robot Management</p>}
+          {open && <p className="text-xs text-sidebar-foreground/60">Robot Mgmt</p>}
         </div>
 
         <SidebarGroup>
