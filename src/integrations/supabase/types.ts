@@ -113,6 +113,7 @@ export type Database = {
         Row: {
           address: string | null
           assigned_salesperson_id: string | null
+          balance: number | null
           billing_person_email: string | null
           billing_person_name: string | null
           billing_person_phone: string | null
@@ -128,12 +129,14 @@ export type Database = {
           primary_contact_email: string | null
           primary_contact_name: string | null
           primary_contact_phone: string | null
+          status: string | null
           updated_at: string | null
           website_url: string | null
         }
         Insert: {
           address?: string | null
           assigned_salesperson_id?: string | null
+          balance?: number | null
           billing_person_email?: string | null
           billing_person_name?: string | null
           billing_person_phone?: string | null
@@ -149,12 +152,14 @@ export type Database = {
           primary_contact_email?: string | null
           primary_contact_name?: string | null
           primary_contact_phone?: string | null
+          status?: string | null
           updated_at?: string | null
           website_url?: string | null
         }
         Update: {
           address?: string | null
           assigned_salesperson_id?: string | null
+          balance?: number | null
           billing_person_email?: string | null
           billing_person_name?: string | null
           billing_person_phone?: string | null
@@ -170,6 +175,7 @@ export type Database = {
           primary_contact_email?: string | null
           primary_contact_name?: string | null
           primary_contact_phone?: string | null
+          status?: string | null
           updated_at?: string | null
           website_url?: string | null
         }
@@ -311,6 +317,62 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          amount_gross: number
+          amount_net: number
+          client_id: string
+          created_at: string | null
+          currency: string | null
+          due_date: string
+          id: string
+          invoice_number: string
+          issue_date: string
+          notes: string | null
+          paid_date: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          amount_gross: number
+          amount_net: number
+          client_id: string
+          created_at?: string | null
+          currency?: string | null
+          due_date: string
+          id?: string
+          invoice_number: string
+          issue_date: string
+          notes?: string | null
+          paid_date?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          amount_gross?: number
+          amount_net?: number
+          client_id?: string
+          created_at?: string | null
+          currency?: string | null
+          due_date?: string
+          id?: string
+          invoice_number?: string
+          issue_date?: string
+          notes?: string | null
+          paid_date?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
         ]
@@ -570,6 +632,63 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payments: {
+        Row: {
+          amount: number
+          client_id: string
+          created_at: string | null
+          currency: string | null
+          id: string
+          invoice_id: string | null
+          notes: string | null
+          payment_date: string
+          payment_method: string | null
+          payment_number: string
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          client_id: string
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          invoice_id?: string | null
+          notes?: string | null
+          payment_date: string
+          payment_method?: string | null
+          payment_number: string
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          client_id?: string
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          invoice_id?: string | null
+          notes?: string | null
+          payment_date?: string
+          payment_method?: string | null
+          payment_number?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
             referencedColumns: ["id"]
           },
         ]

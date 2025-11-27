@@ -31,6 +31,13 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const formSchema = z.object({
   name: z.string().trim().min(1, "Company name is required").max(255, "Name must be less than 255 characters"),
@@ -54,6 +61,10 @@ const formSchema = z.object({
   billing_person_name: z.string().trim().max(255, "Name must be less than 255 characters").optional(),
   billing_person_email: z.string().trim().email("Invalid email address").max(255, "Email must be less than 255 characters").optional().or(z.literal("")),
   billing_person_phone: z.string().trim().max(50, "Phone must be less than 50 characters").optional(),
+  
+  // Financial and status
+  balance: z.number().optional(),
+  status: z.enum(["active", "inactive", "blocked"]).default("active"),
 });
 
 interface ClientFormDialogProps {
@@ -88,6 +99,8 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
       billing_person_name: "",
       billing_person_email: "",
       billing_person_phone: "",
+      balance: 0,
+      status: "active",
     },
   });
 
@@ -109,30 +122,34 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
           primary_contact_name: client.primary_contact_name || "",
           primary_contact_email: client.primary_contact_email || "",
           primary_contact_phone: client.primary_contact_phone || "",
-          billing_person_name: client.billing_person_name || "",
-          billing_person_email: client.billing_person_email || "",
-          billing_person_phone: client.billing_person_phone || "",
-        });
-      } else {
-        setSelectedTags([]);
-        form.reset({
-          name: "",
-          nip: "",
-          address: "",
-          city: "",
-          postal_code: "",
-          country: "Poland",
-          general_email: "",
-          general_phone: "",
-          website_url: "",
-          primary_contact_name: "",
-          primary_contact_email: "",
-          primary_contact_phone: "",
-          billing_person_name: "",
-          billing_person_email: "",
-          billing_person_phone: "",
-        });
-      }
+        billing_person_name: client.billing_person_name || "",
+        billing_person_email: client.billing_person_email || "",
+        billing_person_phone: client.billing_person_phone || "",
+        balance: client.balance || 0,
+        status: client.status || "active",
+      });
+    } else {
+      setSelectedTags([]);
+      form.reset({
+        name: "",
+        nip: "",
+        address: "",
+        city: "",
+        postal_code: "",
+        country: "Poland",
+        general_email: "",
+        general_phone: "",
+        website_url: "",
+        primary_contact_name: "",
+        primary_contact_email: "",
+        primary_contact_phone: "",
+        billing_person_name: "",
+        billing_person_email: "",
+        billing_person_phone: "",
+        balance: 0,
+        status: "active",
+      });
+    }
     }
   }, [open, client]);
 
@@ -188,6 +205,8 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
         billing_person_name: values.billing_person_name || null,
         billing_person_email: values.billing_person_email || null,
         billing_person_phone: values.billing_person_phone || null,
+        balance: values.balance || 0,
+        status: values.status,
       };
 
       if (isEditMode) {
@@ -518,6 +537,58 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
                         <FormControl>
                           <Input type="tel" placeholder="+48 123 456 789" {...field} />
                         </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Financial and Status */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Financial & Status</h3>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="balance"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Balance (PLN)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            placeholder="0.00"
+                            {...field}
+                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="status"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Status</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="active">Active</SelectItem>
+                            <SelectItem value="inactive">Inactive</SelectItem>
+                            <SelectItem value="blocked">Blocked</SelectItem>
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}
