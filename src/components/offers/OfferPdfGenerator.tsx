@@ -474,36 +474,36 @@ export const OfferPdfGenerator = ({
                       minute: '2-digit'
                     })}
                   </TableCell>
-                  <TableCell>
-                    <div className="flex gap-2 justify-end items-center">
-                      <Button
-                        key={`preview-${version.id}`}
-                        variant="outline"
-                        size="sm"
-                        onClick={() => previewPDF(version)}
-                      >
-                        <Eye className="w-4 h-4" />
-                        <span className="ml-2">Preview</span>
-                      </Button>
-                      <Button
-                        key={`email-${version.id}`}
-                        variant="outline"
-                        size="sm"
-                        onClick={() => openEmailDialog(version)}
-                      >
-                        <Mail className="w-4 h-4" />
-                        <span className="ml-2">Email</span>
-                      </Button>
-                      <Button
-                        key={`download-${version.id}`}
-                        variant="default"
-                        size="sm"
-                        onClick={() => downloadPDF(version)}
-                      >
-                        <Download className="w-4 h-4" />
-                        <span className="ml-2">Download</span>
-                      </Button>
-                    </div>
+                  <TableCell className="text-right">
+                    <Button
+                      key={`preview-${version.id}`}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => previewPDF(version)}
+                      className="mr-2"
+                    >
+                      <Eye className="w-4 h-4 mr-2" />
+                      Preview
+                    </Button>
+                    <Button
+                      key={`email-${version.id}`}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openEmailDialog(version)}
+                      className="mr-2"
+                    >
+                      <Mail className="w-4 h-4 mr-2" />
+                      Email
+                    </Button>
+                    <Button
+                      key={`download-${version.id}`}
+                      variant="default"
+                      size="sm"
+                      onClick={() => downloadPDF(version)}
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Download
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}
