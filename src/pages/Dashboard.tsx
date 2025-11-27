@@ -1,8 +1,20 @@
 import { useEffect, useState } from "react";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Bot, FileText, ShoppingCart, TrendingUp, Wrench, Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Bot, FileText, ShoppingCart, TrendingUp, Wrench, CalendarIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
+
+type DateFilter = "this_month" | "last_month" | "ytd" | "custom";
+
+interface DateRange {
+  from: Date;
+  to: Date;
+}
 
 interface Stats {
   openOpportunities: number;
@@ -17,6 +29,11 @@ interface Stats {
 }
 
 const Dashboard = () => {
+  const [activeFilter, setActiveFilter] = useState<DateFilter>("this_month");
+  const [customDateRange, setCustomDateRange] = useState<DateRange>({
+    from: new Date(),
+    to: new Date(),
+  });
   const [stats, setStats] = useState<Stats>({
     openOpportunities: 0,
     totalRobotsSold: 0,
@@ -29,19 +46,55 @@ const Dashboard = () => {
     awaitingImplementation: 0,
   });
 
+  const getDateRange = (): { start: string; end: string } => {
+    const now = new Date();
+    let start: Date;
+    let end: Date = now;
+
+    switch (activeFilter) {
+      case "this_month":
+        start = new Date(now.getFullYear(), now.getMonth(), 1);
+        break;
+      case "last_month":
+        start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        end = new Date(now.getFullYear(), now.getMonth(), 0);
+        break;
+      case "ytd":
+        start = new Date(now.getFullYear(), 0, 1);
+        break;
+      case "custom":
+        start = customDateRange.from;
+        end = customDateRange.to;
+        break;
+      default:
+        start = new Date(now.getFullYear(), now.getMonth(), 1);
+    }
+
+    return {
+      start: start.toISOString(),
+      end: end.toISOString(),
+    };
+  };
+
   useEffect(() => {
     const fetchStats = async () => {
+      const { start, end } = getDateRange();
+
       // Fetch open opportunities (offers in sent status)
       const { count: openOpportunities } = await supabase
         .from("offers")
         .select("*", { count: "exact", head: true })
-        .eq("status", "sent");
+        .eq("status", "sent")
+        .gte("created_at", start)
+        .lte("created_at", end);
 
       // Fetch total robots sold
       const { count: totalRobotsSold } = await supabase
         .from("robots")
         .select("*", { count: "exact", head: true })
-        .not("client_id", "is", null);
+        .not("client_id", "is", null)
+        .gte("delivery_date", start)
+        .lte("delivery_date", end);
 
       // Fetch robots sold YTD
       const yearStart = new Date(new Date().getFullYear(), 0, 1).toISOString();
@@ -49,40 +102,53 @@ const Dashboard = () => {
         .from("robots")
         .select("*", { count: "exact", head: true })
         .not("client_id", "is", null)
-        .gte("delivery_date", yearStart);
+        .gte("delivery_date", yearStart)
+        .lte("delivery_date", end);
 
       // Fetch deployed robots
       const { count: deployedRobots } = await supabase
         .from("robots")
         .select("*", { count: "exact", head: true })
-        .eq("status", "delivered");
+        .eq("status", "delivered")
+        .gte("delivery_date", start)
+        .lte("delivery_date", end);
 
       // Fetch service tickets stats
       const { count: totalServiceTickets } = await supabase
         .from("service_tickets")
-        .select("*", { count: "exact", head: true });
+        .select("*", { count: "exact", head: true })
+        .gte("created_at", start)
+        .lte("created_at", end);
 
       const { count: openTickets } = await supabase
         .from("service_tickets")
         .select("*", { count: "exact", head: true })
-        .in("status", ["open", "in_progress"]);
+        .in("status", ["open", "in_progress"])
+        .gte("created_at", start)
+        .lte("created_at", end);
 
       const { count: closedTickets } = await supabase
         .from("service_tickets")
         .select("*", { count: "exact", head: true })
-        .in("status", ["resolved", "closed"]);
+        .in("status", ["resolved", "closed"])
+        .gte("resolved_at", start)
+        .lte("resolved_at", end);
 
       // Fetch implementation stats
       const { count: implementedRobots } = await supabase
         .from("robots")
         .select("*", { count: "exact", head: true })
-        .in("status", ["delivered", "in_service"]);
+        .in("status", ["delivered", "in_service"])
+        .gte("delivery_date", start)
+        .lte("delivery_date", end);
 
       const { count: awaitingImplementation } = await supabase
         .from("robots")
         .select("*", { count: "exact", head: true })
         .eq("status", "in_warehouse")
-        .not("client_id", "is", null);
+        .not("client_id", "is", null)
+        .gte("warehouse_intake_date", start)
+        .lte("warehouse_intake_date", end);
 
       setStats({
         openOpportunities: openOpportunities || 0,
@@ -98,7 +164,7 @@ const Dashboard = () => {
     };
 
     fetchStats();
-  }, []);
+  }, [activeFilter, customDateRange]);
 
   const statCards = [
     { title: "Open Opportunities", value: stats.openOpportunities, icon: ShoppingCart, color: "text-primary" },
@@ -118,6 +184,61 @@ const Dashboard = () => {
         <div>
           <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
           <p className="text-muted-foreground">Welcome to your RoboCRM overview</p>
+        </div>
+
+        {/* Date Filter Buttons */}
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant={activeFilter === "this_month" ? "default" : "outline"}
+            onClick={() => setActiveFilter("this_month")}
+          >
+            This Month
+          </Button>
+          <Button
+            variant={activeFilter === "last_month" ? "default" : "outline"}
+            onClick={() => setActiveFilter("last_month")}
+          >
+            Last Month
+          </Button>
+          <Button
+            variant={activeFilter === "ytd" ? "default" : "outline"}
+            onClick={() => setActiveFilter("ytd")}
+          >
+            YTD
+          </Button>
+          
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant={activeFilter === "custom" ? "default" : "outline"}
+                className={cn("justify-start text-left font-normal")}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {activeFilter === "custom" ? (
+                  <>
+                    {format(customDateRange.from, "PP")} - {format(customDateRange.to, "PP")}
+                  </>
+                ) : (
+                  "Custom Range"
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="range"
+                selected={{ from: customDateRange.from, to: customDateRange.to }}
+                onSelect={(range) => {
+                  if (range?.from && range?.to) {
+                    setCustomDateRange({ from: range.from, to: range.to });
+                    setActiveFilter("custom");
+                  }
+                }}
+                initialFocus
+                numberOfMonths={2}
+                className="pointer-events-auto"
+              />
+            </PopoverContent>
+          </Popover>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -144,7 +265,3 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
-
-function cn(...classes: string[]) {
-  return classes.filter(Boolean).join(" ");
-}
