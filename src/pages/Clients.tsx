@@ -2,10 +2,11 @@ import { Layout } from "@/components/Layout";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Plus, Search, ArrowUpDown, ArrowUp, ArrowDown, Eye } from "lucide-react";
+import { Plus, Search, ArrowUpDown, ArrowUp, ArrowDown, Eye, Edit } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { ClientFormDialog } from "@/components/clients/ClientFormDialog";
 import {
   Table,
   TableBody,
@@ -40,6 +41,8 @@ const Clients = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState<"name" | "city" | "created_at">("name");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [isClientDialogOpen, setIsClientDialogOpen] = useState(false);
+  const [editingClient, setEditingClient] = useState<any>(null);
   const navigate = useNavigate();
   const recordsPerPage = 20;
 
@@ -103,7 +106,7 @@ const Clients = () => {
             <h1 className="text-3xl font-bold text-foreground">Clients</h1>
             <p className="text-muted-foreground">Manage your client relationships</p>
           </div>
-          <Button>
+          <Button onClick={() => setIsClientDialogOpen(true)}>
             <Plus className="w-4 h-4 mr-2" />
             Add Client
           </Button>
@@ -163,7 +166,7 @@ const Clients = () => {
                     {getSortIcon("created_at")}
                   </Button>
                 </TableHead>
-                <TableHead className="w-20">Actions</TableHead>
+                <TableHead className="w-32">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -198,14 +201,27 @@ const Clients = () => {
                         : "-"}
                     </TableCell>
                     <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0"
-                        onClick={() => navigate(`/clients/${client.id}`)}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          onClick={() => navigate(`/clients/${client.id}`)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          onClick={() => {
+                            setEditingClient(client);
+                            setIsClientDialogOpen(true);
+                          }}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
@@ -244,6 +260,19 @@ const Clients = () => {
           </Pagination>
         )}
       </div>
+
+      <ClientFormDialog
+        open={isClientDialogOpen}
+        onOpenChange={(open) => {
+          setIsClientDialogOpen(open);
+          if (!open) setEditingClient(null);
+        }}
+        onSuccess={() => {
+          fetchClients();
+          setEditingClient(null);
+        }}
+        client={editingClient}
+      />
     </Layout>
   );
 };
