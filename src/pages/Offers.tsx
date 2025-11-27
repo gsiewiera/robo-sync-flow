@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { ArrowUpDown, ArrowUp, ArrowDown, Eye, ChevronDown, Plus, Edit } from "lucide-react";
-import { NewOfferSheet } from "@/components/offers/NewOfferSheet";
+import { NewOfferDialog } from "@/components/offers/NewOfferDialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Popover,
@@ -494,7 +494,7 @@ const Offers = () => {
         )}
       </div>
 
-      <NewOfferSheet
+      <NewOfferDialog
         open={isNewOfferOpen}
         onOpenChange={handleCloseSheet}
         onSuccess={() => {
