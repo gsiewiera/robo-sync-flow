@@ -3,9 +3,10 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { CheckCircle, Circle, MoreHorizontal, Eye, Edit, Trash, Filter, X, ChevronDown } from "lucide-react";
+import { CheckCircle, Circle, MoreHorizontal, Eye, Edit, Filter, X, ChevronDown } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { TaskFormSheet } from "@/components/tasks/TaskFormSheet";
 import {
   Table,
   TableBody,
@@ -72,6 +73,7 @@ const Tasks = () => {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [employees, setEmployees] = useState<Profile[]>([]);
   const [taskTitles, setTaskTitles] = useState<TaskTitleDictionary[]>([]);
+  const [isFormOpen, setIsFormOpen] = useState(false);
   const recordsPerPage = 20;
 
   useEffect(() => {
@@ -214,10 +216,16 @@ const Tasks = () => {
             <h1 className="text-3xl font-bold text-foreground">Tasks</h1>
             <p className="text-muted-foreground">Manage your daily tasks and follow-ups</p>
           </div>
-          <Button size="lg" className="h-11 px-6">
+          <Button size="lg" className="h-11 px-6" onClick={() => setIsFormOpen(true)}>
             New Task
           </Button>
         </div>
+
+        <TaskFormSheet
+          open={isFormOpen}
+          onOpenChange={setIsFormOpen}
+          onSuccess={fetchTasks}
+        />
 
         {/* Filters */}
         <Card className="p-4">
@@ -412,10 +420,6 @@ const Tasks = () => {
                           <DropdownMenuItem>
                             <Edit className="mr-2 h-4 w-4" />
                             Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive">
-                            <Trash className="mr-2 h-4 w-4" />
-                            Delete
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
