@@ -41,6 +41,11 @@ interface TaskTitleDictionary {
   title: string;
 }
 
+interface MeetingTypeDictionary {
+  id: string;
+  type_name: string;
+}
+
 interface Profile {
   id: string;
   full_name: string;
@@ -54,6 +59,12 @@ interface Client {
 interface Contract {
   id: string;
   contract_number: string;
+  client_id: string;
+}
+
+interface Offer {
+  id: string;
+  offer_number: string;
   client_id: string;
 }
 
@@ -74,6 +85,13 @@ const taskFormSchema = z.object({
   client_id: z.string().optional(),
   contract_id: z.string().optional(),
   robot_ids: z.array(z.string()).optional(),
+  offer_id: z.string().optional(),
+  meeting_type: z.string().optional(),
+  person_to_meet: z.string().optional(),
+  meeting_date_time: z.date().optional(),
+  place: z.string().optional(),
+  reminder_date_time: z.date().optional(),
+  notes: z.string().optional(),
 });
 
 type TaskFormValues = z.infer<typeof taskFormSchema>;
@@ -88,11 +106,14 @@ interface TaskFormSheetProps {
 
 export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "create" }: TaskFormSheetProps) => {
   const [taskTitles, setTaskTitles] = useState<TaskTitleDictionary[]>([]);
+  const [meetingTypes, setMeetingTypes] = useState<MeetingTypeDictionary[]>([]);
   const [employees, setEmployees] = useState<Profile[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [contracts, setContracts] = useState<Contract[]>([]);
+  const [offers, setOffers] = useState<Offer[]>([]);
   const [robots, setRobots] = useState<Robot[]>([]);
   const [filteredContracts, setFilteredContracts] = useState<Contract[]>([]);
+  const [filteredOffers, setFilteredOffers] = useState<Offer[]>([]);
   const [filteredRobots, setFilteredRobots] = useState<Robot[]>([]);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -110,14 +131,23 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
       client_id: undefined,
       contract_id: undefined,
       robot_ids: [],
+      offer_id: undefined,
+      meeting_type: undefined,
+      person_to_meet: "",
+      meeting_date_time: undefined,
+      place: "",
+      reminder_date_time: undefined,
+      notes: "",
     },
   });
 
   useEffect(() => {
     fetchTaskTitles();
+    fetchMeetingTypes();
     fetchEmployees();
     fetchClients();
     fetchContracts();
+    fetchOffers();
     fetchRobots();
     checkUserRole();
   }, []);
@@ -131,17 +161,31 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
     }
   }, [taskId, open, mode]);
 
-  // Filter contracts and robots when client changes
+  // Filter contracts, offers, and robots when client changes
   const selectedClientId = form.watch("client_id");
+  const selectedTaskTitle = form.watch("title");
+  const selectedMeetingDateTime = form.watch("meeting_date_time");
+
   useEffect(() => {
     if (selectedClientId) {
       setFilteredContracts(contracts.filter(c => c.client_id === selectedClientId));
+      setFilteredOffers(offers.filter(o => o.client_id === selectedClientId));
       setFilteredRobots(robots.filter(r => r.client_id === selectedClientId));
     } else {
       setFilteredContracts([]);
+      setFilteredOffers([]);
       setFilteredRobots([]);
     }
-  }, [selectedClientId, contracts, robots]);
+  }, [selectedClientId, contracts, offers, robots]);
+
+  // Auto-calculate reminder date (3 hours before meeting) for Client meeting and Site Visit
+  useEffect(() => {
+    if (selectedMeetingDateTime && (selectedTaskTitle === "Client meeting" || selectedTaskTitle === "Site Visit")) {
+      const reminderDate = new Date(selectedMeetingDateTime);
+      reminderDate.setHours(reminderDate.getHours() - 3);
+      form.setValue("reminder_date_time", reminderDate);
+    }
+  }, [selectedMeetingDateTime, selectedTaskTitle]);
 
   const checkUserRole = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -166,6 +210,17 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
 
     if (data) {
       setTaskTitles(data);
+    }
+  };
+
+  const fetchMeetingTypes = async () => {
+    const { data } = await supabase
+      .from("meeting_type_dictionary")
+      .select("id, type_name")
+      .order("type_name");
+
+    if (data) {
+      setMeetingTypes(data);
     }
   };
 
@@ -199,6 +254,17 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
 
     if (data) {
       setContracts(data);
+    }
+  };
+
+  const fetchOffers = async () => {
+    const { data } = await supabase
+      .from("offers")
+      .select("id, offer_number, client_id")
+      .order("offer_number");
+
+    if (data) {
+      setOffers(data);
     }
   };
 
@@ -245,6 +311,13 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
         client_id: task.client_id || undefined,
         contract_id: task.contract_id || undefined,
         robot_ids: taskRobots?.map(tr => tr.robot_id) || [],
+        offer_id: task.offer_id || undefined,
+        meeting_type: task.meeting_type || undefined,
+        person_to_meet: task.person_to_meet || "",
+        meeting_date_time: task.meeting_date_time ? new Date(task.meeting_date_time) : undefined,
+        place: task.place || "",
+        reminder_date_time: task.reminder_date_time ? new Date(task.reminder_date_time) : undefined,
+        notes: task.notes || "",
       });
     } catch (error) {
       toast({
@@ -269,11 +342,18 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
             description: values.description || null,
             due_date: values.due_date ? values.due_date.toISOString() : null,
             status: values.status,
-          assigned_to: values.assigned_to || null,
-          client_id: values.client_id || null,
-          contract_id: values.contract_id || null,
-        })
-        .eq("id", taskId);
+            assigned_to: values.assigned_to || null,
+            client_id: values.client_id || null,
+            contract_id: values.contract_id || null,
+            offer_id: values.offer_id || null,
+            meeting_type: values.meeting_type || null,
+            person_to_meet: values.person_to_meet || null,
+            meeting_date_time: values.meeting_date_time ? values.meeting_date_time.toISOString() : null,
+            place: values.place || null,
+            reminder_date_time: values.reminder_date_time ? values.reminder_date_time.toISOString() : null,
+            notes: values.notes || null,
+          })
+          .eq("id", taskId);
 
         if (taskError) throw taskError;
 
@@ -315,6 +395,13 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
             assigned_to: values.assigned_to || null,
             client_id: values.client_id || null,
             contract_id: values.contract_id || null,
+            offer_id: values.offer_id || null,
+            meeting_type: values.meeting_type || null,
+            person_to_meet: values.person_to_meet || null,
+            meeting_date_time: values.meeting_date_time ? values.meeting_date_time.toISOString() : null,
+            place: values.place || null,
+            reminder_date_time: values.reminder_date_time ? values.reminder_date_time.toISOString() : null,
+            notes: values.notes || null,
           })
           .select()
           .single();
@@ -357,6 +444,20 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
 
   const canAssignEmployee = userRole === "admin" || userRole === "manager";
   const isViewMode = mode === "view" && !isEditing;
+
+  // Field visibility logic based on task type
+  const showClientField = ["Client meeting", "Contract review", "Demo presentation", "Follow up call", "Price negotiation", "Offer (proposal) preparation", "Site Visit", "Technical support"].includes(selectedTaskTitle);
+  const showOfferField = ["Client meeting", "Demo presentation", "Follow up call", "Price negotiation", "Site Visit"].includes(selectedTaskTitle);
+  const showMeetingTypeField = ["Client meeting", "Site Visit"].includes(selectedTaskTitle);
+  const showPersonToMeetField = ["Client meeting", "Demo presentation", "Follow up call", "Price negotiation", "Offer (proposal) preparation", "Site Visit"].includes(selectedTaskTitle);
+  const showMeetingDateTimeField = ["Client meeting", "Site Visit"].includes(selectedTaskTitle);
+  const showPlaceField = ["Client meeting", "Site Visit"].includes(selectedTaskTitle);
+  const showReminderField = ["Client meeting", "Site Visit"].includes(selectedTaskTitle);
+  const showContractField = ["Contract review", "Technical support"].includes(selectedTaskTitle);
+  const showRobotsField = ["Demo presentation"].includes(selectedTaskTitle);
+  const showDueDateField = ["Contract review", "Documentation update", "Follow up call", "Price negotiation", "Offer (proposal) preparation", "Training session"].includes(selectedTaskTitle);
+  const showNotesField = true; // All task types can have notes
+  const clientIsOptional = selectedTaskTitle === "Documentation update";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -412,112 +513,376 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="client_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Customer</FormLabel>
-                  <Select 
-                    onValueChange={(value) => {
-                      field.onChange(value);
-                      // Reset contract and robots when client changes
-                      form.setValue("contract_id", undefined);
-                      form.setValue("robot_ids", []);
-                    }} 
-                    value={field.value}
-                    disabled={isViewMode}
-                  >
+            {showClientField && (
+              <FormField
+                control={form.control}
+                name="client_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Customer {clientIsOptional && "(optional)"}</FormLabel>
+                    <Select 
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                        // Reset contract, offer, and robots when client changes
+                        form.setValue("contract_id", undefined);
+                        form.setValue("offer_id", undefined);
+                        form.setValue("robot_ids", []);
+                      }} 
+                      value={field.value}
+                      disabled={isViewMode}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder={`Select customer ${clientIsOptional ? "(optional)" : ""}`} />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {clients.map((client) => (
+                          <SelectItem key={client.id} value={client.id}>
+                            {client.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {selectedClientId && showOfferField && filteredOffers.length > 0 && (
+              <FormField
+                control={form.control}
+                name="offer_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Offer</FormLabel>
+                    <Select 
+                      onValueChange={field.onChange} 
+                      value={field.value}
+                      disabled={isViewMode}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select offer (optional)" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {filteredOffers.map((offer) => (
+                          <SelectItem key={offer.id} value={offer.id}>
+                            {offer.offer_number}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {selectedClientId && showContractField && filteredContracts.length > 0 && (
+              <FormField
+                control={form.control}
+                name="contract_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Contract</FormLabel>
+                    <Select 
+                      onValueChange={field.onChange} 
+                      value={field.value}
+                      disabled={isViewMode}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select contract" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {filteredContracts.map((contract) => (
+                          <SelectItem key={contract.id} value={contract.id}>
+                            {contract.contract_number}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {showMeetingTypeField && (
+              <FormField
+                control={form.control}
+                name="meeting_type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Meeting Type</FormLabel>
+                    <Select 
+                      onValueChange={field.onChange} 
+                      value={field.value}
+                      disabled={isViewMode}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select meeting type" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {meetingTypes.map((type) => (
+                          <SelectItem key={type.id} value={type.type_name}>
+                            {type.type_name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {showPersonToMeetField && (
+              <FormField
+                control={form.control}
+                name="person_to_meet"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Person to Meet</FormLabel>
                     <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select customer (optional)" />
-                      </SelectTrigger>
+                      <Input {...field} disabled={isViewMode} placeholder="Enter person name" />
                     </FormControl>
-                    <SelectContent>
-                      {clients.map((client) => (
-                        <SelectItem key={client.id} value={client.id}>
-                          {client.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
-            {selectedClientId && (
-              <>
-                {filteredContracts.length > 0 && (
-                  <FormField
-                    control={form.control}
-                    name="contract_id"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Contract</FormLabel>
-                        <Select 
-                          onValueChange={field.onChange} 
-                          value={field.value}
+            {showMeetingDateTimeField && (
+              <FormField
+                control={form.control}
+                name="meeting_date_time"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Meeting Date & Time</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            disabled={isViewMode}
+                            className={cn(
+                              "pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value ? (
+                              format(field.value, "PPP HH:mm")
+                            ) : (
+                              <span>Pick a date and time</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
                           disabled={isViewMode}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select contract (optional)" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {filteredContracts.map((contract) => (
-                              <SelectItem key={contract.id} value={contract.id}>
-                                {contract.contract_number}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
-
-                {filteredRobots.length > 0 && (
-                  <FormField
-                    control={form.control}
-                    name="robot_ids"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Robots (Select one or more)</FormLabel>
-                        <div className="space-y-2 border rounded-md p-3 max-h-[200px] overflow-y-auto">
-                          {filteredRobots.map((robot) => (
-                            <div key={robot.id} className="flex items-center space-x-2">
-                              <Checkbox
-                                checked={field.value?.includes(robot.id)}
-                                disabled={isViewMode}
-                                onCheckedChange={(checked) => {
-                                  const current = field.value || [];
-                                  if (checked) {
-                                    field.onChange([...current, robot.id]);
-                                  } else {
-                                    field.onChange(current.filter(id => id !== robot.id));
-                                  }
-                                }}
-                              />
-                              <label className="text-sm flex-1 cursor-pointer">
-                                <span className="font-medium">{robot.type}</span>
-                                {" - "}
-                                <span>{robot.model}</span>
-                                {" ("}
-                                <span className="text-muted-foreground">{robot.serial_number}</span>
-                                {")"}
-                              </label>
-                            </div>
-                          ))}
+                          initialFocus
+                        />
+                        <div className="p-3 border-t">
+                          <Input
+                            type="time"
+                            value={field.value ? format(field.value, "HH:mm") : ""}
+                            onChange={(e) => {
+                              const [hours, minutes] = e.target.value.split(":");
+                              const newDate = field.value ? new Date(field.value) : new Date();
+                              newDate.setHours(parseInt(hours), parseInt(minutes));
+                              field.onChange(newDate);
+                            }}
+                            disabled={isViewMode}
+                          />
                         </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
                 )}
-              </>
+              />
+            )}
+
+            {showPlaceField && (
+              <FormField
+                control={form.control}
+                name="place"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Place</FormLabel>
+                    <FormControl>
+                      <Input {...field} disabled={isViewMode} placeholder="Enter location" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {showReminderField && (
+              <FormField
+                control={form.control}
+                name="reminder_date_time"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Reminder Date & Time</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            disabled={isViewMode}
+                            className={cn(
+                              "pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value ? (
+                              format(field.value, "PPP HH:mm")
+                            ) : (
+                              <span>Auto-set 3 hours before meeting</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          disabled={isViewMode}
+                          initialFocus
+                        />
+                        <div className="p-3 border-t">
+                          <Input
+                            type="time"
+                            value={field.value ? format(field.value, "HH:mm") : ""}
+                            onChange={(e) => {
+                              const [hours, minutes] = e.target.value.split(":");
+                              const newDate = field.value ? new Date(field.value) : new Date();
+                              newDate.setHours(parseInt(hours), parseInt(minutes));
+                              field.onChange(newDate);
+                            }}
+                            disabled={isViewMode}
+                          />
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {selectedClientId && showRobotsField && filteredRobots.length > 0 && (
+              <FormField
+                control={form.control}
+                name="robot_ids"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Robots (Select one or more)</FormLabel>
+                    <div className="space-y-2 border rounded-md p-3 max-h-[200px] overflow-y-auto">
+                      {filteredRobots.map((robot) => (
+                        <div key={robot.id} className="flex items-center space-x-2">
+                          <Checkbox
+                            checked={field.value?.includes(robot.id)}
+                            disabled={isViewMode}
+                            onCheckedChange={(checked) => {
+                              const current = field.value || [];
+                              if (checked) {
+                                field.onChange([...current, robot.id]);
+                              } else {
+                                field.onChange(current.filter(id => id !== robot.id));
+                              }
+                            }}
+                          />
+                          <label className="text-sm flex-1 cursor-pointer">
+                            <span className="font-medium">{robot.type}</span>
+                            {" - "}
+                            <span>{robot.model}</span>
+                            {" ("}
+                            <span className="text-muted-foreground">{robot.serial_number}</span>
+                            {")"}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {showDueDateField && (
+              <FormField
+                control={form.control}
+                name="due_date"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Due Date</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            disabled={isViewMode}
+                            className={cn(
+                              "pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value ? (
+                              format(field.value, "PPP")
+                            ) : (
+                              <span>Pick a due date</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          disabled={isViewMode}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {showNotesField && (
+              <FormField
+                control={form.control}
+                name="notes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Notes</FormLabel>
+                    <FormControl>
+                      <Textarea {...field} disabled={isViewMode} placeholder="Add notes..." rows={3} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             )}
 
             <FormField

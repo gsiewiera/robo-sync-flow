@@ -169,6 +169,24 @@ export type Database = {
           },
         ]
       }
+      meeting_type_dictionary: {
+        Row: {
+          created_at: string | null
+          id: string
+          type_name: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          type_name: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          type_name?: string
+        }
+        Relationships: []
+      }
       offer_items: {
         Row: {
           created_at: string | null
@@ -470,8 +488,13 @@ export type Database = {
           description: string | null
           due_date: string | null
           id: string
+          meeting_date_time: string | null
+          meeting_type: string | null
           notes: string | null
           offer_id: string | null
+          person_to_meet: string | null
+          place: string | null
+          reminder_date_time: string | null
           status: Database["public"]["Enums"]["task_status"] | null
           title: string
           updated_at: string | null
@@ -486,8 +509,13 @@ export type Database = {
           description?: string | null
           due_date?: string | null
           id?: string
+          meeting_date_time?: string | null
+          meeting_type?: string | null
           notes?: string | null
           offer_id?: string | null
+          person_to_meet?: string | null
+          place?: string | null
+          reminder_date_time?: string | null
           status?: Database["public"]["Enums"]["task_status"] | null
           title: string
           updated_at?: string | null
@@ -502,8 +530,13 @@ export type Database = {
           description?: string | null
           due_date?: string | null
           id?: string
+          meeting_date_time?: string | null
+          meeting_type?: string | null
           notes?: string | null
           offer_id?: string | null
+          person_to_meet?: string | null
+          place?: string | null
+          reminder_date_time?: string | null
           status?: Database["public"]["Enums"]["task_status"] | null
           title?: string
           updated_at?: string | null
