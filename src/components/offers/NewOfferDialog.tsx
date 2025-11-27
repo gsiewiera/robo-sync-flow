@@ -45,6 +45,7 @@ const formSchema = z.object({
   initial_payment: z.number().min(0).default(0),
   prepayment_type: z.enum(["none", "percent", "amount"]).default("none"),
   prepayment_value: z.number().min(0).optional(),
+  status: z.enum(["draft", "sent", "modified", "accepted", "rejected"]).default("draft"),
 });
 
 interface RobotSelection {
@@ -118,6 +119,7 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer }: NewOffe
       warranty_period: 12,
       initial_payment: 0,
       prepayment_type: "none",
+      status: "draft",
     },
   });
 
@@ -133,6 +135,7 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer }: NewOffe
           warranty_period: 12,
           initial_payment: 0,
           prepayment_type: "none",
+          status: "draft",
         });
         setRobotSelections([]);
       }
@@ -192,6 +195,7 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer }: NewOffe
       initial_payment: offer.initial_payment,
       prepayment_type: prepaymentType as "none" | "percent" | "amount",
       prepayment_value: offer.prepayment_percent || offer.prepayment_amount || 0,
+      status: offer.status as "draft" | "sent" | "modified" | "accepted" | "rejected",
     });
 
     // Populate robot selections
@@ -338,6 +342,107 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer }: NewOffe
     return robotTotal - prepaymentAmount - initialPayment;
   };
 
+  const createContractFromOffer = async (
+    offerId: string,
+    clientId: string,
+    items: RobotSelection[]
+  ) => {
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      
+      // Generate contract number
+      const { data: lastContract } = await supabase
+        .from("contracts")
+        .select("contract_number")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      let contractNumber = "CON-00001";
+      if (lastContract?.contract_number) {
+        const match = lastContract.contract_number.match(/\d+$/);
+        if (match) {
+          const nextNumber = parseInt(match[0]) + 1;
+          contractNumber = `CON-${String(nextNumber).padStart(5, "0")}`;
+        }
+      }
+
+      // Calculate contract details
+      const leaseItems = items.filter(item => item.contract_type === "lease");
+      const hasLease = leaseItems.length > 0;
+      
+      let monthlyPayment = 0;
+      let endDate = null;
+      let paymentModel = "purchase";
+      
+      if (hasLease) {
+        const totalPrice = leaseItems.reduce((sum, item) => sum + item.price, 0);
+        const leaseMonths = leaseItems[0].lease_months || 12;
+        monthlyPayment = totalPrice / leaseMonths;
+        paymentModel = "lease";
+        
+        const start = new Date();
+        start.setMonth(start.getMonth() + leaseMonths);
+        endDate = start.toISOString().split('T')[0];
+      }
+
+      // Fetch billing schedule from settings
+      const { data: settingsData } = await supabase
+        .from("system_settings")
+        .select("value")
+        .eq("key", "lease_billing_schedule")
+        .maybeSingle();
+      
+      const billingSchedule = settingsData?.value || "monthly";
+
+      // Create contract
+      const { data: contract, error: contractError } = await supabase
+        .from("contracts")
+        .insert([{
+          contract_number: contractNumber,
+          client_id: clientId,
+          status: "draft",
+          start_date: new Date().toISOString().split('T')[0],
+          end_date: endDate,
+          monthly_payment: monthlyPayment,
+          payment_model: paymentModel,
+          billing_schedule: billingSchedule,
+          created_by: session?.session?.user?.id,
+        }])
+        .select()
+        .single();
+
+      if (contractError) throw contractError;
+
+      // Show success message with link to contract
+      toast({
+        title: "Offer Accepted & Contract Created",
+        description: (
+          <div className="space-y-2">
+            <p>Contract {contractNumber} has been created from this offer.</p>
+            <Button
+              variant="link"
+              className="p-0 h-auto text-primary"
+              onClick={() => {
+                window.location.href = `/contracts/${contract.id}`;
+              }}
+            >
+              View Contract →
+            </Button>
+          </div>
+        ),
+        duration: 10000,
+      });
+    } catch (error: any) {
+      console.error("Error creating contract:", error);
+      toast({
+        title: "Contract Creation Failed",
+        description: "Offer was updated but contract creation failed: " + error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (robotSelections.length === 0) {
       toast({
@@ -390,10 +495,16 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer }: NewOffe
       };
 
       if (isEditMode && offer) {
+        // Check if status changed to accepted
+        const statusChangedToAccepted = offer.status !== "accepted" && values.status === "accepted";
+        
         // Update existing offer
         const { error: offerError } = await supabase
           .from("offers")
-          .update(offerData)
+          .update({
+            ...offerData,
+            status: values.status,
+          })
           .eq("id", offer.id);
 
         if (offerError) throw offerError;
@@ -424,10 +535,15 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer }: NewOffe
 
         if (itemsError) throw itemsError;
 
-        toast({
-          title: "Offer updated",
-          description: `Offer ${offer.offer_number} has been updated successfully`,
-        });
+        // Auto-create contract if status changed to accepted
+        if (statusChangedToAccepted) {
+          await createContractFromOffer(offer.id, values.client_id, robotSelections);
+        } else {
+          toast({
+            title: "Offer updated",
+            description: `Offer ${offer.offer_number} has been updated successfully`,
+          });
+        }
       } else {
         // Create new offer
         const offerNumber = `OFF-${Date.now()}`;
@@ -541,29 +657,58 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer }: NewOffe
                 />
               </div>
 
-              {/* Currency */}
-              <FormField
-                control={form.control}
-                name="currency"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Currency *</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="PLN">PLN</SelectItem>
-                        <SelectItem value="USD">USD</SelectItem>
-                        <SelectItem value="EUR">EUR</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
+              {/* Currency and Status */}
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="currency"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Currency *</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="PLN">PLN</SelectItem>
+                          <SelectItem value="USD">USD</SelectItem>
+                          <SelectItem value="EUR">EUR</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {isEditMode && (
+                  <FormField
+                    control={form.control}
+                    name="status"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Status *</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="draft">Draft</SelectItem>
+                            <SelectItem value="sent">Sent</SelectItem>
+                            <SelectItem value="modified">Modified</SelectItem>
+                            <SelectItem value="accepted">Accepted</SelectItem>
+                            <SelectItem value="rejected">Rejected</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 )}
-              />
+              </div>
 
               {/* Robots Section */}
               <div className="space-y-4">
