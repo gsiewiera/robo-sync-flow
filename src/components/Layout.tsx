@@ -117,10 +117,10 @@ export const Layout = ({ children }: LayoutProps) => {
       <div className="flex min-h-screen w-full">
         <AppSidebar />
         <main className="flex-1 overflow-auto">
-          <div className="sticky top-0 z-10 flex h-14 items-center border-b bg-background px-4">
+          <div className="sticky top-0 z-10 flex h-14 items-center border-b bg-background pl-0 pr-4">
             <SidebarTrigger />
           </div>
-          <div className="pr-6 pb-6 pt-6 max-w-7xl">
+          <div className="pl-0 pr-6 pb-6 pt-6 max-w-7xl">
             {children}
           </div>
         </main>
