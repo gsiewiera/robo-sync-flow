@@ -2,8 +2,8 @@ import { Layout } from "@/components/Layout";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { CheckCircle, Circle, MoreHorizontal, Eye, Edit, Trash, Filter, X } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { CheckCircle, Circle, MoreHorizontal, Eye, Edit, Trash, Filter, X, ChevronDown } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -29,12 +29,10 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface Task {
   id: string;
@@ -68,9 +66,9 @@ const Tasks = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [forToday, setForToday] = useState(false);
-  const [titleFilter, setTitleFilter] = useState<string>("all");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [assignedToFilter, setAssignedToFilter] = useState<string>("all");
+  const [titleFilters, setTitleFilters] = useState<string[]>([]);
+  const [statusFilters, setStatusFilters] = useState<string[]>([]);
+  const [assignedToFilters, setAssignedToFilters] = useState<string[]>([]);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [employees, setEmployees] = useState<Profile[]>([]);
   const [taskTitles, setTaskTitles] = useState<TaskTitleDictionary[]>([]);
@@ -85,7 +83,7 @@ const Tasks = () => {
   useEffect(() => {
     fetchTasks();
     setCurrentPage(1);
-  }, [forToday, titleFilter, statusFilter, assignedToFilter]);
+  }, [forToday, titleFilters, statusFilters, assignedToFilters]);
 
   const checkUserRole = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -141,16 +139,16 @@ const Tasks = () => {
         .lt("due_date", tomorrow.toISOString());
     }
 
-    if (titleFilter !== "all") {
-      query = query.eq("title", titleFilter);
+    if (titleFilters.length > 0) {
+      query = query.in("title", titleFilters);
     }
 
-    if (statusFilter !== "all") {
-      query = query.eq("status", statusFilter as Task["status"]);
+    if (statusFilters.length > 0) {
+      query = query.in("status", statusFilters as Task["status"][]);
     }
 
-    if (assignedToFilter !== "all") {
-      query = query.eq("assigned_to", assignedToFilter);
+    if (assignedToFilters.length > 0) {
+      query = query.in("assigned_to", assignedToFilters);
     }
 
     query = query.order("due_date", { ascending: true });
@@ -164,9 +162,27 @@ const Tasks = () => {
 
   const clearFilters = () => {
     setForToday(false);
-    setTitleFilter("all");
-    setStatusFilter("all");
-    setAssignedToFilter("all");
+    setTitleFilters([]);
+    setStatusFilters([]);
+    setAssignedToFilters([]);
+  };
+
+  const toggleTitleFilter = (title: string) => {
+    setTitleFilters(prev =>
+      prev.includes(title) ? prev.filter(t => t !== title) : [...prev, title]
+    );
+  };
+
+  const toggleStatusFilter = (status: string) => {
+    setStatusFilters(prev =>
+      prev.includes(status) ? prev.filter(s => s !== status) : [...prev, status]
+    );
+  };
+
+  const toggleAssignedToFilter = (employeeId: string) => {
+    setAssignedToFilters(prev =>
+      prev.includes(employeeId) ? prev.filter(e => e !== employeeId) : [...prev, employeeId]
+    );
   };
 
   const handleMarkComplete = async (taskId: string) => {
@@ -210,50 +226,98 @@ const Tasks = () => {
               For Today
             </Button>
 
-            <Select value={titleFilter} onValueChange={setTitleFilter}>
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="Task" />
-              </SelectTrigger>
-              <SelectContent className="bg-background">
-                <SelectItem value="all">All Tasks</SelectItem>
-                {taskTitles.map((taskTitle) => (
-                  <SelectItem key={taskTitle.id} value={taskTitle.title}>
-                    {taskTitle.title}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="h-10 w-[200px] justify-between">
+                  Task {titleFilters.length > 0 && `(${titleFilters.length})`}
+                  <ChevronDown className="ml-2 h-4 w-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[200px] p-3 bg-background z-50" align="start">
+                <div className="space-y-2">
+                  {taskTitles.map((taskTitle) => (
+                    <div key={taskTitle.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`title-${taskTitle.id}`}
+                        checked={titleFilters.includes(taskTitle.title)}
+                        onCheckedChange={() => toggleTitleFilter(taskTitle.title)}
+                      />
+                      <label
+                        htmlFor={`title-${taskTitle.id}`}
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      >
+                        {taskTitle.title}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
 
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent className="bg-background">
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="in_progress">In Progress</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="overdue">Overdue</SelectItem>
-              </SelectContent>
-            </Select>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="h-10 w-[180px] justify-between">
+                  Status {statusFilters.length > 0 && `(${statusFilters.length})`}
+                  <ChevronDown className="ml-2 h-4 w-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[180px] p-3 bg-background z-50" align="start">
+                <div className="space-y-2">
+                  {[
+                    { value: "pending", label: "Pending" },
+                    { value: "in_progress", label: "In Progress" },
+                    { value: "completed", label: "Completed" },
+                    { value: "overdue", label: "Overdue" },
+                  ].map((status) => (
+                    <div key={status.value} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`status-${status.value}`}
+                        checked={statusFilters.includes(status.value)}
+                        onCheckedChange={() => toggleStatusFilter(status.value)}
+                      />
+                      <label
+                        htmlFor={`status-${status.value}`}
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      >
+                        {status.label}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
 
             {(userRole === "admin" || userRole === "manager") && (
-              <Select value={assignedToFilter} onValueChange={setAssignedToFilter}>
-                <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="Employee" />
-                </SelectTrigger>
-                <SelectContent className="bg-background">
-                  <SelectItem value="all">All Employees</SelectItem>
-                  {employees.map((employee) => (
-                    <SelectItem key={employee.id} value={employee.id}>
-                      {employee.full_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="h-10 w-[200px] justify-between">
+                    Employee {assignedToFilters.length > 0 && `(${assignedToFilters.length})`}
+                    <ChevronDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[200px] p-3 bg-background z-50" align="start">
+                  <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                    {employees.map((employee) => (
+                      <div key={employee.id} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`employee-${employee.id}`}
+                          checked={assignedToFilters.includes(employee.id)}
+                          onCheckedChange={() => toggleAssignedToFilter(employee.id)}
+                        />
+                        <label
+                          htmlFor={`employee-${employee.id}`}
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                        >
+                          {employee.full_name}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
             )}
 
-            {(forToday || titleFilter !== "all" || statusFilter !== "all" || assignedToFilter !== "all") && (
+            {(forToday || titleFilters.length > 0 || statusFilters.length > 0 || assignedToFilters.length > 0) && (
               <Button variant="ghost" onClick={clearFilters} className="h-10">
                 <X className="mr-2 h-4 w-4" />
                 Clear Filters
