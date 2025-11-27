@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Bot, FileText, ShoppingCart, TrendingUp, Wrench, CalendarIcon } from "lucide-react";
+import { Bot, FileText, ShoppingCart, TrendingUp, Wrench, CalendarIcon, ArrowUp, ArrowDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { format, eachDayOfInterval } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -32,6 +32,20 @@ interface Stats {
   awaitingImplementation: number;
 }
 
+interface StatsWithChange extends Stats {
+  changes: {
+    openOpportunities: number;
+    totalRobotsSold: number;
+    robotsYTD: number;
+    deployedRobots: number;
+    totalServiceTickets: number;
+    openTickets: number;
+    closedTickets: number;
+    implementedRobots: number;
+    awaitingImplementation: number;
+  };
+}
+
 interface ChartData {
   robotsSold: Array<{ date: string; count: number }>;
   serviceTickets: Array<{ date: string; open: number; closed: number }>;
@@ -44,7 +58,7 @@ const Dashboard = () => {
     from: new Date(),
     to: new Date(),
   });
-  const [stats, setStats] = useState<Stats>({
+  const [stats, setStats] = useState<StatsWithChange>({
     openOpportunities: 0,
     totalRobotsSold: 0,
     robotsYTD: 0,
@@ -54,6 +68,17 @@ const Dashboard = () => {
     closedTickets: 0,
     implementedRobots: 0,
     awaitingImplementation: 0,
+    changes: {
+      openOpportunities: 0,
+      totalRobotsSold: 0,
+      robotsYTD: 0,
+      deployedRobots: 0,
+      totalServiceTickets: 0,
+      openTickets: 0,
+      closedTickets: 0,
+      implementedRobots: 0,
+      awaitingImplementation: 0,
+    },
   });
   const [chartData, setChartData] = useState<ChartData>({
     robotsSold: [],
@@ -92,14 +117,61 @@ const Dashboard = () => {
     };
   };
 
+  const getPreviousDateRange = (): { start: string; end: string } => {
+    const now = new Date();
+    let start: Date;
+    let end: Date;
+
+    switch (activeFilter) {
+      case "this_month":
+        // Previous month
+        start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        end = new Date(now.getFullYear(), now.getMonth(), 0);
+        break;
+      case "last_month":
+        // Month before last
+        start = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+        end = new Date(now.getFullYear(), now.getMonth() - 1, 0);
+        break;
+      case "ytd":
+        // Previous year same period
+        const currentYearStart = new Date(now.getFullYear(), 0, 1);
+        const dayOfYear = Math.floor((now.getTime() - currentYearStart.getTime()) / (1000 * 60 * 60 * 24));
+        start = new Date(now.getFullYear() - 1, 0, 1);
+        end = new Date(now.getFullYear() - 1, 0, dayOfYear);
+        break;
+      case "custom":
+        // Previous period of same length
+        const duration = customDateRange.to.getTime() - customDateRange.from.getTime();
+        end = new Date(customDateRange.from.getTime() - 1);
+        start = new Date(end.getTime() - duration);
+        break;
+      default:
+        start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        end = new Date(now.getFullYear(), now.getMonth(), 0);
+    }
+
+    return {
+      start: start.toISOString(),
+      end: end.toISOString(),
+    };
+  };
+
+  const calculatePercentageChange = (current: number, previous: number): number => {
+    if (previous === 0) return current > 0 ? 100 : 0;
+    return ((current - previous) / previous) * 100;
+  };
+
   useEffect(() => {
     const fetchStats = async () => {
       setIsLoading(true);
       const { start, end } = getDateRange();
+      const { start: prevStart, end: prevEnd } = getPreviousDateRange();
       const startDate = new Date(start);
       const endDate = new Date(end);
       const dateRange = eachDayOfInterval({ start: startDate, end: endDate });
 
+      // Fetch current period stats
       // Fetch open opportunities (offers in sent status)
       const { count: openOpportunities } = await supabase
         .from("offers")
@@ -170,7 +242,64 @@ const Dashboard = () => {
         .gte("warehouse_intake_date", start)
         .lte("warehouse_intake_date", end);
 
-      setStats({
+      // Fetch previous period stats for comparison
+      const { count: prevOpenOpportunities } = await supabase
+        .from("offers")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "sent")
+        .gte("created_at", prevStart)
+        .lte("created_at", prevEnd);
+
+      const { count: prevTotalRobotsSold } = await supabase
+        .from("robots")
+        .select("*", { count: "exact", head: true })
+        .not("client_id", "is", null)
+        .gte("delivery_date", prevStart)
+        .lte("delivery_date", prevEnd);
+
+      const { count: prevDeployedRobots } = await supabase
+        .from("robots")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "delivered")
+        .gte("delivery_date", prevStart)
+        .lte("delivery_date", prevEnd);
+
+      const { count: prevTotalServiceTickets } = await supabase
+        .from("service_tickets")
+        .select("*", { count: "exact", head: true })
+        .gte("created_at", prevStart)
+        .lte("created_at", prevEnd);
+
+      const { count: prevOpenTickets } = await supabase
+        .from("service_tickets")
+        .select("*", { count: "exact", head: true })
+        .in("status", ["open", "in_progress"])
+        .gte("created_at", prevStart)
+        .lte("created_at", prevEnd);
+
+      const { count: prevClosedTickets } = await supabase
+        .from("service_tickets")
+        .select("*", { count: "exact", head: true })
+        .in("status", ["resolved", "closed"])
+        .gte("resolved_at", prevStart)
+        .lte("resolved_at", prevEnd);
+
+      const { count: prevImplementedRobots } = await supabase
+        .from("robots")
+        .select("*", { count: "exact", head: true })
+        .in("status", ["delivered", "in_service"])
+        .gte("delivery_date", prevStart)
+        .lte("delivery_date", prevEnd);
+
+      const { count: prevAwaitingImplementation } = await supabase
+        .from("robots")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "in_warehouse")
+        .not("client_id", "is", null)
+        .gte("warehouse_intake_date", prevStart)
+        .lte("warehouse_intake_date", prevEnd);
+
+      const currentStats = {
         openOpportunities: openOpportunities || 0,
         totalRobotsSold: totalRobotsSold || 0,
         robotsYTD: robotsYTD || 0,
@@ -180,6 +309,21 @@ const Dashboard = () => {
         closedTickets: closedTickets || 0,
         implementedRobots: implementedRobots || 0,
         awaitingImplementation: awaitingImplementation || 0,
+      };
+
+      setStats({
+        ...currentStats,
+        changes: {
+          openOpportunities: calculatePercentageChange(currentStats.openOpportunities, prevOpenOpportunities || 0),
+          totalRobotsSold: calculatePercentageChange(currentStats.totalRobotsSold, prevTotalRobotsSold || 0),
+          robotsYTD: calculatePercentageChange(currentStats.robotsYTD, robotsYTD || 0),
+          deployedRobots: calculatePercentageChange(currentStats.deployedRobots, prevDeployedRobots || 0),
+          totalServiceTickets: calculatePercentageChange(currentStats.totalServiceTickets, prevTotalServiceTickets || 0),
+          openTickets: calculatePercentageChange(currentStats.openTickets, prevOpenTickets || 0),
+          closedTickets: calculatePercentageChange(currentStats.closedTickets, prevClosedTickets || 0),
+          implementedRobots: calculatePercentageChange(currentStats.implementedRobots, prevImplementedRobots || 0),
+          awaitingImplementation: calculatePercentageChange(currentStats.awaitingImplementation, prevAwaitingImplementation || 0),
+        },
       });
 
       // Fetch time-series data for charts
@@ -245,15 +389,15 @@ const Dashboard = () => {
   }, [activeFilter, customDateRange]);
 
   const statCards = [
-    { title: "Open Opportunities", value: stats.openOpportunities, icon: ShoppingCart, color: "text-primary" },
-    { title: "Total Robots Sold", value: stats.totalRobotsSold, icon: Bot, color: "text-success" },
-    { title: "Robots Sold YTD", value: stats.robotsYTD, icon: TrendingUp, color: "text-primary" },
-    { title: "Deployed Robots", value: stats.deployedRobots, icon: Bot, color: "text-accent" },
-    { title: "Total Service Tickets", value: stats.totalServiceTickets, icon: Wrench, color: "text-muted-foreground" },
-    { title: "Open Tickets", value: stats.openTickets, icon: Wrench, color: "text-warning" },
-    { title: "Closed Tickets", value: stats.closedTickets, icon: Wrench, color: "text-success" },
-    { title: "Implemented Robots", value: stats.implementedRobots, icon: Bot, color: "text-success" },
-    { title: "Awaiting Implementation", value: stats.awaitingImplementation, icon: FileText, color: "text-warning" },
+    { title: "Open Opportunities", value: stats.openOpportunities, change: stats.changes.openOpportunities, icon: ShoppingCart, color: "text-primary" },
+    { title: "Total Robots Sold", value: stats.totalRobotsSold, change: stats.changes.totalRobotsSold, icon: Bot, color: "text-success" },
+    { title: "Robots Sold YTD", value: stats.robotsYTD, change: stats.changes.robotsYTD, icon: TrendingUp, color: "text-primary" },
+    { title: "Deployed Robots", value: stats.deployedRobots, change: stats.changes.deployedRobots, icon: Bot, color: "text-accent" },
+    { title: "Total Service Tickets", value: stats.totalServiceTickets, change: stats.changes.totalServiceTickets, icon: Wrench, color: "text-muted-foreground" },
+    { title: "Open Tickets", value: stats.openTickets, change: stats.changes.openTickets, icon: Wrench, color: "text-warning" },
+    { title: "Closed Tickets", value: stats.closedTickets, change: stats.changes.closedTickets, icon: Wrench, color: "text-success" },
+    { title: "Implemented Robots", value: stats.implementedRobots, change: stats.changes.implementedRobots, icon: Bot, color: "text-success" },
+    { title: "Awaiting Implementation", value: stats.awaitingImplementation, change: stats.changes.awaitingImplementation, icon: FileText, color: "text-warning" },
   ];
 
   return (
@@ -322,6 +466,10 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {statCards.map((stat) => {
             const Icon = stat.icon;
+            const isPositive = stat.change >= 0;
+            const ChangeIcon = isPositive ? ArrowUp : ArrowDown;
+            const changeColor = isPositive ? "text-success" : "text-destructive";
+            
             return (
               <Card key={stat.title} className="transition-shadow hover:shadow-lg">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -331,7 +479,14 @@ const Dashboard = () => {
                   <Icon className={cn("w-5 h-5", stat.color)} />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold">{stat.value}</div>
+                  <div className="flex items-end justify-between">
+                    <div className="text-3xl font-bold">{stat.value}</div>
+                    <div className={cn("flex items-center gap-1 text-sm font-medium", changeColor)}>
+                      <ChangeIcon className="w-4 h-4" />
+                      <span>{Math.abs(stat.change).toFixed(1)}%</span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">vs previous period</p>
                 </CardContent>
               </Card>
             );
