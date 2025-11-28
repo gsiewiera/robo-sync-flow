@@ -1,16 +1,18 @@
 import { useState, useEffect } from "react";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { FileText, Search, Download, Filter } from "lucide-react";
+import { FileText, Filter, CalendarIcon, X } from "lucide-react";
 import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 interface Invoice {
   id: string;
@@ -37,8 +39,9 @@ const Invoices = () => {
   const [clients, setClients] = useState<Client[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedClient, setSelectedClient] = useState<string>("all");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState<string>("all");
+  const [startDate, setStartDate] = useState<Date | undefined>();
+  const [endDate, setEndDate] = useState<Date | undefined>();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -47,7 +50,7 @@ const Invoices = () => {
 
   useEffect(() => {
     fetchInvoices();
-  }, [selectedClient, startDate, endDate]);
+  }, [selectedClient, selectedStatus, startDate, endDate]);
 
   const fetchClients = async () => {
     const { data, error } = await supabase
@@ -84,12 +87,20 @@ const Invoices = () => {
         query = query.eq("client_id", selectedClient);
       }
 
+      if (selectedStatus !== "all") {
+        if (selectedStatus === "paid") {
+          query = query.not("paid_date", "is", null);
+        } else {
+          query = query.eq("status", selectedStatus).is("paid_date", null);
+        }
+      }
+
       if (startDate) {
-        query = query.gte("issue_date", startDate);
+        query = query.gte("issue_date", format(startDate, "yyyy-MM-dd"));
       }
 
       if (endDate) {
-        query = query.lte("issue_date", endDate);
+        query = query.lte("issue_date", format(endDate, "yyyy-MM-dd"));
       }
 
       const { data, error } = await query;
@@ -128,8 +139,19 @@ const Invoices = () => {
 
   const clearFilters = () => {
     setSelectedClient("all");
-    setStartDate("");
-    setEndDate("");
+    setSelectedStatus("all");
+    setStartDate(undefined);
+    setEndDate(undefined);
+  };
+
+  const hasActiveFilters = 
+    selectedClient !== "all" || 
+    selectedStatus !== "all" || 
+    startDate !== undefined || 
+    endDate !== undefined;
+
+  const getClientName = (clientId: string) => {
+    return clients.find(c => c.id === clientId)?.name || "Unknown Client";
   };
 
   return (
@@ -145,22 +167,31 @@ const Invoices = () => {
           </div>
         </div>
 
-        <Card className="shadow-lg">
-          <CardHeader className="bg-gradient-to-r from-primary/5 to-transparent">
-            <CardTitle className="flex items-center gap-2">
-              <Filter className="w-5 h-5" />
-              Filters
-            </CardTitle>
+        <Card className="shadow-lg border-primary/20">
+          <CardHeader className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent pb-4">
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Filter className="w-5 h-5 text-primary" />
+                Filters
+              </CardTitle>
+              {hasActiveFilters && (
+                <Badge variant="secondary" className="animate-fade-in">
+                  {invoices.length} result{invoices.length !== 1 ? "s" : ""}
+                </Badge>
+              )}
+            </div>
           </CardHeader>
-          <CardContent className="pt-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <CardContent className="pt-6 space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="client-filter">Client</Label>
+                <Label htmlFor="client-filter" className="text-sm font-medium">
+                  Client
+                </Label>
                 <Select value={selectedClient} onValueChange={setSelectedClient}>
-                  <SelectTrigger id="client-filter">
+                  <SelectTrigger id="client-filter" className="bg-background">
                     <SelectValue placeholder="All Clients" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="z-50 bg-background">
                     <SelectItem value="all">All Clients</SelectItem>
                     {clients.map((client) => (
                       <SelectItem key={client.id} value={client.id}>
@@ -172,46 +203,163 @@ const Invoices = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="start-date">Start Date</Label>
-                <Input
-                  id="start-date"
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                />
+                <Label htmlFor="status-filter" className="text-sm font-medium">
+                  Status
+                </Label>
+                <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                  <SelectTrigger id="status-filter" className="bg-background">
+                    <SelectValue placeholder="All Statuses" />
+                  </SelectTrigger>
+                  <SelectContent className="z-50 bg-background">
+                    <SelectItem value="all">All Statuses</SelectItem>
+                    <SelectItem value="paid">Paid</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="overdue">Overdue</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="end-date">End Date</Label>
-                <Input
-                  id="end-date"
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                />
+                <Label className="text-sm font-medium">Start Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal bg-background",
+                        !startDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {startDate ? format(startDate, "MMM dd, yyyy") : "Pick a date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 z-50 bg-background" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={startDate}
+                      onSelect={setStartDate}
+                      initialFocus
+                      className="pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
 
-              <div className="flex items-end">
-                <Button variant="outline" onClick={clearFilters} className="w-full">
-                  Clear Filters
-                </Button>
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">End Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal bg-background",
+                        !endDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {endDate ? format(endDate, "MMM dd, yyyy") : "Pick a date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 z-50 bg-background" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={endDate}
+                      onSelect={setEndDate}
+                      initialFocus
+                      className="pointer-events-auto"
+                      disabled={(date) => startDate ? date < startDate : false}
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
+
+            {hasActiveFilters && (
+              <div className="flex flex-wrap items-center gap-2 pt-2 border-t animate-fade-in">
+                <span className="text-sm text-muted-foreground mr-2">Active filters:</span>
+                {selectedClient !== "all" && (
+                  <Badge variant="secondary" className="gap-1">
+                    Client: {getClientName(selectedClient)}
+                    <X
+                      className="w-3 h-3 cursor-pointer hover:text-destructive"
+                      onClick={() => setSelectedClient("all")}
+                    />
+                  </Badge>
+                )}
+                {selectedStatus !== "all" && (
+                  <Badge variant="secondary" className="gap-1">
+                    Status: {selectedStatus.charAt(0).toUpperCase() + selectedStatus.slice(1)}
+                    <X
+                      className="w-3 h-3 cursor-pointer hover:text-destructive"
+                      onClick={() => setSelectedStatus("all")}
+                    />
+                  </Badge>
+                )}
+                {startDate && (
+                  <Badge variant="secondary" className="gap-1">
+                    From: {format(startDate, "MMM dd, yyyy")}
+                    <X
+                      className="w-3 h-3 cursor-pointer hover:text-destructive"
+                      onClick={() => setStartDate(undefined)}
+                    />
+                  </Badge>
+                )}
+                {endDate && (
+                  <Badge variant="secondary" className="gap-1">
+                    To: {format(endDate, "MMM dd, yyyy")}
+                    <X
+                      className="w-3 h-3 cursor-pointer hover:text-destructive"
+                      onClick={() => setEndDate(undefined)}
+                    />
+                  </Badge>
+                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearFilters}
+                  className="h-6 text-xs"
+                >
+                  Clear All
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
 
         <Card className="shadow-lg">
           <CardHeader>
-            <CardTitle>Invoice List</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle>Invoice List</CardTitle>
+              {!isLoading && invoices.length > 0 && (
+                <Badge variant="outline" className="text-sm">
+                  Showing {invoices.length} invoice{invoices.length !== 1 ? "s" : ""}
+                </Badge>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <div className="text-center py-8">
+              <div className="text-center py-12">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>
                 <p className="text-muted-foreground">Loading invoices...</p>
               </div>
             ) : invoices.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground">No invoices found</p>
+              <div className="text-center py-12">
+                <FileText className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
+                <p className="text-lg font-medium text-muted-foreground mb-2">
+                  No invoices found
+                </p>
+                {hasActiveFilters && (
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Try adjusting your filters to see more results
+                  </p>
+                )}
+                {hasActiveFilters && (
+                  <Button variant="outline" onClick={clearFilters}>
+                    Clear All Filters
+                  </Button>
+                )}
               </div>
             ) : (
               <div className="overflow-x-auto">
