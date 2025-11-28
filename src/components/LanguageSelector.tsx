@@ -13,6 +13,7 @@ const languages = [
   { code: 'pl', name: 'Polski', flag: '🇵🇱' },
   { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
   { code: 'es', name: 'Español', flag: '🇪🇸' },
+  { code: 'zh', name: '中文', flag: '🇨🇳' },
 ];
 
 export function LanguageSelector() {

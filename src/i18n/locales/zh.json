@@ -1,0 +1,199 @@
+{
+  "app": {
+    "title": "RoboCRM",
+    "subtitle": "机器人管理"
+  },
+  "nav": {
+    "dashboard": "仪表板",
+    "tasks": "任务",
+    "leads": "潜在客户",
+    "offers": "报价",
+    "funnel": "销售漏斗",
+    "clients": "客户",
+    "resellers": "经销商",
+    "contracts": "合同",
+    "invoices": "发票",
+    "service": "服务",
+    "robots": "机器人",
+    "items": "项目",
+    "pricing": "价格",
+    "leaderboard": "排行榜",
+    "goals": "目标",
+    "admin": "管理员",
+    "settings": "设置",
+    "logout": "登出",
+    "navigation": "导航",
+    "reports": "报告"
+  },
+  "reports": {
+    "activity": "活动",
+    "sales": "销售",
+    "reseller": "经销商",
+    "ending": "结束"
+  },
+  "common": {
+    "search": "搜索",
+    "add": "添加",
+    "edit": "编辑",
+    "delete": "删除",
+    "save": "保存",
+    "cancel": "取消",
+    "close": "关闭",
+    "view": "查看",
+    "actions": "操作",
+    "status": "状态",
+    "name": "名称",
+    "email": "邮箱",
+    "phone": "电话",
+    "address": "地址",
+    "city": "城市",
+    "country": "国家",
+    "created": "创建时间",
+    "updated": "更新时间",
+    "loading": "加载中...",
+    "noData": "未找到数据",
+    "clear": "清除",
+    "send": "发送",
+    "sending": "发送中...",
+    "filters": "筛选",
+    "description": "描述",
+    "price": "价格",
+    "quantity": "数量",
+    "total": "总计",
+    "date": "日期",
+    "notes": "备注",
+    "type": "类型",
+    "priority": "优先级",
+    "assignedTo": "分配给"
+  },
+  "dashboard": {
+    "title": "仪表板",
+    "description": "关键指标和活动概览"
+  },
+  "tasks": {
+    "title": "任务",
+    "description": "管理您的任务和活动",
+    "addTask": "添加任务",
+    "editTask": "编辑任务",
+    "dueDate": "截止日期",
+    "noTasks": "未找到任务",
+    "taskTitle": "任务标题",
+    "taskDescription": "任务描述"
+  },
+  "leads": {
+    "title": "潜在客户",
+    "description": "管理销售线索和机会",
+    "addLead": "添加潜在客户",
+    "leadStatus": "潜在客户状态",
+    "noLeads": "未找到潜在客户"
+  },
+  "offers": {
+    "title": "报价",
+    "description": "管理客户报价和提案",
+    "addOffer": "添加报价",
+    "offerNumber": "报价编号",
+    "noOffers": "未找到报价",
+    "stage": "阶段",
+    "totalPrice": "总价"
+  },
+  "clients": {
+    "title": "客户",
+    "description": "管理客户信息",
+    "addClient": "添加客户",
+    "editClient": "编辑客户",
+    "noClients": "未找到客户",
+    "primaryContact": "主要联系人",
+    "nip": "税号"
+  },
+  "resellers": {
+    "title": "经销商",
+    "description": "管理经销商合作伙伴",
+    "addReseller": "添加经销商",
+    "editReseller": "编辑经销商",
+    "nip": "税号",
+    "primaryContact": "主要联系人",
+    "noResellers": "未找到经销商"
+  },
+  "contracts": {
+    "title": "合同",
+    "description": "管理客户合同和协议",
+    "contractNumber": "合同编号",
+    "client": "客户",
+    "startDate": "开始日期",
+    "endDate": "结束日期",
+    "monthlyPayment": "月付款",
+    "noContracts": "未找到合同",
+    "sendEmail": "发送合同邮件",
+    "emailDescription": "通过电子邮件向客户发送最新的合同PDF版本。",
+    "recipientEmail": "收件人邮箱",
+    "allClients": "所有客户",
+    "allStatuses": "所有状态"
+  },
+  "invoices": {
+    "title": "发票",
+    "description": "管理发票和账单",
+    "addInvoice": "添加发票",
+    "invoiceNumber": "发票编号",
+    "noInvoices": "未找到发票",
+    "issueDate": "开票日期",
+    "dueDate": "到期日期",
+    "amount": "金额"
+  },
+  "service": {
+    "title": "服务",
+    "description": "管理服务工单和维护",
+    "addTicket": "添加工单",
+    "ticketNumber": "工单编号",
+    "noTickets": "未找到工单"
+  },
+  "robots": {
+    "title": "机器人",
+    "description": "管理机器人库存",
+    "addRobot": "添加机器人",
+    "serialNumber": "序列号",
+    "model": "型号",
+    "noRobots": "未找到机器人",
+    "manufacturer": "制造商"
+  },
+  "items": {
+    "title": "项目",
+    "description": "管理产品项目和目录",
+    "addItem": "添加项目",
+    "noItems": "未找到项目",
+    "itemType": "项目类型",
+    "isActive": "活跃"
+  },
+  "pricing": {
+    "title": "价格",
+    "description": "管理定价和价目表"
+  },
+  "leaderboard": {
+    "title": "排行榜",
+    "description": "销售业绩排名"
+  },
+  "goals": {
+    "title": "目标",
+    "description": "绩效目标和指标",
+    "addGoal": "添加目标",
+    "noGoals": "未找到目标"
+  },
+  "settings": {
+    "title": "设置",
+    "description": "配置您的偏好"
+  },
+  "status": {
+    "active": "活跃",
+    "inactive": "不活跃",
+    "draft": "草稿",
+    "pending_signature": "待签名",
+    "expired": "已过期",
+    "cancelled": "已取消",
+    "pending": "待处理",
+    "in_progress": "进行中",
+    "completed": "已完成",
+    "overdue": "逾期"
+  },
+  "language": {
+    "select": "选择语言"
+  }
+}
