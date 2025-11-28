@@ -4,11 +4,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { UserPlus, Phone, Mail, Building2, Calendar } from "lucide-react";
-import { format } from "date-fns";
+import { UserPlus, Phone, Mail, Building2, Calendar as CalendarIcon, Edit, AlertCircle, Clock } from "lucide-react";
+import { format, isAfter, isBefore, startOfDay, addDays } from "date-fns";
 import { useNavigate } from "react-router-dom";
+import { cn } from "@/lib/utils";
 
 interface Lead {
   id: string;
@@ -18,6 +25,10 @@ interface Lead {
   created_at: string;
   total_price: number | null;
   currency: string;
+  lead_status: string | null;
+  next_action_date: string | null;
+  follow_up_notes: string | null;
+  last_contact_date: string | null;
   clients: {
     id: string;
     name: string;
@@ -29,22 +40,32 @@ interface Lead {
 const Leads = () => {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [editForm, setEditForm] = useState({
+    lead_status: "",
+    next_action_date: undefined as Date | undefined,
+    follow_up_notes: "",
+    last_contact_date: undefined as Date | undefined,
+  });
   const [stats, setStats] = useState({
     totalLeads: 0,
     totalValue: 0,
     thisMonth: 0,
+    overdueFollowUps: 0,
   });
   const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchLeads();
-  }, []);
+  }, [filterStatus]);
 
   const fetchLeads = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from("offers")
         .select(`
           *,
@@ -56,7 +77,13 @@ const Leads = () => {
           )
         `)
         .eq("stage", "leads")
-        .order("created_at", { ascending: false });
+        .order("next_action_date", { ascending: true, nullsFirst: false });
+
+      if (filterStatus !== "all") {
+        query = query.eq("lead_status", filterStatus);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
 
@@ -65,16 +92,23 @@ const Leads = () => {
       // Calculate stats
       const now = new Date();
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const today = startOfDay(now);
       
       const totalValue = data?.reduce((sum, lead) => sum + (lead.total_price || 0), 0) || 0;
       const thisMonthCount = data?.filter(
         lead => new Date(lead.created_at) >= startOfMonth
       ).length || 0;
+      
+      const overdueCount = data?.filter(lead => {
+        if (!lead.next_action_date) return false;
+        return isBefore(new Date(lead.next_action_date), today);
+      }).length || 0;
 
       setStats({
         totalLeads: data?.length || 0,
         totalValue,
         thisMonth: thisMonthCount,
+        overdueFollowUps: overdueCount,
       });
     } catch (error: any) {
       toast({
@@ -92,6 +126,85 @@ const Leads = () => {
     navigate(`/offers/${offerId}`);
   };
 
+  const getLeadStatusBadge = (status: string | null) => {
+    switch (status) {
+      case "new":
+        return <Badge variant="secondary">New</Badge>;
+      case "contacted":
+        return <Badge className="bg-chart-2 text-white">Contacted</Badge>;
+      case "qualified":
+        return <Badge className="bg-success text-white">Qualified</Badge>;
+      case "nurturing":
+        return <Badge className="bg-chart-3 text-white">Nurturing</Badge>;
+      case "follow_up_scheduled":
+        return <Badge className="bg-primary text-white">Follow-up Scheduled</Badge>;
+      case "on_hold":
+        return <Badge variant="outline">On Hold</Badge>;
+      default:
+        return <Badge variant="secondary">New</Badge>;
+    }
+  };
+
+  const getNextActionStatus = (nextActionDate: string | null) => {
+    if (!nextActionDate) return null;
+    
+    const today = startOfDay(new Date());
+    const actionDate = startOfDay(new Date(nextActionDate));
+    const threeDaysFromNow = addDays(today, 3);
+
+    if (isBefore(actionDate, today)) {
+      return <Badge variant="destructive" className="gap-1"><AlertCircle className="w-3 h-3" />Overdue</Badge>;
+    } else if (isBefore(actionDate, threeDaysFromNow)) {
+      return <Badge className="bg-orange-500 text-white gap-1"><Clock className="w-3 h-3" />Soon</Badge>;
+    }
+    return null;
+  };
+
+  const handleEditLead = (lead: Lead, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedLead(lead);
+    setEditForm({
+      lead_status: lead.lead_status || "new",
+      next_action_date: lead.next_action_date ? new Date(lead.next_action_date) : undefined,
+      follow_up_notes: lead.follow_up_notes || "",
+      last_contact_date: lead.last_contact_date ? new Date(lead.last_contact_date) : undefined,
+    });
+    setIsDialogOpen(true);
+  };
+
+  const handleSaveLeadStatus = async () => {
+    if (!selectedLead) return;
+
+    try {
+      const { error } = await supabase
+        .from("offers")
+        .update({
+          lead_status: editForm.lead_status,
+          next_action_date: editForm.next_action_date ? format(editForm.next_action_date, "yyyy-MM-dd") : null,
+          follow_up_notes: editForm.follow_up_notes,
+          last_contact_date: editForm.last_contact_date ? format(editForm.last_contact_date, "yyyy-MM-dd") : null,
+        })
+        .eq("id", selectedLead.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Lead status updated successfully",
+      });
+
+      setIsDialogOpen(false);
+      fetchLeads();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "Failed to update lead status",
+        variant: "destructive",
+      });
+      console.error(error);
+    }
+  };
+
   return (
     <Layout>
       <div className="space-y-6">
@@ -105,7 +218,7 @@ const Leads = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <Card className="hover-scale animate-fade-in bg-gradient-to-br from-primary/5 to-transparent">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
@@ -143,7 +256,7 @@ const Leads = () => {
               <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
                 This Month
               </CardTitle>
-              <Calendar className="w-5 h-5 text-chart-2" />
+              <CalendarIcon className="w-5 h-5 text-chart-2" />
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold" style={{ color: "hsl(var(--chart-2))" }}>
@@ -154,17 +267,50 @@ const Leads = () => {
               </p>
             </CardContent>
           </Card>
+
+          <Card className="hover-scale animate-fade-in bg-gradient-to-br from-destructive/5 to-transparent" style={{ animationDelay: "300ms" }}>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+                Overdue
+              </CardTitle>
+              <AlertCircle className="w-5 h-5 text-destructive" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-destructive">
+                {stats.overdueFollowUps}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Need follow-up
+              </p>
+            </CardContent>
+          </Card>
         </div>
 
         <Card className="shadow-lg">
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle>Leads List</CardTitle>
-              {!isLoading && leads.length > 0 && (
-                <Badge variant="outline" className="text-sm">
-                  {leads.length} lead{leads.length !== 1 ? "s" : ""}
-                </Badge>
-              )}
+              <div className="flex items-center gap-2">
+                <Select value={filterStatus} onValueChange={setFilterStatus}>
+                  <SelectTrigger className="w-[180px] bg-background">
+                    <SelectValue placeholder="Filter by status" />
+                  </SelectTrigger>
+                  <SelectContent className="z-50 bg-background">
+                    <SelectItem value="all">All Statuses</SelectItem>
+                    <SelectItem value="new">New</SelectItem>
+                    <SelectItem value="contacted">Contacted</SelectItem>
+                    <SelectItem value="qualified">Qualified</SelectItem>
+                    <SelectItem value="nurturing">Nurturing</SelectItem>
+                    <SelectItem value="follow_up_scheduled">Follow-up Scheduled</SelectItem>
+                    <SelectItem value="on_hold">On Hold</SelectItem>
+                  </SelectContent>
+                </Select>
+                {!isLoading && leads.length > 0 && (
+                  <Badge variant="outline" className="text-sm">
+                    {leads.length} lead{leads.length !== 1 ? "s" : ""}
+                  </Badge>
+                )}
+              </div>
             </div>
           </CardHeader>
           <CardContent>
@@ -190,12 +336,12 @@ const Leads = () => {
                     <TableRow>
                       <TableHead>Offer #</TableHead>
                       <TableHead>Client</TableHead>
-                      <TableHead>Contact Person</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Phone</TableHead>
-                      <TableHead>Location</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Next Action</TableHead>
+                      <TableHead>Last Contact</TableHead>
                       <TableHead>Value</TableHead>
                       <TableHead>Created</TableHead>
+                      <TableHead className="w-[50px]"></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -209,36 +355,34 @@ const Leads = () => {
                           {lead.offer_number}
                         </TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Building2 className="w-4 h-4 text-muted-foreground" />
-                            {lead.clients?.name || "N/A"}
+                          <div className="flex flex-col gap-1">
+                            <div className="flex items-center gap-2">
+                              <Building2 className="w-4 h-4 text-muted-foreground" />
+                              {lead.clients?.name || "N/A"}
+                            </div>
+                            {lead.person_contact && (
+                              <span className="text-xs text-muted-foreground">{lead.person_contact}</span>
+                            )}
                           </div>
                         </TableCell>
                         <TableCell>
-                          {lead.person_contact || "-"}
+                          {getLeadStatusBadge(lead.lead_status)}
                         </TableCell>
                         <TableCell>
-                          {lead.clients?.primary_contact_email ? (
-                            <div className="flex items-center gap-1">
-                              <Mail className="w-3 h-3 text-muted-foreground" />
-                              <span className="text-sm">{lead.clients.primary_contact_email}</span>
+                          {lead.next_action_date ? (
+                            <div className="flex flex-col gap-1">
+                              <span className="text-sm">{format(new Date(lead.next_action_date), "MMM dd, yyyy")}</span>
+                              {getNextActionStatus(lead.next_action_date)}
                             </div>
                           ) : (
-                            "-"
+                            <span className="text-muted-foreground text-sm">Not set</span>
                           )}
                         </TableCell>
                         <TableCell>
-                          {lead.clients?.primary_contact_phone ? (
-                            <div className="flex items-center gap-1">
-                              <Phone className="w-3 h-3 text-muted-foreground" />
-                              <span className="text-sm">{lead.clients.primary_contact_phone}</span>
-                            </div>
-                          ) : (
-                            "-"
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {lead.deployment_location || "-"}
+                          {lead.last_contact_date 
+                            ? format(new Date(lead.last_contact_date), "MMM dd, yyyy")
+                            : "-"
+                          }
                         </TableCell>
                         <TableCell>
                           {lead.total_price 
@@ -249,6 +393,15 @@ const Leads = () => {
                         <TableCell>
                           {format(new Date(lead.created_at), "MMM dd, yyyy")}
                         </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => handleEditLead(lead, e)}
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -257,6 +410,113 @@ const Leads = () => {
             )}
           </CardContent>
         </Card>
+
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Update Lead Status</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Lead Status</Label>
+                <Select
+                  value={editForm.lead_status}
+                  onValueChange={(value) => setEditForm({ ...editForm, lead_status: value })}
+                >
+                  <SelectTrigger className="bg-background">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="z-50 bg-background">
+                    <SelectItem value="new">New</SelectItem>
+                    <SelectItem value="contacted">Contacted</SelectItem>
+                    <SelectItem value="qualified">Qualified</SelectItem>
+                    <SelectItem value="nurturing">Nurturing</SelectItem>
+                    <SelectItem value="follow_up_scheduled">Follow-up Scheduled</SelectItem>
+                    <SelectItem value="on_hold">On Hold</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Next Action Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal bg-background",
+                        !editForm.next_action_date && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {editForm.next_action_date 
+                        ? format(editForm.next_action_date, "MMM dd, yyyy") 
+                        : "Pick a date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 z-50 bg-background" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={editForm.next_action_date}
+                      onSelect={(date) => setEditForm({ ...editForm, next_action_date: date })}
+                      initialFocus
+                      className="pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Last Contact Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal bg-background",
+                        !editForm.last_contact_date && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {editForm.last_contact_date 
+                        ? format(editForm.last_contact_date, "MMM dd, yyyy") 
+                        : "Pick a date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 z-50 bg-background" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={editForm.last_contact_date}
+                      onSelect={(date) => setEditForm({ ...editForm, last_contact_date: date })}
+                      initialFocus
+                      className="pointer-events-auto"
+                      disabled={(date) => isAfter(date, new Date())}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Follow-up Notes</Label>
+                <Textarea
+                  value={editForm.follow_up_notes}
+                  onChange={(e) => setEditForm({ ...editForm, follow_up_notes: e.target.value })}
+                  placeholder="Add notes about next steps, discussion points, etc."
+                  rows={4}
+                />
+              </div>
+
+              <div className="flex gap-2 justify-end">
+                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleSaveLeadStatus}>
+                  Save Changes
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </Layout>
   );
