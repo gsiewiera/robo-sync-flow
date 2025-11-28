@@ -92,9 +92,9 @@ export const RevenueTable = ({ year: propYear }: RevenueTableProps) => {
     setIsLoading(false);
   };
 
-  const startEdit = (revenue: MonthlyRevenue) => {
+  const startEdit = (revenue: MonthlyRevenue, type: 'forecast' | 'actual') => {
     if (!canEdit) return;
-    setEditingId(revenue.id);
+    setEditingId(`${type}-${revenue.id}`);
     setEditValues({
       forecast: revenue.forecast_amount.toString(),
       actual: revenue.actual_amount.toString(),
@@ -128,14 +128,19 @@ export const RevenueTable = ({ year: propYear }: RevenueTableProps) => {
 
         if (error) throw error;
       } else {
-        // Update existing record
+        // Update existing record - only update the field being edited
+        const isEditingForecast = editingId?.startsWith('forecast');
+        const updateData: any = { updated_by: user?.id };
+        
+        if (isEditingForecast) {
+          updateData.forecast_amount = forecast;
+        } else {
+          updateData.actual_amount = actual;
+        }
+        
         const { error } = await supabase
           .from("monthly_revenue")
-          .update({
-            forecast_amount: forecast,
-            actual_amount: actual,
-            updated_by: user?.id,
-          })
+          .update(updateData)
           .eq("id", revenue.id);
 
         if (error) throw error;
@@ -207,56 +212,139 @@ export const RevenueTable = ({ year: propYear }: RevenueTableProps) => {
           <div className="text-center py-8 text-muted-foreground">Loading...</div>
         ) : (
           <>
-            <div className="border rounded-lg overflow-hidden">
+            <div className="border rounded-lg overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/50">
-                    <TableHead className="font-semibold">Month</TableHead>
-                    <TableHead className="text-right font-semibold">Forecast (PLN)</TableHead>
-                    <TableHead className="text-right font-semibold">Actual (PLN)</TableHead>
-                    <TableHead className="text-right font-semibold">Variance</TableHead>
-                    {canEdit && <TableHead className="w-20"></TableHead>}
+                    <TableHead className="font-semibold w-32"></TableHead>
+                    {revenues.map((revenue) => (
+                      <TableHead key={revenue.id} className="text-center font-semibold min-w-[120px]">
+                        {monthNames[revenue.month - 1]}
+                      </TableHead>
+                    ))}
+                    <TableHead className="text-center font-semibold min-w-[120px]">Total</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {revenues.map((revenue) => {
-                    const variance = calculateVariance(revenue.forecast_amount, revenue.actual_amount);
-                    const isEditing = editingId === revenue.id;
-                    
-                    return (
-                      <TableRow key={revenue.id}>
-                        <TableCell className="font-medium">
-                          {monthNames[revenue.month - 1]}
-                        </TableCell>
-                        <TableCell className="text-right">
+                  {/* Forecast Row */}
+                  <TableRow>
+                    <TableCell className="font-semibold">
+                      <div className="flex items-center gap-2">
+                        Forecast
+                        {canEdit && editingId && editingId.startsWith('forecast') && (
+                          <div className="flex gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => saveEdit(revenues.find(r => r.id === editingId.replace('forecast-', ''))!)}
+                            >
+                              <Check className="w-4 h-4 text-success" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={cancelEdit}
+                            >
+                              <X className="w-4 h-4 text-destructive" />
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
+                    {revenues.map((revenue) => {
+                      const isEditing = editingId === `forecast-${revenue.id}`;
+                      return (
+                        <TableCell key={revenue.id} className="text-center">
                           {isEditing ? (
                             <Input
                               type="number"
                               step="0.01"
                               value={editValues.forecast}
                               onChange={(e) => setEditValues({ ...editValues, forecast: e.target.value })}
-                              className="w-32 ml-auto"
+                              className="w-full"
+                              autoFocus
                             />
                           ) : (
-                            revenue.forecast_amount.toLocaleString("en-US", { minimumFractionDigits: 2 })
+                            <button
+                              onClick={() => canEdit && startEdit(revenue, 'forecast')}
+                              disabled={!canEdit}
+                              className={canEdit ? "hover:bg-muted/50 px-2 py-1 rounded w-full" : "w-full"}
+                            >
+                              {revenue.forecast_amount.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                            </button>
                           )}
                         </TableCell>
-                        <TableCell className="text-right">
+                      );
+                    })}
+                    <TableCell className="text-center font-semibold bg-muted/30">
+                      {totals.forecast.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                    </TableCell>
+                  </TableRow>
+                  
+                  {/* Actual Row */}
+                  <TableRow>
+                    <TableCell className="font-semibold">
+                      <div className="flex items-center gap-2">
+                        Actual
+                        {canEdit && editingId && editingId.startsWith('actual') && (
+                          <div className="flex gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => saveEdit(revenues.find(r => r.id === editingId.replace('actual-', ''))!)}
+                            >
+                              <Check className="w-4 h-4 text-success" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={cancelEdit}
+                            >
+                              <X className="w-4 h-4 text-destructive" />
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
+                    {revenues.map((revenue) => {
+                      const isEditing = editingId === `actual-${revenue.id}`;
+                      return (
+                        <TableCell key={revenue.id} className="text-center">
                           {isEditing ? (
                             <Input
                               type="number"
                               step="0.01"
                               value={editValues.actual}
                               onChange={(e) => setEditValues({ ...editValues, actual: e.target.value })}
-                              className="w-32 ml-auto"
+                              className="w-full"
+                              autoFocus
                             />
                           ) : (
-                            revenue.actual_amount.toLocaleString("en-US", { minimumFractionDigits: 2 })
+                            <button
+                              onClick={() => canEdit && startEdit(revenue, 'actual')}
+                              disabled={!canEdit}
+                              className={canEdit ? "hover:bg-muted/50 px-2 py-1 rounded w-full" : "w-full"}
+                            >
+                              {revenue.actual_amount.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                            </button>
                           )}
                         </TableCell>
-                        <TableCell className="text-right">
+                      );
+                    })}
+                    <TableCell className="text-center font-semibold bg-muted/30">
+                      {totals.actual.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                    </TableCell>
+                  </TableRow>
+                  
+                  {/* Variance Row */}
+                  <TableRow className="bg-muted/20">
+                    <TableCell className="font-semibold">Variance</TableCell>
+                    {revenues.map((revenue) => {
+                      const variance = calculateVariance(revenue.forecast_amount, revenue.actual_amount);
+                      return (
+                        <TableCell key={revenue.id} className="text-center">
                           {revenue.forecast_amount > 0 && (
-                            <div className="flex items-center justify-end gap-1">
+                            <div className="flex items-center justify-center gap-1">
                               {variance >= 0 ? (
                                 <TrendingUp className="w-4 h-4 text-success" />
                               ) : (
@@ -268,50 +356,11 @@ export const RevenueTable = ({ year: propYear }: RevenueTableProps) => {
                             </div>
                           )}
                         </TableCell>
-                        {canEdit && (
-                          <TableCell>
-                            {isEditing ? (
-                              <div className="flex gap-1">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => saveEdit(revenue)}
-                                >
-                                  <Check className="w-4 h-4 text-success" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={cancelEdit}
-                                >
-                                  <X className="w-4 h-4 text-destructive" />
-                                </Button>
-                              </div>
-                            ) : (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => startEdit(revenue)}
-                              >
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                            )}
-                          </TableCell>
-                        )}
-                      </TableRow>
-                    );
-                  })}
-                  <TableRow className="bg-muted/50 font-semibold">
-                    <TableCell>Total</TableCell>
-                    <TableCell className="text-right">
-                      {totals.forecast.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {totals.actual.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                    </TableCell>
-                    <TableCell className="text-right">
+                      );
+                    })}
+                    <TableCell className="text-center font-semibold bg-muted/30">
                       {totals.forecast > 0 && (
-                        <div className="flex items-center justify-end gap-1">
+                        <div className="flex items-center justify-center gap-1">
                           {totalVariance >= 0 ? (
                             <TrendingUp className="w-4 h-4 text-success" />
                           ) : (
@@ -323,7 +372,6 @@ export const RevenueTable = ({ year: propYear }: RevenueTableProps) => {
                         </div>
                       )}
                     </TableCell>
-                    {canEdit && <TableCell></TableCell>}
                   </TableRow>
                 </TableBody>
               </Table>
