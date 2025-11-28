@@ -55,7 +55,55 @@
     "clear": "Löschen",
     "send": "Senden",
     "sending": "Wird gesendet...",
-    "filters": "Filter"
+    "filters": "Filter",
+    "description": "Beschreibung",
+    "price": "Preis",
+    "quantity": "Menge",
+    "total": "Gesamt",
+    "date": "Datum",
+    "notes": "Notizen",
+    "type": "Typ",
+    "priority": "Priorität",
+    "assignedTo": "Zugewiesen an"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "description": "Übersicht über wichtige Kennzahlen und Aktivitäten"
+  },
+  "tasks": {
+    "title": "Aufgaben",
+    "description": "Verwalten Sie Ihre Aufgaben und Aktivitäten",
+    "addTask": "Aufgabe hinzufügen",
+    "editTask": "Aufgabe bearbeiten",
+    "dueDate": "Fälligkeitsdatum",
+    "noTasks": "Keine Aufgaben gefunden",
+    "taskTitle": "Aufgabentitel",
+    "taskDescription": "Aufgabenbeschreibung"
+  },
+  "leads": {
+    "title": "Leads",
+    "description": "Verkaufs-Leads und Möglichkeiten verwalten",
+    "addLead": "Lead hinzufügen",
+    "leadStatus": "Lead-Status",
+    "noLeads": "Keine Leads gefunden"
+  },
+  "offers": {
+    "title": "Angebote",
+    "description": "Kundenangebote und Vorschläge verwalten",
+    "addOffer": "Angebot hinzufügen",
+    "offerNumber": "Angebotsnummer",
+    "noOffers": "Keine Angebote gefunden",
+    "stage": "Phase",
+    "totalPrice": "Gesamtpreis"
+  },
+  "clients": {
+    "title": "Kunden",
+    "description": "Kundeninformationen verwalten",
+    "addClient": "Kunde hinzufügen",
+    "editClient": "Kunde bearbeiten",
+    "noClients": "Keine Kunden gefunden",
+    "primaryContact": "Hauptansprechpartner",
+    "nip": "Steuernummer"
   },
   "resellers": {
     "title": "Wiederverkäufer",
@@ -81,13 +129,69 @@
     "allClients": "Alle Kunden",
     "allStatuses": "Alle Status"
   },
+  "invoices": {
+    "title": "Rechnungen",
+    "description": "Rechnungen und Abrechnung verwalten",
+    "addInvoice": "Rechnung hinzufügen",
+    "invoiceNumber": "Rechnungsnummer",
+    "noInvoices": "Keine Rechnungen gefunden",
+    "issueDate": "Ausstellungsdatum",
+    "dueDate": "Fälligkeitsdatum",
+    "amount": "Betrag"
+  },
+  "service": {
+    "title": "Service",
+    "description": "Service-Tickets und Wartung verwalten",
+    "addTicket": "Ticket hinzufügen",
+    "ticketNumber": "Ticketnummer",
+    "noTickets": "Keine Tickets gefunden"
+  },
+  "robots": {
+    "title": "Roboter",
+    "description": "Roboterbestand verwalten",
+    "addRobot": "Roboter hinzufügen",
+    "serialNumber": "Seriennummer",
+    "model": "Modell",
+    "noRobots": "Keine Roboter gefunden",
+    "manufacturer": "Hersteller"
+  },
+  "items": {
+    "title": "Artikel",
+    "description": "Produktartikel und Katalog verwalten",
+    "addItem": "Artikel hinzufügen",
+    "noItems": "Keine Artikel gefunden",
+    "itemType": "Artikeltyp",
+    "isActive": "Aktiv"
+  },
+  "pricing": {
+    "title": "Preise",
+    "description": "Preisgestaltung und Preislisten verwalten"
+  },
+  "leaderboard": {
+    "title": "Bestenliste",
+    "description": "Verkaufsleistungs-Rankings"
+  },
+  "goals": {
+    "title": "Ziele",
+    "description": "Leistungsziele und Vorgaben",
+    "addGoal": "Ziel hinzufügen",
+    "noGoals": "Keine Ziele gefunden"
+  },
+  "settings": {
+    "title": "Einstellungen",
+    "description": "Konfigurieren Sie Ihre Einstellungen"
+  },
   "status": {
     "active": "Aktiv",
     "inactive": "Inaktiv",
     "draft": "Entwurf",
     "pending_signature": "Ausstehende Unterschrift",
     "expired": "Abgelaufen",
-    "cancelled": "Storniert"
+    "cancelled": "Storniert",
+    "pending": "Ausstehend",
+    "in_progress": "In Bearbeitung",
+    "completed": "Abgeschlossen",
+    "overdue": "Überfällig"
   },
   "language": {
     "select": "Sprache auswählen"

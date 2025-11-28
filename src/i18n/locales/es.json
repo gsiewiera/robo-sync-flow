@@ -55,13 +55,61 @@
     "clear": "Limpiar",
     "send": "Enviar",
     "sending": "Enviando...",
-    "filters": "Filtros"
+    "filters": "Filtros",
+    "description": "Descripción",
+    "price": "Precio",
+    "quantity": "Cantidad",
+    "total": "Total",
+    "date": "Fecha",
+    "notes": "Notas",
+    "type": "Tipo",
+    "priority": "Prioridad",
+    "assignedTo": "Asignado a"
+  },
+  "dashboard": {
+    "title": "Panel de control",
+    "description": "Resumen de métricas clave y actividades"
+  },
+  "tasks": {
+    "title": "Tareas",
+    "description": "Gestione sus tareas y actividades",
+    "addTask": "Agregar tarea",
+    "editTask": "Editar tarea",
+    "dueDate": "Fecha de vencimiento",
+    "noTasks": "No se encontraron tareas",
+    "taskTitle": "Título de la tarea",
+    "taskDescription": "Descripción de la tarea"
+  },
+  "leads": {
+    "title": "Prospectos",
+    "description": "Gestionar prospectos de ventas y oportunidades",
+    "addLead": "Agregar prospecto",
+    "leadStatus": "Estado del prospecto",
+    "noLeads": "No se encontraron prospectos"
+  },
+  "offers": {
+    "title": "Ofertas",
+    "description": "Gestionar ofertas y propuestas para clientes",
+    "addOffer": "Agregar oferta",
+    "offerNumber": "Número de oferta",
+    "noOffers": "No se encontraron ofertas",
+    "stage": "Etapa",
+    "totalPrice": "Precio total"
+  },
+  "clients": {
+    "title": "Clientes",
+    "description": "Gestionar información de clientes",
+    "addClient": "Agregar cliente",
+    "editClient": "Editar cliente",
+    "noClients": "No se encontraron clientes",
+    "primaryContact": "Contacto principal",
+    "nip": "NIF"
   },
   "resellers": {
     "title": "Revendedores",
     "description": "Gestionar socios revendedores",
-    "addReseller": "Agregar Revendedor",
-    "editReseller": "Editar Revendedor",
+    "addReseller": "Agregar revendedor",
+    "editReseller": "Editar revendedor",
     "nip": "NIF",
     "primaryContact": "Contacto principal",
     "noResellers": "No se encontraron revendedores"
@@ -81,13 +129,69 @@
     "allClients": "Todos los clientes",
     "allStatuses": "Todos los estados"
   },
+  "invoices": {
+    "title": "Facturas",
+    "description": "Gestionar facturas y facturación",
+    "addInvoice": "Agregar factura",
+    "invoiceNumber": "Número de factura",
+    "noInvoices": "No se encontraron facturas",
+    "issueDate": "Fecha de emisión",
+    "dueDate": "Fecha de vencimiento",
+    "amount": "Monto"
+  },
+  "service": {
+    "title": "Servicio",
+    "description": "Gestionar tickets de servicio y mantenimiento",
+    "addTicket": "Agregar ticket",
+    "ticketNumber": "Número de ticket",
+    "noTickets": "No se encontraron tickets"
+  },
+  "robots": {
+    "title": "Robots",
+    "description": "Gestionar inventario de robots",
+    "addRobot": "Agregar robot",
+    "serialNumber": "Número de serie",
+    "model": "Modelo",
+    "noRobots": "No se encontraron robots",
+    "manufacturer": "Fabricante"
+  },
+  "items": {
+    "title": "Artículos",
+    "description": "Gestionar artículos de productos y catálogo",
+    "addItem": "Agregar artículo",
+    "noItems": "No se encontraron artículos",
+    "itemType": "Tipo de artículo",
+    "isActive": "Activo"
+  },
+  "pricing": {
+    "title": "Precios",
+    "description": "Gestionar precios y listas de precios"
+  },
+  "leaderboard": {
+    "title": "Clasificación",
+    "description": "Rankings de rendimiento de ventas"
+  },
+  "goals": {
+    "title": "Objetivos",
+    "description": "Objetivos y metas de rendimiento",
+    "addGoal": "Agregar objetivo",
+    "noGoals": "No se encontraron objetivos"
+  },
+  "settings": {
+    "title": "Configuración",
+    "description": "Configure sus preferencias"
+  },
   "status": {
     "active": "Activo",
     "inactive": "Inactivo",
     "draft": "Borrador",
     "pending_signature": "Pendiente de firma",
     "expired": "Expirado",
-    "cancelled": "Cancelado"
+    "cancelled": "Cancelado",
+    "pending": "Pendiente",
+    "in_progress": "En progreso",
+    "completed": "Completado",
+    "overdue": "Atrasado"
   },
   "language": {
     "select": "Seleccionar idioma"

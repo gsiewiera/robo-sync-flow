@@ -2,6 +2,7 @@ import { Layout } from "@/components/Layout";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "react-i18next";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -65,6 +66,7 @@ const statusColors: Record<string, string> = {
 };
 
 const Offers = () => {
+  const { t } = useTranslation();
   const [offers, setOffers] = useState<Offer[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -250,12 +252,12 @@ const Offers = () => {
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Offers</h1>
-            <p className="text-muted-foreground">Track sales opportunities and proposals</p>
+            <h1 className="text-3xl font-bold text-foreground">{t("offers.title")}</h1>
+            <p className="text-muted-foreground">{t("offers.description")}</p>
           </div>
           <Button onClick={() => setIsNewOfferOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
-            New Offer
+            {t("offers.addOffer")}
           </Button>
         </div>
 

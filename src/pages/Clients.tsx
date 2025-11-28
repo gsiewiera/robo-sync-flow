@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useTranslation } from "react-i18next";
 import { Plus, Search, ArrowUpDown, ArrowUp, ArrowDown, Eye, Edit, ChevronDown } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -43,6 +44,7 @@ interface Client {
 }
 
 const Clients = () => {
+  const { t } = useTranslation();
   const [clients, setClients] = useState<Client[]>([]);
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -167,12 +169,12 @@ const Clients = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Clients</h1>
-            <p className="text-muted-foreground">Manage your client relationships</p>
+            <h1 className="text-3xl font-bold text-foreground">{t("clients.title")}</h1>
+            <p className="text-muted-foreground">{t("clients.description")}</p>
           </div>
           <Button onClick={() => setIsClientDialogOpen(true)}>
             <Plus className="w-4 h-4 mr-2" />
-            Add Client
+            {t("clients.addClient")}
           </Button>
         </div>
 
