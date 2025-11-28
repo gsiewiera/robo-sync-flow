@@ -693,6 +693,60 @@ export type Database = {
           },
         ]
       }
+      monthly_robots_delivered: {
+        Row: {
+          actual_units: number
+          created_at: string
+          created_by: string | null
+          forecast_units: number
+          id: string
+          month: number
+          notes: string | null
+          updated_at: string
+          updated_by: string | null
+          year: number
+        }
+        Insert: {
+          actual_units?: number
+          created_at?: string
+          created_by?: string | null
+          forecast_units?: number
+          id?: string
+          month: number
+          notes?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          year: number
+        }
+        Update: {
+          actual_units?: number
+          created_at?: string
+          created_by?: string | null
+          forecast_units?: number
+          id?: string
+          month?: number
+          notes?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "monthly_robots_delivered_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "monthly_robots_delivered_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       offer_items: {
         Row: {
           contract_type: string | null

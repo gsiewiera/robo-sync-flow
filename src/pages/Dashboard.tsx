@@ -13,6 +13,8 @@ import { ServiceTicketsChart } from "@/components/dashboard/ServiceTicketsChart"
 import { OpportunitiesChart } from "@/components/dashboard/OpportunitiesChart";
 import { RevenueChart } from "@/components/dashboard/RevenueChart";
 import { RevenueTable } from "@/components/dashboard/RevenueTable";
+import { RobotsDeliveredChart } from "@/components/dashboard/RobotsDeliveredChart";
+import { RobotsDeliveredTable } from "@/components/dashboard/RobotsDeliveredTable";
 import { Skeleton } from "@/components/ui/skeleton";
 
 type DateFilter = "this_month" | "last_month" | "ytd" | "custom";
@@ -469,6 +471,12 @@ const Dashboard = () => {
         <div className="space-y-6">
           <RevenueChart />
           <RevenueTable />
+        </div>
+
+        {/* Robots Delivered Section */}
+        <div className="space-y-6">
+          <RobotsDeliveredChart />
+          <RobotsDeliveredTable />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
