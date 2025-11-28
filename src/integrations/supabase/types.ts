@@ -1081,6 +1081,53 @@ export type Database = {
         }
         Relationships: []
       }
+      report_subscriptions: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          enabled: boolean
+          frequency: string
+          id: string
+          last_sent_at: string | null
+          recipient_email: string
+          recipient_name: string
+          report_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          enabled?: boolean
+          frequency: string
+          id?: string
+          last_sent_at?: string | null
+          recipient_email: string
+          recipient_name: string
+          report_type: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          enabled?: boolean
+          frequency?: string
+          id?: string
+          last_sent_at?: string | null
+          recipient_email?: string
+          recipient_name?: string
+          report_type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_subscriptions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       resellers: {
         Row: {
           address: string | null
