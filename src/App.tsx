@@ -28,6 +28,7 @@ import Pricing from "./pages/Pricing";
 import Invoices from "./pages/Invoices";
 import Leads from "./pages/Leads";
 import AdminUsers from "./pages/AdminUsers";
+import UserProfile from "./pages/UserProfile";
 import Settings from "./pages/Settings";
 import ActivityReport from "./pages/reports/ActivityReport";
 import SalesReport from "./pages/reports/SalesReport";
@@ -233,6 +234,14 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <AdminUsers />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/users/:id"
+            element={
+              <ProtectedRoute>
+                <UserProfile />
               </ProtectedRoute>
             }
           />
