@@ -170,69 +170,78 @@ const Funnel = () => {
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card className="hover-scale border-primary/20 shadow-lg animate-fade-in bg-gradient-to-br from-primary/5 to-transparent">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+              <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
                 Total Pipeline Value
               </CardTitle>
-              <DollarSign className="w-5 h-5 text-primary" />
+              <div className="p-2 rounded-full bg-primary/10">
+                <DollarSign className="w-5 h-5 text-primary" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">
-                {totalPipeline.toLocaleString("en-US", { minimumFractionDigits: 0 })} PLN
+              <div className="text-4xl font-black tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                {totalPipeline.toLocaleString("en-US", { minimumFractionDigits: 0 })}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Active opportunities
+              <p className="text-xs text-muted-foreground mt-2 font-medium">
+                PLN in active opportunities
               </p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="hover-scale border-success/20 shadow-lg animate-fade-in bg-gradient-to-br from-success/5 to-transparent" style={{ animationDelay: "100ms" }}>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+              <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
                 Win Rate
               </CardTitle>
-              <Target className="w-5 h-5 text-success" />
+              <div className="p-2 rounded-full bg-success/10">
+                <Target className="w-5 h-5 text-success" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-success">
+              <div className="text-4xl font-black tracking-tight text-success">
                 {winRate}%
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {metrics.closed_won.count} won / {metrics.closed_won.count + metrics.closed_lost.count} closed
+              <p className="text-xs text-muted-foreground mt-2 font-medium">
+                {metrics.closed_won.count} won / {metrics.closed_won.count + metrics.closed_lost.count} closed deals
               </p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="hover-scale border-success/20 shadow-lg animate-fade-in bg-gradient-to-br from-success/5 to-transparent" style={{ animationDelay: "200ms" }}>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+              <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
                 Revenue Generated
               </CardTitle>
-              <TrendingUp className="w-5 h-5 text-success" />
+              <div className="p-2 rounded-full bg-success/10">
+                <TrendingUp className="w-5 h-5 text-success" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">
-                {metrics.closed_won.value.toLocaleString("en-US", { minimumFractionDigits: 0 })} PLN
+              <div className="text-4xl font-black tracking-tight text-success">
+                {metrics.closed_won.value.toLocaleString("en-US", { minimumFractionDigits: 0 })}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                From closed deals
+              <p className="text-xs text-muted-foreground mt-2 font-medium">
+                PLN from closed deals
               </p>
             </CardContent>
           </Card>
         </div>
 
         {/* Funnel Visualization */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Sales Pipeline Funnel</CardTitle>
+        <Card className="shadow-xl border-primary/10 animate-fade-in bg-gradient-to-br from-background via-background to-primary/5" style={{ animationDelay: "300ms" }}>
+          <CardHeader className="border-b border-primary/10 bg-gradient-to-r from-primary/5 to-transparent">
+            <CardTitle className="text-2xl font-bold tracking-tight flex items-center gap-3">
+              <div className="h-8 w-1 bg-gradient-to-b from-primary to-primary/50 rounded-full" />
+              Sales Pipeline Funnel
+            </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-2">
             {isLoading ? (
-              <div className="space-y-4">
+              <div className="space-y-4 py-4">
                 {[1, 2, 3, 4, 5].map((i) => (
-                  <Skeleton key={i} className="h-24 w-full" />
+                  <Skeleton key={i} className="h-28 w-full animate-pulse" style={{ animationDelay: `${i * 100}ms` }} />
                 ))}
               </div>
             ) : (
@@ -243,16 +252,29 @@ const Funnel = () => {
 
         {/* Lost Deals */}
         {metrics.closed_lost.count > 0 && (
-          <Card className="border-destructive/50">
-            <CardHeader>
-              <CardTitle className="text-destructive">Closed Lost</CardTitle>
+          <Card className="border-destructive/50 shadow-xl hover-scale animate-fade-in bg-gradient-to-br from-destructive/5 to-transparent" style={{ animationDelay: "400ms" }}>
+            <CardHeader className="border-b border-destructive/20 bg-gradient-to-r from-destructive/5 to-transparent">
+              <CardTitle className="text-destructive font-bold flex items-center gap-3">
+                <div className="h-6 w-1 bg-gradient-to-b from-destructive to-destructive/50 rounded-full" />
+                Closed Lost Opportunities
+              </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-2xl font-bold">{metrics.closed_lost.count} deals</div>
-                  <div className="text-muted-foreground">
-                    {metrics.closed_lost.value.toLocaleString("en-US", { minimumFractionDigits: 0 })} PLN lost value
+                  <div className="text-4xl font-black text-destructive tracking-tight">
+                    {metrics.closed_lost.count}
+                  </div>
+                  <div className="text-sm text-muted-foreground font-medium mt-1">
+                    lost deals
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-3xl font-bold text-destructive/80">
+                    {metrics.closed_lost.value.toLocaleString("en-US", { minimumFractionDigits: 0 })}
+                  </div>
+                  <div className="text-sm text-muted-foreground font-medium mt-1">
+                    PLN lost value
                   </div>
                 </div>
               </div>
