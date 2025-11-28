@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Layout } from "@/components/Layout";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -287,18 +288,27 @@ export default function AdminUsers() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-muted-foreground">Loading...</div>
-      </div>
+      <Layout>
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-muted-foreground">Loading...</div>
+        </div>
+      </Layout>
     );
   }
 
   if (!isAdmin) {
-    return null;
+    return (
+      <Layout>
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-muted-foreground">Access denied</div>
+        </div>
+      </Layout>
+    );
   }
 
   return (
-    <div className="container mx-auto py-8 px-4">
+    <Layout>
+      <div className="container mx-auto py-8 px-4">
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">
@@ -568,5 +578,6 @@ export default function AdminUsers() {
         </CardContent>
       </Card>
     </div>
+    </Layout>
   );
 }

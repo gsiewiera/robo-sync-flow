@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Layout } from "@/components/Layout";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -196,20 +197,29 @@ export default function Leaderboard() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-muted-foreground">Loading leaderboard...</div>
-      </div>
+      <Layout>
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-muted-foreground">Loading leaderboard...</div>
+        </div>
+      </Layout>
     );
   }
 
   if (!hasAccess) {
-    return null;
+    return (
+      <Layout>
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-muted-foreground">Access denied</div>
+        </div>
+      </Layout>
+    );
   }
 
   const topPerformers = leaderboard.slice(0, 3);
 
   return (
-    <div className="container mx-auto py-8 px-4">
+    <Layout>
+      <div className="container mx-auto py-8 px-4">
       <div className="mb-8">
         <h1 className="text-3xl font-bold flex items-center gap-2">
           <Trophy className="h-8 w-8 text-yellow-500" />
@@ -422,5 +432,6 @@ export default function Leaderboard() {
         </TabsContent>
       </Tabs>
     </div>
+    </Layout>
   );
 }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Layout } from "@/components/Layout";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -233,21 +234,30 @@ export default function Goals() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-muted-foreground">Loading goals...</div>
-      </div>
+      <Layout>
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-muted-foreground">Loading goals...</div>
+        </div>
+      </Layout>
     );
   }
 
   if (!hasAccess) {
-    return null;
+    return (
+      <Layout>
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-muted-foreground">Access denied</div>
+        </div>
+      </Layout>
+    );
   }
 
   const activeGoals = goals.filter(g => g.status === "active");
   const completedGoals = goals.filter(g => g.status === "completed");
 
   return (
-    <div className="container mx-auto py-8 px-4">
+    <Layout>
+      <div className="container mx-auto py-8 px-4">
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">
@@ -546,5 +556,6 @@ export default function Goals() {
         </CardContent>
       </Card>
     </div>
+    </Layout>
   );
 }
