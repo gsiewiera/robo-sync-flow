@@ -928,6 +928,7 @@ export type Database = {
           prepayment_amount: number | null
           prepayment_percent: number | null
           reseller_id: string | null
+          stage: string | null
           status: Database["public"]["Enums"]["offer_status"] | null
           total_price: number | null
           updated_at: string | null
@@ -948,6 +949,7 @@ export type Database = {
           prepayment_amount?: number | null
           prepayment_percent?: number | null
           reseller_id?: string | null
+          stage?: string | null
           status?: Database["public"]["Enums"]["offer_status"] | null
           total_price?: number | null
           updated_at?: string | null
@@ -968,6 +970,7 @@ export type Database = {
           prepayment_amount?: number | null
           prepayment_percent?: number | null
           reseller_id?: string | null
+          stage?: string | null
           status?: Database["public"]["Enums"]["offer_status"] | null
           total_price?: number | null
           updated_at?: string | null

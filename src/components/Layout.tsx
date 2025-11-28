@@ -12,7 +12,8 @@ import {
   Package,
   Building2,
   Settings as SettingsIcon,
-  LogOut
+  LogOut,
+  TrendingUp
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -40,6 +41,7 @@ const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
   { icon: CheckSquare, label: "Tasks", path: "/tasks" },
   { icon: ShoppingCart, label: "Offers", path: "/offers" },
+  { icon: TrendingUp, label: "Funnel", path: "/funnel" },
   { icon: Users, label: "Clients", path: "/clients" },
   { icon: Building2, label: "Resellers", path: "/resellers" },
   { icon: FileText, label: "Contracts", path: "/contracts" },

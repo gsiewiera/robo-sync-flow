@@ -9,6 +9,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { NewOfferDialog } from "@/components/offers/NewOfferDialog";
 import { OfferPdfGenerator } from "@/components/offers/OfferPdfGenerator";
 import { CreateContractDialog } from "@/components/offers/CreateContractDialog";
+import { OfferStageSelector } from "@/components/offers/OfferStageSelector";
 import {
   Table,
   TableBody,
@@ -22,6 +23,7 @@ interface Offer {
   id: string;
   offer_number: string;
   status: string;
+  stage?: string;
   total_price: number | null;
   notes: string | null;
   created_at: string;
@@ -206,6 +208,14 @@ const OfferDetail = () => {
                 <p className="font-medium">
                   {new Date(offer.created_at).toLocaleDateString()}
                 </p>
+              </div>
+              
+              <div className="pt-2">
+                <OfferStageSelector 
+                  offerId={offer.id}
+                  currentStage={offer.stage || 'leads'}
+                  onStageChange={fetchOfferData}
+                />
               </div>
             </div>
 
