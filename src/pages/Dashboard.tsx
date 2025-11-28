@@ -465,6 +465,12 @@ const Dashboard = () => {
           </Popover>
         </div>
 
+        {/* Revenue Section */}
+        <div className="space-y-6">
+          <RevenueChart />
+          <RevenueTable />
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {statCards.map((stat) => {
             const Icon = stat.icon;
@@ -500,7 +506,6 @@ const Dashboard = () => {
           {isLoading ? (
             <>
               <Skeleton className="h-[350px] w-full" />
-              <Skeleton className="h-[350px] w-full" />
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <Skeleton className="h-[350px] w-full" />
                 <Skeleton className="h-[350px] w-full" />
@@ -508,7 +513,6 @@ const Dashboard = () => {
             </>
           ) : (
             <>
-              <RevenueChart />
               <RobotsSoldChart data={chartData.robotsSold} />
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <ServiceTicketsChart data={chartData.serviceTickets} />
@@ -517,9 +521,6 @@ const Dashboard = () => {
             </>
           )}
         </div>
-
-        {/* Revenue Section */}
-        <RevenueTable />
       </div>
     </Layout>
   );
