@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { ArrowUpDown, ArrowUp, ArrowDown, Eye, X } from "lucide-react";
+import { ArrowUpDown, ArrowUp, ArrowDown, Eye, X, Mail } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -29,6 +29,19 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 
 interface Contract {
   id: string;
@@ -57,6 +70,10 @@ const Contracts = () => {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [filterClient, setFilterClient] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string | "all">("all");
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
+  const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
+  const [recipientEmail, setRecipientEmail] = useState("");
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
   const navigate = useNavigate();
   const recordsPerPage = 20;
 
@@ -135,6 +152,63 @@ const Contracts = () => {
   };
 
   const hasActiveFilters = filterClient !== "all" || filterStatus !== "all";
+
+  const openEmailDialog = (contract: Contract) => {
+    setSelectedContract(contract);
+    setRecipientEmail("");
+    setEmailDialogOpen(true);
+  };
+
+  const sendEmail = async () => {
+    if (!selectedContract || !recipientEmail) {
+      toast.error("Please enter a recipient email");
+      return;
+    }
+
+    setIsSendingEmail(true);
+
+    try {
+      // Fetch latest contract version
+      const { data: versions, error: versionsError } = await supabase
+        .from("contract_versions")
+        .select("*")
+        .eq("contract_id", selectedContract.id)
+        .order("version_number", { ascending: false })
+        .limit(1);
+
+      if (versionsError) throw versionsError;
+
+      if (!versions || versions.length === 0) {
+        toast.error("No contract PDF version found. Please generate a PDF first.");
+        setIsSendingEmail(false);
+        return;
+      }
+
+      const latestVersion = versions[0];
+
+      // Call edge function
+      const { error } = await supabase.functions.invoke("send-contract-email", {
+        body: {
+          contractNumber: selectedContract.contract_number,
+          versionId: latestVersion.id,
+          clientEmail: recipientEmail,
+          clientName: selectedContract.clients?.name || "Client",
+          filePath: latestVersion.file_path,
+        },
+      });
+
+      if (error) throw error;
+
+      toast.success("Contract email sent successfully!");
+      setEmailDialogOpen(false);
+      setRecipientEmail("");
+    } catch (error: any) {
+      console.error("Error sending email:", error);
+      toast.error(error.message || "Failed to send email");
+    } finally {
+      setIsSendingEmail(false);
+    }
+  };
 
   return (
     <Layout>
@@ -289,14 +363,26 @@ const Contracts = () => {
                         : "-"}
                     </TableCell>
                     <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0"
-                        onClick={() => navigate(`/contracts/${contract.id}`)}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          onClick={() => openEmailDialog(contract)}
+                          title="Send email"
+                        >
+                          <Mail className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          onClick={() => navigate(`/contracts/${contract.id}`)}
+                          title="View details"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
@@ -334,6 +420,35 @@ const Contracts = () => {
             </PaginationContent>
           </Pagination>
         )}
+
+        <AlertDialog open={emailDialogOpen} onOpenChange={setEmailDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Send Contract Email</AlertDialogTitle>
+              <AlertDialogDescription>
+                Send the latest contract PDF version to the client via email.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Recipient Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="client@example.com"
+                  value={recipientEmail}
+                  onChange={(e) => setRecipientEmail(e.target.value)}
+                />
+              </div>
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isSendingEmail}>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={sendEmail} disabled={isSendingEmail}>
+                {isSendingEmail ? "Sending..." : "Send Email"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </Layout>
   );
