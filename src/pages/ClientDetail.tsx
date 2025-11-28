@@ -45,7 +45,7 @@ interface Contract {
 interface Offer {
   id: string;
   offer_number: string;
-  status: string;
+  stage: string;
   total_price: number | null;
   created_at: string;
 }
@@ -96,6 +96,13 @@ const statusColors: Record<string, string> = {
   paid: "bg-success text-success-foreground",
   overdue: "bg-destructive text-destructive-foreground",
   cancelled: "bg-muted text-muted-foreground",
+  // Funnel stages
+  leads: "bg-gray-500",
+  qualified: "bg-blue-500",
+  proposal_sent: "bg-yellow-500",
+  negotiation: "bg-orange-500",
+  closed_won: "bg-green-500",
+  closed_lost: "bg-red-500",
 };
 
 const ClientDetail = () => {
@@ -472,7 +479,9 @@ const ClientDetail = () => {
                   <div>
                     <div className="flex items-center gap-3">
                       <h3 className="font-semibold">{offer.offer_number}</h3>
-                      <Badge className={statusColors[offer.status]}>{offer.status}</Badge>
+                      <Badge className={statusColors[offer.stage]}>
+                        {offer.stage.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                      </Badge>
                     </div>
                     <p className="text-sm text-muted-foreground mt-1">
                       Created: {new Date(offer.created_at).toLocaleDateString()}

@@ -176,11 +176,11 @@ const Dashboard = () => {
       const dateRange = eachDayOfInterval({ start: startDate, end: endDate });
 
       // Fetch current period stats
-      // Fetch open opportunities (offers in sent status)
+      // Fetch open opportunities (offers in proposal_sent or negotiation stage)
       const { count: openOpportunities } = await supabase
         .from("offers")
         .select("*", { count: "exact", head: true })
-        .eq("status", "sent")
+        .in("stage", ["proposal_sent", "negotiation"])
         .gte("created_at", start)
         .lte("created_at", end);
 
@@ -250,7 +250,7 @@ const Dashboard = () => {
       const { count: prevOpenOpportunities } = await supabase
         .from("offers")
         .select("*", { count: "exact", head: true })
-        .eq("status", "sent")
+        .in("stage", ["proposal_sent", "negotiation"])
         .gte("created_at", prevStart)
         .lte("created_at", prevEnd);
 
@@ -373,7 +373,7 @@ const Dashboard = () => {
           const { count } = await supabase
             .from("offers")
             .select("*", { count: "exact", head: true })
-            .eq("status", "sent")
+            .in("stage", ["proposal_sent", "negotiation"])
             .gte("created_at", dateStr)
             .lt("created_at", new Date(date.getTime() + 86400000).toISOString());
           return { date: dateStr, count: count || 0 };

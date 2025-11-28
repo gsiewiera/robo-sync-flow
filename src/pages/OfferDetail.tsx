@@ -22,8 +22,7 @@ import {
 interface Offer {
   id: string;
   offer_number: string;
-  status: string;
-  stage?: string;
+  stage: string;
   total_price: number | null;
   notes: string | null;
   created_at: string;
@@ -51,12 +50,13 @@ interface OfferItem {
   unit_price: number;
 }
 
-const statusColors: Record<string, string> = {
-  draft: "bg-muted text-muted-foreground",
-  sent: "bg-primary text-primary-foreground",
-  modified: "bg-warning text-warning-foreground",
-  accepted: "bg-success text-success-foreground",
-  rejected: "bg-destructive text-destructive-foreground",
+const stageColors: Record<string, string> = {
+  leads: "bg-gray-500",
+  qualified: "bg-blue-500",
+  proposal_sent: "bg-yellow-500",
+  negotiation: "bg-orange-500",
+  closed_won: "bg-green-500",
+  closed_lost: "bg-red-500",
 };
 
 const OfferDetail = () => {
@@ -164,7 +164,9 @@ const OfferDetail = () => {
               </div>
               <div>
                 <h2 className="text-xl font-semibold">Offer Information</h2>
-                <Badge className={statusColors[offer.status]}>{offer.status}</Badge>
+                <Badge className={stageColors[offer.stage]}>
+                  {offer.stage.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                </Badge>
               </div>
             </div>
             {offer.total_price && (

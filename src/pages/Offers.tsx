@@ -37,7 +37,7 @@ import {
 interface Offer {
   id: string;
   offer_number: string;
-  status: string;
+  stage: string;
   total_price: number | null;
   created_at: string;
   clients: { name: string; id: string } | null;
@@ -71,7 +71,7 @@ const Offers = () => {
   const [sortField, setSortField] = useState<"offer_number" | "total_price" | "created_at">("created_at");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [clientFilters, setClientFilters] = useState<string[]>([]);
-  const [statusFilters, setStatusFilters] = useState<Array<"draft" | "sent" | "modified" | "accepted" | "rejected">>([]);
+  const [stageFilters, setStageFilters] = useState<Array<"leads" | "qualified" | "proposal_sent" | "negotiation" | "closed_won" | "closed_lost">>([]);
   const [createdDateFilter, setCreatedDateFilter] = useState<string>("");
   const [isNewOfferOpen, setIsNewOfferOpen] = useState(false);
   const [editingOffer, setEditingOffer] = useState<any>(null);
@@ -115,9 +115,9 @@ const Offers = () => {
       query = query.in("client_id", clientFilters);
     }
 
-    // Apply status filters
-    if (statusFilters.length > 0) {
-      query = query.in("status", statusFilters);
+    // Apply stage filters
+    if (stageFilters.length > 0) {
+      query = query.in("stage", stageFilters);
     }
 
     // Apply created date filter
@@ -141,10 +141,10 @@ const Offers = () => {
         );
       }
 
-      // Apply status filters
-      if (statusFilters.length > 0) {
+      // Apply stage filters
+      if (stageFilters.length > 0) {
         filteredData = filteredData.filter((offer) =>
-          statusFilters.includes(offer.status)
+          stageFilters.includes(offer.stage as any)
         );
       }
 
@@ -163,7 +163,7 @@ const Offers = () => {
   useEffect(() => {
     fetchOffers();
     setCurrentPage(1);
-  }, [sortField, sortDirection, clientFilters, statusFilters, createdDateFilter]);
+  }, [sortField, sortDirection, clientFilters, stageFilters, createdDateFilter]);
 
   const indexOfLastRecord = currentPage * recordsPerPage;
   const indexOfFirstRecord = indexOfLastRecord - recordsPerPage;
@@ -200,17 +200,17 @@ const Offers = () => {
     );
   };
 
-  const toggleStatusFilter = (status: "draft" | "sent" | "modified" | "accepted" | "rejected") => {
-    setStatusFilters((prev) =>
-      prev.includes(status)
-        ? prev.filter((s) => s !== status)
-        : [...prev, status]
+  const toggleStageFilter = (stage: "leads" | "qualified" | "proposal_sent" | "negotiation" | "closed_won" | "closed_lost") => {
+    setStageFilters((prev) =>
+      prev.includes(stage)
+        ? prev.filter((s) => s !== stage)
+        : [...prev, stage]
     );
   };
 
   const clearFilters = () => {
     setClientFilters([]);
-    setStatusFilters([]);
+    setStageFilters([]);
     setCreatedDateFilter("");
   };
 
@@ -222,7 +222,7 @@ const Offers = () => {
     );
   };
 
-  const hasActiveFilters = clientFilters.length > 0 || statusFilters.length > 0 || createdDateFilter !== "";
+  const hasActiveFilters = clientFilters.length > 0 || stageFilters.length > 0 || createdDateFilter !== "";
 
   const handleEditOffer = async (offerId: string) => {
     const { data: offerData, error } = await supabase
@@ -294,30 +294,31 @@ const Offers = () => {
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="outline" className="h-10 w-[180px] justify-between">
-                    Status {statusFilters.length > 0 && `(${statusFilters.length})`}
+                    Funnel Stage {stageFilters.length > 0 && `(${stageFilters.length})`}
                     <ChevronDown className="ml-2 h-4 w-4" />
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-[180px] p-3 bg-background z-50" align="start">
                   <div className="space-y-2">
                     {([
-                      { value: "draft" as const, label: "Draft" },
-                      { value: "sent" as const, label: "Sent" },
-                      { value: "modified" as const, label: "Modified" },
-                      { value: "accepted" as const, label: "Accepted" },
-                      { value: "rejected" as const, label: "Rejected" },
-                    ]).map((status) => (
-                      <div key={status.value} className="flex items-center space-x-2">
+                      { value: "leads" as const, label: "Leads" },
+                      { value: "qualified" as const, label: "Qualified" },
+                      { value: "proposal_sent" as const, label: "Proposal Sent" },
+                      { value: "negotiation" as const, label: "Negotiation" },
+                      { value: "closed_won" as const, label: "Closed Won" },
+                      { value: "closed_lost" as const, label: "Closed Lost" },
+                    ]).map((stage) => (
+                      <div key={stage.value} className="flex items-center space-x-2">
                         <Checkbox
-                          id={`status-${status.value}`}
-                          checked={statusFilters.includes(status.value)}
-                          onCheckedChange={() => toggleStatusFilter(status.value)}
+                          id={`stage-${stage.value}`}
+                          checked={stageFilters.includes(stage.value)}
+                          onCheckedChange={() => toggleStageFilter(stage.value)}
                         />
                         <label
-                          htmlFor={`status-${status.value}`}
+                          htmlFor={`stage-${stage.value}`}
                           className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
                         >
-                          {status.label}
+                          {stage.label}
                         </label>
                       </div>
                     ))}
@@ -419,8 +420,8 @@ const Offers = () => {
                     )}
                     {visibleColumns.includes("status") && (
                       <TableCell>
-                        <Badge className={statusColors[offer.status]}>
-                          {offer.status}
+                        <Badge className={statusColors[offer.stage]}>
+                          {offer.stage.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
                         </Badge>
                       </TableCell>
                     )}
