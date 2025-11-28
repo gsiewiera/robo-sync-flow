@@ -1,4 +1,4 @@
-import { ReactNode, useState } from "react";
+import { ReactNode, useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { 
   LayoutDashboard, 
@@ -20,7 +20,8 @@ import {
   CalendarClock,
   ChevronDown,
   Receipt,
-  UserPlus
+  UserPlus,
+  Shield
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -45,27 +46,35 @@ interface LayoutProps {
   children: ReactNode;
 }
 
-const navItems = [
-  { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
-  { icon: CheckSquare, label: "Tasks", path: "/tasks" },
-  { icon: UserPlus, label: "Leads", path: "/leads" },
-  { icon: ShoppingCart, label: "Offers", path: "/offers" },
-  { icon: TrendingUp, label: "Funnel", path: "/funnel" },
-  { icon: Users, label: "Clients", path: "/clients" },
-  { icon: Building2, label: "Resellers", path: "/resellers" },
-  { icon: FileText, label: "Contracts", path: "/contracts" },
-  { icon: Receipt, label: "Invoices", path: "/invoices" },
-  { icon: Wrench, label: "Service", path: "/service" },
-  { icon: Bot, label: "Robots", path: "/robots" },
-  { icon: Package, label: "Items", path: "/items" },
-  { icon: DollarSign, label: "Pricing", path: "/pricing" },
+interface NavItem {
+  icon: any;
+  label: string;
+  path: string;
+  roles: string[];
+}
+
+const allNavItems: NavItem[] = [
+  { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard", roles: ["admin", "manager", "salesperson", "technician"] },
+  { icon: CheckSquare, label: "Tasks", path: "/tasks", roles: ["admin", "manager", "salesperson", "technician"] },
+  { icon: UserPlus, label: "Leads", path: "/leads", roles: ["admin", "manager", "salesperson"] },
+  { icon: ShoppingCart, label: "Offers", path: "/offers", roles: ["admin", "manager", "salesperson"] },
+  { icon: TrendingUp, label: "Funnel", path: "/funnel", roles: ["admin", "manager"] },
+  { icon: Users, label: "Clients", path: "/clients", roles: ["admin", "manager", "salesperson"] },
+  { icon: Building2, label: "Resellers", path: "/resellers", roles: ["admin", "manager", "salesperson"] },
+  { icon: FileText, label: "Contracts", path: "/contracts", roles: ["admin", "manager", "salesperson"] },
+  { icon: Receipt, label: "Invoices", path: "/invoices", roles: ["admin", "manager", "salesperson"] },
+  { icon: Wrench, label: "Service", path: "/service", roles: ["admin", "manager", "technician"] },
+  { icon: Bot, label: "Robots", path: "/robots", roles: ["admin", "manager", "technician"] },
+  { icon: Package, label: "Items", path: "/items", roles: ["admin", "manager"] },
+  { icon: DollarSign, label: "Pricing", path: "/pricing", roles: ["admin", "manager"] },
+  { icon: Shield, label: "Admin", path: "/admin/users", roles: ["admin"] },
 ];
 
-const reportItems = [
-  { icon: Activity, label: "Activity", path: "/reports/activity" },
-  { icon: BarChart3, label: "Sales", path: "/reports/sales" },
-  { icon: Building, label: "Reseller", path: "/reports/reseller" },
-  { icon: CalendarClock, label: "Ending", path: "/reports/ending" },
+const reportItems: NavItem[] = [
+  { icon: Activity, label: "Activity", path: "/reports/activity", roles: ["admin", "manager"] },
+  { icon: BarChart3, label: "Sales", path: "/reports/sales", roles: ["admin", "manager"] },
+  { icon: Building, label: "Reseller", path: "/reports/reseller", roles: ["admin", "manager"] },
+  { icon: CalendarClock, label: "Ending", path: "/reports/ending", roles: ["admin", "manager"] },
 ];
 
 function AppSidebar() {
@@ -74,6 +83,33 @@ function AppSidebar() {
   const navigate = useNavigate();
   const [reportsOpen, setReportsOpen] = useState(
     location.pathname.startsWith("/reports")
+  );
+  const [userRoles, setUserRoles] = useState<string[]>([]);
+
+  useEffect(() => {
+    fetchUserRoles();
+  }, []);
+
+  const fetchUserRoles = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id);
+
+    if (data) {
+      setUserRoles(data.map(r => r.role));
+    }
+  };
+
+  const navItems = allNavItems.filter(item => 
+    item.roles.some(role => userRoles.includes(role))
+  );
+
+  const filteredReportItems = reportItems.filter(item => 
+    item.roles.some(role => userRoles.includes(role))
   );
 
   const handleLogout = async () => {
@@ -128,7 +164,7 @@ function AppSidebar() {
             <CollapsibleContent>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {reportItems.map((item) => {
+                  {filteredReportItems.map((item) => {
                     const Icon = item.icon;
                     const isActive = location.pathname === item.path;
 

@@ -27,6 +27,7 @@ import Items from "./pages/Items";
 import Pricing from "./pages/Pricing";
 import Invoices from "./pages/Invoices";
 import Leads from "./pages/Leads";
+import AdminUsers from "./pages/AdminUsers";
 import Settings from "./pages/Settings";
 import ActivityReport from "./pages/reports/ActivityReport";
 import SalesReport from "./pages/reports/SalesReport";
@@ -224,6 +225,14 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <Leads />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/users"
+            element={
+              <ProtectedRoute>
+                <AdminUsers />
               </ProtectedRoute>
             }
           />
