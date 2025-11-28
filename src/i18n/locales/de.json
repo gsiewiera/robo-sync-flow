@@ -31,6 +31,64 @@
     "reseller": "Wiederverkäufer",
     "ending": "Auslaufend"
   },
+  "common": {
+    "search": "Suchen",
+    "add": "Hinzufügen",
+    "edit": "Bearbeiten",
+    "delete": "Löschen",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "close": "Schließen",
+    "view": "Ansehen",
+    "actions": "Aktionen",
+    "status": "Status",
+    "name": "Name",
+    "email": "E-Mail",
+    "phone": "Telefon",
+    "address": "Adresse",
+    "city": "Stadt",
+    "country": "Land",
+    "created": "Erstellt",
+    "updated": "Aktualisiert",
+    "loading": "Lädt...",
+    "noData": "Keine Daten gefunden",
+    "clear": "Löschen",
+    "send": "Senden",
+    "sending": "Wird gesendet...",
+    "filters": "Filter"
+  },
+  "resellers": {
+    "title": "Wiederverkäufer",
+    "description": "Wiederverkäufer-Partner verwalten",
+    "addReseller": "Wiederverkäufer hinzufügen",
+    "editReseller": "Wiederverkäufer bearbeiten",
+    "nip": "Steuernummer",
+    "primaryContact": "Hauptansprechpartner",
+    "noResellers": "Keine Wiederverkäufer gefunden"
+  },
+  "contracts": {
+    "title": "Verträge",
+    "description": "Kundenverträge und Vereinbarungen verwalten",
+    "contractNumber": "Vertragsnummer",
+    "client": "Kunde",
+    "startDate": "Startdatum",
+    "endDate": "Enddatum",
+    "monthlyPayment": "Monatliche Zahlung",
+    "noContracts": "Keine Verträge gefunden",
+    "sendEmail": "Vertrags-E-Mail senden",
+    "emailDescription": "Senden Sie die neueste PDF-Version des Vertrags per E-Mail an den Kunden.",
+    "recipientEmail": "Empfänger E-Mail",
+    "allClients": "Alle Kunden",
+    "allStatuses": "Alle Status"
+  },
+  "status": {
+    "active": "Aktiv",
+    "inactive": "Inaktiv",
+    "draft": "Entwurf",
+    "pending_signature": "Ausstehende Unterschrift",
+    "expired": "Abgelaufen",
+    "cancelled": "Storniert"
+  },
   "language": {
     "select": "Sprache auswählen"
   }

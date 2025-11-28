@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { ArrowUpDown, ArrowUp, ArrowDown, Eye, X, Mail } from "lucide-react";
 import {
   Select,
@@ -63,6 +64,7 @@ const statusColors: Record<string, string> = {
 };
 
 const Contracts = () => {
+  const { t } = useTranslation();
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [clients, setClients] = useState<{ id: string; name: string }[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -214,8 +216,8 @@ const Contracts = () => {
     <Layout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Contracts</h1>
-          <p className="text-muted-foreground">Manage client contracts and agreements</p>
+          <h1 className="text-3xl font-bold text-foreground">{t("contracts.title")}</h1>
+          <p className="text-muted-foreground">{t("contracts.description")}</p>
         </div>
 
         {/* Filters */}
@@ -223,13 +225,13 @@ const Contracts = () => {
           <div className="flex items-center gap-4">
             <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-medium mb-2 block">Client</label>
+                <label className="text-sm font-medium mb-2 block">{t("contracts.client")}</label>
                 <Select value={filterClient} onValueChange={setFilterClient}>
                   <SelectTrigger>
-                    <SelectValue placeholder="All Clients" />
+                    <SelectValue placeholder={t("contracts.allClients")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Clients</SelectItem>
+                    <SelectItem value="all">{t("contracts.allClients")}</SelectItem>
                     {clients.map((client) => (
                       <SelectItem key={client.id} value={client.id}>
                         {client.name}
@@ -240,18 +242,18 @@ const Contracts = () => {
               </div>
 
               <div>
-                <label className="text-sm font-medium mb-2 block">Status</label>
+                <label className="text-sm font-medium mb-2 block">{t("common.status")}</label>
                 <Select value={filterStatus} onValueChange={setFilterStatus}>
                   <SelectTrigger>
-                    <SelectValue placeholder="All Statuses" />
+                    <SelectValue placeholder={t("contracts.allStatuses")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Statuses</SelectItem>
-                    <SelectItem value="draft">Draft</SelectItem>
-                    <SelectItem value="pending_signature">Pending Signature</SelectItem>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="expired">Expired</SelectItem>
-                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                    <SelectItem value="all">{t("contracts.allStatuses")}</SelectItem>
+                    <SelectItem value="draft">{t("status.draft")}</SelectItem>
+                    <SelectItem value="pending_signature">{t("status.pending_signature")}</SelectItem>
+                    <SelectItem value="active">{t("status.active")}</SelectItem>
+                    <SelectItem value="expired">{t("status.expired")}</SelectItem>
+                    <SelectItem value="cancelled">{t("status.cancelled")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -265,7 +267,7 @@ const Contracts = () => {
                 className="mt-6"
               >
                 <X className="h-4 w-4 mr-2" />
-                Clear
+                {t("common.clear")}
               </Button>
             )}
           </div>
@@ -282,12 +284,12 @@ const Contracts = () => {
                     onClick={() => handleSort("contract_number")}
                     className="h-8 px-2 -ml-2 font-medium hover:bg-transparent"
                   >
-                    Contract Number
+                    {t("contracts.contractNumber")}
                     {getSortIcon("contract_number")}
                   </Button>
                 </TableHead>
-                <TableHead>Client</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>{t("contracts.client")}</TableHead>
+                <TableHead>{t("common.status")}</TableHead>
                 <TableHead>
                   <Button
                     variant="ghost"
@@ -295,7 +297,7 @@ const Contracts = () => {
                     onClick={() => handleSort("start_date")}
                     className="h-8 px-2 -ml-2 font-medium hover:bg-transparent"
                   >
-                    Start Date
+                    {t("contracts.startDate")}
                     {getSortIcon("start_date")}
                   </Button>
                 </TableHead>
@@ -306,11 +308,11 @@ const Contracts = () => {
                     onClick={() => handleSort("end_date")}
                     className="h-8 px-2 -ml-2 font-medium hover:bg-transparent"
                   >
-                    End Date
+                    {t("contracts.endDate")}
                     {getSortIcon("end_date")}
                   </Button>
                 </TableHead>
-                <TableHead>Monthly Payment</TableHead>
+                <TableHead>{t("contracts.monthlyPayment")}</TableHead>
                 <TableHead>
                   <Button
                     variant="ghost"
@@ -318,18 +320,18 @@ const Contracts = () => {
                     onClick={() => handleSort("created_at")}
                     className="h-8 px-2 -ml-2 font-medium hover:bg-transparent"
                   >
-                    Created
+                    {t("common.created")}
                     {getSortIcon("created_at")}
                   </Button>
                 </TableHead>
-                <TableHead className="w-20">Actions</TableHead>
+                <TableHead className="w-20">{t("common.actions")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {currentRecords.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                    No contracts found
+                    {t("contracts.noContracts")}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -339,7 +341,7 @@ const Contracts = () => {
                     <TableCell>{contract.clients?.name || "-"}</TableCell>
                     <TableCell>
                       <Badge className={statusColors[contract.status]}>
-                        {contract.status.replace("_", " ")}
+                        {t(`status.${contract.status}`)}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -424,14 +426,14 @@ const Contracts = () => {
         <AlertDialog open={emailDialogOpen} onOpenChange={setEmailDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Send Contract Email</AlertDialogTitle>
+              <AlertDialogTitle>{t("contracts.sendEmail")}</AlertDialogTitle>
               <AlertDialogDescription>
-                Send the latest contract PDF version to the client via email.
+                {t("contracts.emailDescription")}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Recipient Email</Label>
+                <Label htmlFor="email">{t("contracts.recipientEmail")}</Label>
                 <Input
                   id="email"
                   type="email"
@@ -442,9 +444,9 @@ const Contracts = () => {
               </div>
             </div>
             <AlertDialogFooter>
-              <AlertDialogCancel disabled={isSendingEmail}>Cancel</AlertDialogCancel>
+              <AlertDialogCancel disabled={isSendingEmail}>{t("common.cancel")}</AlertDialogCancel>
               <AlertDialogAction onClick={sendEmail} disabled={isSendingEmail}>
-                {isSendingEmail ? "Sending..." : "Send Email"}
+                {isSendingEmail ? t("common.sending") : t("common.send")}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

@@ -31,6 +31,64 @@
     "reseller": "Reseller",
     "ending": "Kończące się"
   },
+  "common": {
+    "search": "Szukaj",
+    "add": "Dodaj",
+    "edit": "Edytuj",
+    "delete": "Usuń",
+    "save": "Zapisz",
+    "cancel": "Anuluj",
+    "close": "Zamknij",
+    "view": "Wyświetl",
+    "actions": "Akcje",
+    "status": "Status",
+    "name": "Nazwa",
+    "email": "Email",
+    "phone": "Telefon",
+    "address": "Adres",
+    "city": "Miasto",
+    "country": "Kraj",
+    "created": "Utworzono",
+    "updated": "Zaktualizowano",
+    "loading": "Ładowanie...",
+    "noData": "Brak danych",
+    "clear": "Wyczyść",
+    "send": "Wyślij",
+    "sending": "Wysyłanie...",
+    "filters": "Filtry"
+  },
+  "resellers": {
+    "title": "Resellerzy",
+    "description": "Zarządzaj partnerami resellerskimi",
+    "addReseller": "Dodaj Resellera",
+    "editReseller": "Edytuj Resellera",
+    "nip": "NIP",
+    "primaryContact": "Kontakt główny",
+    "noResellers": "Nie znaleziono resellerów"
+  },
+  "contracts": {
+    "title": "Kontrakty",
+    "description": "Zarządzaj kontraktami i umowami z klientami",
+    "contractNumber": "Numer kontraktu",
+    "client": "Klient",
+    "startDate": "Data rozpoczęcia",
+    "endDate": "Data zakończenia",
+    "monthlyPayment": "Płatność miesięczna",
+    "noContracts": "Nie znaleziono kontraktów",
+    "sendEmail": "Wyślij email z kontraktem",
+    "emailDescription": "Wyślij najnowszą wersję PDF kontraktu do klienta przez email.",
+    "recipientEmail": "Email odbiorcy",
+    "allClients": "Wszyscy klienci",
+    "allStatuses": "Wszystkie statusy"
+  },
+  "status": {
+    "active": "Aktywny",
+    "inactive": "Nieaktywny",
+    "draft": "Szkic",
+    "pending_signature": "Oczekuje na podpis",
+    "expired": "Wygasły",
+    "cancelled": "Anulowany"
+  },
   "language": {
     "select": "Wybierz język"
   }
