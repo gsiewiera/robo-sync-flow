@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { 
   LayoutDashboard, 
@@ -13,11 +13,17 @@ import {
   Building2,
   Settings as SettingsIcon,
   LogOut,
-  TrendingUp
+  TrendingUp,
+  BarChart3,
+  Activity,
+  Building,
+  CalendarClock,
+  ChevronDown
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { NavLink } from "@/components/NavLink";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   Sidebar,
   SidebarContent,
@@ -51,10 +57,20 @@ const navItems = [
   { icon: DollarSign, label: "Pricing", path: "/pricing" },
 ];
 
+const reportItems = [
+  { icon: Activity, label: "Activity", path: "/reports/activity" },
+  { icon: BarChart3, label: "Sales", path: "/reports/sales" },
+  { icon: Building, label: "Reseller", path: "/reports/reseller" },
+  { icon: CalendarClock, label: "Ending", path: "/reports/ending" },
+];
+
 function AppSidebar() {
   const { open } = useSidebar();
   const location = useLocation();
   const navigate = useNavigate();
+  const [reportsOpen, setReportsOpen] = useState(
+    location.pathname.startsWith("/reports")
+  );
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -92,6 +108,41 @@ function AppSidebar() {
               })}
             </SidebarMenu>
           </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <Collapsible open={reportsOpen} onOpenChange={setReportsOpen}>
+            <SidebarGroupLabel asChild>
+              <CollapsibleTrigger className="flex items-center justify-between w-full group/collapsible">
+                <span className="flex items-center gap-2">
+                  <BarChart3 className="w-4 h-4" />
+                  Reports
+                </span>
+                <ChevronDown className="w-4 h-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-180" />
+              </CollapsibleTrigger>
+            </SidebarGroupLabel>
+            <CollapsibleContent>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {reportItems.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = location.pathname === item.path;
+
+                    return (
+                      <SidebarMenuItem key={item.path}>
+                        <SidebarMenuButton asChild isActive={isActive}>
+                          <NavLink to={item.path} className="pl-7">
+                            <Icon className="w-4 h-4" />
+                            <span>{item.label}</span>
+                          </NavLink>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </CollapsibleContent>
+          </Collapsible>
         </SidebarGroup>
       </SidebarContent>
 
