@@ -18,7 +18,8 @@ import {
   Activity,
   Building,
   CalendarClock,
-  ChevronDown
+  ChevronDown,
+  Receipt
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -51,6 +52,7 @@ const navItems = [
   { icon: Users, label: "Clients", path: "/clients" },
   { icon: Building2, label: "Resellers", path: "/resellers" },
   { icon: FileText, label: "Contracts", path: "/contracts" },
+  { icon: Receipt, label: "Invoices", path: "/invoices" },
   { icon: Wrench, label: "Service", path: "/service" },
   { icon: Bot, label: "Robots", path: "/robots" },
   { icon: Package, label: "Items", path: "/items" },
