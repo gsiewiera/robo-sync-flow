@@ -20,6 +20,7 @@ import Contracts from "./pages/Contracts";
 import ContractDetail from "./pages/ContractDetail";
 import Offers from "./pages/Offers";
 import OfferDetail from "./pages/OfferDetail";
+import Funnel from "./pages/Funnel";
 import Service from "./pages/Service";
 import ServiceDetail from "./pages/ServiceDetail";
 import Items from "./pages/Items";
@@ -161,6 +162,14 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <OfferDetail />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/funnel"
+            element={
+              <ProtectedRoute>
+                <Funnel />
               </ProtectedRoute>
             }
           />

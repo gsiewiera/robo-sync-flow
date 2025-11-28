@@ -15,8 +15,6 @@ import { RevenueChart } from "@/components/dashboard/RevenueChart";
 import { RevenueTable } from "@/components/dashboard/RevenueTable";
 import { RobotsDeliveredChart } from "@/components/dashboard/RobotsDeliveredChart";
 import { RobotsDeliveredTable } from "@/components/dashboard/RobotsDeliveredTable";
-import { SalesFunnelChart } from "@/components/dashboard/SalesFunnelChart";
-import { SalesFunnelTable } from "@/components/dashboard/SalesFunnelTable";
 import { Skeleton } from "@/components/ui/skeleton";
 
 type DateFilter = "this_month" | "last_month" | "ytd" | "custom";
@@ -479,12 +477,6 @@ const Dashboard = () => {
         <div className="space-y-6">
           <RobotsDeliveredChart />
           <RobotsDeliveredTable />
-        </div>
-
-        {/* Sales Funnel Section */}
-        <div className="space-y-6">
-          <SalesFunnelChart />
-          <SalesFunnelTable />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
