@@ -102,22 +102,29 @@ export function CreateContractDialog({
   };
 
   const generateContractNumber = async () => {
-    const { data } = await supabase
+    const currentYear = new Date().getFullYear();
+    
+    // Fetch all contracts from current year to find the highest number
+    const { data: contracts } = await supabase
       .from("contracts")
       .select("contract_number")
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+      .like("contract_number", `CNT-${currentYear}-%`);
 
-    if (data?.contract_number) {
-      const match = data.contract_number.match(/\d+$/);
-      if (match) {
-        const nextNumber = parseInt(match[0]) + 1;
-        setContractNumber(`CON-${String(nextNumber).padStart(5, "0")}`);
-      }
-    } else {
-      setContractNumber("CON-00001");
+    let maxNumber = 0;
+    if (contracts && contracts.length > 0) {
+      contracts.forEach(contract => {
+        const match = contract.contract_number.match(/-(\d+)$/);
+        if (match) {
+          const num = parseInt(match[1]);
+          if (num > maxNumber) {
+            maxNumber = num;
+          }
+        }
+      });
     }
+    
+    const nextNumber = maxNumber + 1;
+    setContractNumber(`CNT-${currentYear}-${String(nextNumber).padStart(3, "0")}`);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -126,6 +133,9 @@ export function CreateContractDialog({
 
     try {
       const { data: session } = await supabase.auth.getSession();
+      
+      // Regenerate contract number just before inserting to minimize collision risk
+      await generateContractNumber();
       
       // Create contract
       const { data: contractData, error: contractError } = await supabase
@@ -154,7 +164,13 @@ export function CreateContractDialog({
       
       const contract = contractData as any;
 
-      if (contractError) throw contractError;
+      if (contractError) {
+        // If duplicate key error, show more helpful message
+        if (contractError.message?.includes('duplicate key')) {
+          throw new Error('Contract number already exists. Please try again.');
+        }
+        throw contractError;
+      }
 
       // Link robots from offer to contract
       const robotIds = offerItems.map(item => item.robot_id).filter(Boolean);
