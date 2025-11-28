@@ -1066,6 +1066,75 @@ export type Database = {
           },
         ]
       }
+      performance_goals: {
+        Row: {
+          assigned_user_id: string | null
+          created_at: string | null
+          created_by: string | null
+          current_value: number | null
+          description: string | null
+          end_date: string
+          goal_type: string
+          id: string
+          is_team_goal: boolean | null
+          period_type: string
+          start_date: string
+          status: string | null
+          target_value: number
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_user_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          current_value?: number | null
+          description?: string | null
+          end_date: string
+          goal_type: string
+          id?: string
+          is_team_goal?: boolean | null
+          period_type: string
+          start_date: string
+          status?: string | null
+          target_value: number
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_user_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          current_value?: number | null
+          description?: string | null
+          end_date?: string
+          goal_type?: string
+          id?: string
+          is_team_goal?: boolean | null
+          period_type?: string
+          start_date?: string
+          status?: string | null
+          target_value?: number
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "performance_goals_assigned_user_id_fkey"
+            columns: ["assigned_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "performance_goals_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string | null

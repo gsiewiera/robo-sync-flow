@@ -30,6 +30,7 @@ import Leads from "./pages/Leads";
 import AdminUsers from "./pages/AdminUsers";
 import UserProfile from "./pages/UserProfile";
 import Leaderboard from "./pages/Leaderboard";
+import Goals from "./pages/Goals";
 import Settings from "./pages/Settings";
 import ActivityReport from "./pages/reports/ActivityReport";
 import SalesReport from "./pages/reports/SalesReport";
@@ -251,6 +252,14 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <Leaderboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/goals"
+            element={
+              <ProtectedRoute>
+                <Goals />
               </ProtectedRoute>
             }
           />
