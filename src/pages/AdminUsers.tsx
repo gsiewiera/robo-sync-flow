@@ -60,6 +60,9 @@ export default function AdminUsers() {
   const [newUserName, setNewUserName] = useState("");
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+  const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
+  const [bulkRoles, setBulkRoles] = useState<string[]>([]);
 
   useEffect(() => {
     checkAdminAccess();
@@ -215,6 +218,73 @@ export default function AdminUsers() {
     );
   };
 
+  const toggleBulkRole = (role: string) => {
+    setBulkRoles((prev) =>
+      prev.includes(role)
+        ? prev.filter((r) => r !== role)
+        : [...prev, role]
+    );
+  };
+
+  const toggleUserSelection = (userId: string) => {
+    setSelectedUsers((prev) =>
+      prev.includes(userId)
+        ? prev.filter((id) => id !== userId)
+        : [...prev, userId]
+    );
+  };
+
+  const toggleAllUsers = () => {
+    if (selectedUsers.length === users.length) {
+      setSelectedUsers([]);
+    } else {
+      setSelectedUsers(users.map((u) => u.id));
+    }
+  };
+
+  const handleBulkRoleAssignment = async () => {
+    if (selectedUsers.length === 0) {
+      toast.error("Please select at least one user");
+      return;
+    }
+
+    if (bulkRoles.length === 0) {
+      toast.error("Please select at least one role");
+      return;
+    }
+
+    try {
+      // Delete existing roles for selected users
+      await supabase
+        .from("user_roles")
+        .delete()
+        .in("user_id", selectedUsers);
+
+      // Insert new roles for all selected users
+      const roleInserts = selectedUsers.flatMap((userId) =>
+        bulkRoles.map((role) => ({
+          user_id: userId,
+          role: role as "admin" | "manager" | "salesperson" | "technician",
+        }))
+      );
+
+      const { error: rolesError } = await supabase
+        .from("user_roles")
+        .insert(roleInserts);
+
+      if (rolesError) throw rolesError;
+
+      toast.success(`Roles updated for ${selectedUsers.length} users`);
+      setBulkDialogOpen(false);
+      setSelectedUsers([]);
+      setBulkRoles([]);
+      fetchUsers();
+    } catch (error: any) {
+      toast.error("Failed to update user roles");
+      console.error(error);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -239,7 +309,60 @@ export default function AdminUsers() {
             Manage users and their access privileges
           </p>
         </div>
-        <Dialog open={dialogOpen && !editingUser} onOpenChange={(open) => {
+        <div className="flex gap-2">
+          {selectedUsers.length > 0 && (
+            <Dialog open={bulkDialogOpen} onOpenChange={(open) => {
+              setBulkDialogOpen(open);
+              if (!open) {
+                setBulkRoles([]);
+              }
+            }}>
+              <DialogTrigger asChild>
+                <Button variant="secondary">
+                  Bulk Assign Roles ({selectedUsers.length})
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Bulk Role Assignment</DialogTitle>
+                  <DialogDescription>
+                    Assign roles to {selectedUsers.length} selected user(s)
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 mt-4">
+                  <div>
+                    <Label>Roles</Label>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Selected roles will replace existing roles for all selected users
+                    </p>
+                    <div className="space-y-2 mt-2">
+                      {AVAILABLE_ROLES.map((role) => (
+                        <div key={role} className="flex items-start gap-2">
+                          <input
+                            type="checkbox"
+                            id={`bulk-${role}`}
+                            checked={bulkRoles.includes(role)}
+                            onChange={() => toggleBulkRole(role)}
+                            className="mt-1"
+                          />
+                          <label htmlFor={`bulk-${role}`} className="text-sm">
+                            <div className="font-medium capitalize">{role}</div>
+                            <div className="text-muted-foreground">
+                              {ROLE_DESCRIPTIONS[role as keyof typeof ROLE_DESCRIPTIONS]}
+                            </div>
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <Button onClick={handleBulkRoleAssignment} className="w-full">
+                    Assign Roles to {selectedUsers.length} User(s)
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          )}
+          <Dialog open={dialogOpen && !editingUser} onOpenChange={(open) => {
           setDialogOpen(open);
           if (!open) {
             setNewUserEmail("");
@@ -319,6 +442,7 @@ export default function AdminUsers() {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       <Card>
@@ -332,6 +456,14 @@ export default function AdminUsers() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-12">
+                  <input
+                    type="checkbox"
+                    checked={selectedUsers.length === users.length && users.length > 0}
+                    onChange={toggleAllUsers}
+                    className="cursor-pointer"
+                  />
+                </TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Phone</TableHead>
@@ -342,6 +474,14 @@ export default function AdminUsers() {
             <TableBody>
               {users.map((user) => (
                 <TableRow key={user.id}>
+                  <TableCell>
+                    <input
+                      type="checkbox"
+                      checked={selectedUsers.includes(user.id)}
+                      onChange={() => toggleUserSelection(user.id)}
+                      className="cursor-pointer"
+                    />
+                  </TableCell>
                   <TableCell className="font-medium">{user.full_name}</TableCell>
                   <TableCell>{user.email}</TableCell>
                   <TableCell>{user.phone || "-"}</TableCell>
