@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { RobotsSoldChart } from "@/components/dashboard/RobotsSoldChart";
 import { ServiceTicketsChart } from "@/components/dashboard/ServiceTicketsChart";
 import { OpportunitiesChart } from "@/components/dashboard/OpportunitiesChart";
+import { RevenueTable } from "@/components/dashboard/RevenueTable";
 import { Skeleton } from "@/components/ui/skeleton";
 
 type DateFilter = "this_month" | "last_month" | "ytd" | "custom";
@@ -513,6 +514,9 @@ const Dashboard = () => {
             </>
           )}
         </div>
+
+        {/* Revenue Section */}
+        <RevenueTable />
       </div>
     </Layout>
   );

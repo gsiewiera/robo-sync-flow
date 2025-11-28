@@ -96,12 +96,12 @@ export const ContractPdfGenerator = ({
   const fetchVersions = async () => {
     const { data, error } = await supabase
       .from("contract_versions")
-      .select("*, profiles(full_name, email)")
+      .select("*, profiles:generated_by(full_name, email)")
       .eq("contract_id", contractId)
       .order("version_number", { ascending: false });
 
     if (!error && data) {
-      setVersions(data);
+      setVersions(data as any);
       // Fetch email history for each version
       data.forEach(version => fetchEmailHistory(version.id));
     }
