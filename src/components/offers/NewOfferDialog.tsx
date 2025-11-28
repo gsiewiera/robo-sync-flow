@@ -45,7 +45,7 @@ const formSchema = z.object({
   initial_payment: z.number().min(0).default(0),
   prepayment_type: z.enum(["none", "percent", "amount"]).default("none"),
   prepayment_value: z.number().min(0).optional(),
-  status: z.enum(["draft", "sent", "modified", "accepted", "rejected"]).default("draft"),
+  stage: z.enum(["leads", "qualified", "proposal_sent", "negotiation", "closed_won", "closed_lost"]).default("leads"),
   reseller_id: z.string().optional(),
 });
 
@@ -93,7 +93,7 @@ interface OfferData {
   prepayment_percent?: number;
   prepayment_amount?: number;
   offer_number: string;
-  status: string;
+  stage: string;
 }
 
 interface NewOfferDialogProps {
@@ -121,7 +121,7 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer }: NewOffe
       warranty_period: 12,
       initial_payment: 0,
       prepayment_type: "none",
-      status: "draft",
+      stage: "leads",
     },
   });
 
@@ -138,7 +138,7 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer }: NewOffe
           warranty_period: 12,
           initial_payment: 0,
           prepayment_type: "none",
-          status: "draft",
+          stage: "leads",
         });
         setRobotSelections([]);
       }
@@ -217,7 +217,7 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer }: NewOffe
       initial_payment: offer.initial_payment,
       prepayment_type: prepaymentType as "none" | "percent" | "amount",
       prepayment_value: offer.prepayment_percent || offer.prepayment_amount || 0,
-      status: offer.status as "draft" | "sent" | "modified" | "accepted" | "rejected",
+      stage: offer.stage as "leads" | "qualified" | "proposal_sent" | "negotiation" | "closed_won" | "closed_lost",
       reseller_id: (offer as any).reseller_id || "",
     });
 
@@ -519,15 +519,15 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer }: NewOffe
       };
 
       if (isEditMode && offer) {
-        // Check if status changed to accepted
-        const statusChangedToAccepted = offer.status !== "accepted" && values.status === "accepted";
+        // Check if stage changed to closed_won
+        const stageChangedToWon = offer.stage !== "closed_won" && values.stage === "closed_won";
         
         // Update existing offer
         const { error: offerError } = await supabase
           .from("offers")
           .update({
             ...offerData,
-            status: values.status,
+            stage: values.stage,
           })
           .eq("id", offer.id);
 
@@ -559,8 +559,8 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer }: NewOffe
 
         if (itemsError) throw itemsError;
 
-        // Auto-create contract if status changed to accepted
-        if (statusChangedToAccepted) {
+        // Auto-create contract if stage changed to closed_won
+        if (stageChangedToWon) {
           await createContractFromOffer(offer.id, values.client_id, robotSelections);
         } else {
           toast({
@@ -578,7 +578,7 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer }: NewOffe
             ...offerData,
             created_by: user.id,
             offer_number: offerNumber,
-            status: "draft",
+            stage: "leads",
           })
           .select()
           .single();
@@ -735,10 +735,10 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer }: NewOffe
                 {isEditMode && (
                   <FormField
                     control={form.control}
-                    name="status"
+                    name="stage"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Status *</FormLabel>
+                        <FormLabel>Funnel Stage *</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger>
@@ -746,11 +746,12 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer }: NewOffe
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="draft">Draft</SelectItem>
-                            <SelectItem value="sent">Sent</SelectItem>
-                            <SelectItem value="modified">Modified</SelectItem>
-                            <SelectItem value="accepted">Accepted</SelectItem>
-                            <SelectItem value="rejected">Rejected</SelectItem>
+                            <SelectItem value="leads">Leads</SelectItem>
+                            <SelectItem value="qualified">Qualified</SelectItem>
+                            <SelectItem value="proposal_sent">Proposal Sent</SelectItem>
+                            <SelectItem value="negotiation">Negotiation</SelectItem>
+                            <SelectItem value="closed_won">Closed Won</SelectItem>
+                            <SelectItem value="closed_lost">Closed Lost</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
