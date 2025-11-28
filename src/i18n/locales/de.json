@@ -1,0 +1,37 @@
+{
+  "app": {
+    "title": "RoboCRM",
+    "subtitle": "Roboterverwaltung"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "tasks": "Aufgaben",
+    "leads": "Leads",
+    "offers": "Angebote",
+    "funnel": "Verkaufstrichter",
+    "clients": "Kunden",
+    "resellers": "Wiederverkäufer",
+    "contracts": "Verträge",
+    "invoices": "Rechnungen",
+    "service": "Service",
+    "robots": "Roboter",
+    "items": "Artikel",
+    "pricing": "Preise",
+    "leaderboard": "Bestenliste",
+    "goals": "Ziele",
+    "admin": "Administrator",
+    "settings": "Einstellungen",
+    "logout": "Abmelden",
+    "navigation": "Navigation",
+    "reports": "Berichte"
+  },
+  "reports": {
+    "activity": "Aktivität",
+    "sales": "Verkauf",
+    "reseller": "Wiederverkäufer",
+    "ending": "Auslaufend"
+  },
+  "language": {
+    "select": "Sprache auswählen"
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "app": {
+    "title": "RoboCRM",
+    "subtitle": "Robot Mgmt"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "tasks": "Tasks",
+    "leads": "Leads",
+    "offers": "Offers",
+    "funnel": "Funnel",
+    "clients": "Clients",
+    "resellers": "Resellers",
+    "contracts": "Contracts",
+    "invoices": "Invoices",
+    "service": "Service",
+    "robots": "Robots",
+    "items": "Items",
+    "pricing": "Pricing",
+    "leaderboard": "Leaderboard",
+    "goals": "Goals",
+    "admin": "Admin",
+    "settings": "Settings",
+    "logout": "Logout",
+    "navigation": "Navigation",
+    "reports": "Reports"
+  },
+  "reports": {
+    "activity": "Activity",
+    "sales": "Sales",
+    "reseller": "Reseller",
+    "ending": "Ending"
+  },
+  "language": {
+    "select": "Select Language"
+  }
+}
