@@ -29,6 +29,7 @@ import Invoices from "./pages/Invoices";
 import Leads from "./pages/Leads";
 import AdminUsers from "./pages/AdminUsers";
 import UserProfile from "./pages/UserProfile";
+import Leaderboard from "./pages/Leaderboard";
 import Settings from "./pages/Settings";
 import ActivityReport from "./pages/reports/ActivityReport";
 import SalesReport from "./pages/reports/SalesReport";
@@ -242,6 +243,14 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <UserProfile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/leaderboard"
+            element={
+              <ProtectedRoute>
+                <Leaderboard />
               </ProtectedRoute>
             }
           />

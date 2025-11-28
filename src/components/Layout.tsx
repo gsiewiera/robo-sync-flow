@@ -1,11 +1,11 @@
 import { ReactNode, useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { 
-  LayoutDashboard, 
-  Users, 
-  Bot, 
-  CheckSquare, 
-  FileText, 
+import {
+  LayoutDashboard,
+  Users,
+  Bot,
+  CheckSquare,
+  FileText,
   ShoppingCart,
   Wrench,
   DollarSign,
@@ -21,7 +21,8 @@ import {
   ChevronDown,
   Receipt,
   UserPlus,
-  Shield
+  Shield,
+  Trophy
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -67,6 +68,7 @@ const allNavItems: NavItem[] = [
   { icon: Bot, label: "Robots", path: "/robots", roles: ["admin", "manager", "technician"] },
   { icon: Package, label: "Items", path: "/items", roles: ["admin", "manager"] },
   { icon: DollarSign, label: "Pricing", path: "/pricing", roles: ["admin", "manager"] },
+  { icon: Trophy, label: "Leaderboard", path: "/leaderboard", roles: ["admin", "manager"] },
   { icon: Shield, label: "Admin", path: "/admin/users", roles: ["admin"] },
 ];
 
