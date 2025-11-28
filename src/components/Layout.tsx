@@ -89,22 +89,32 @@ function AppSidebar() {
     location.pathname.startsWith("/reports")
   );
   const [userRoles, setUserRoles] = useState<string[]>([]);
+  const [rolesLoading, setRolesLoading] = useState(true);
 
   useEffect(() => {
     fetchUserRoles();
   }, []);
 
   const fetchUserRoles = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setRolesLoading(false);
+        return;
+      }
 
-    const { data } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", user.id);
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id);
 
-    if (data) {
-      setUserRoles(data.map(r => r.role));
+      if (data) {
+        setUserRoles(data.map(r => r.role));
+      }
+    } catch (error) {
+      console.error("Failed to fetch user roles:", error);
+    } finally {
+      setRolesLoading(false);
     }
   };
 
@@ -131,63 +141,77 @@ function AppSidebar() {
           {open && <p className="text-xs text-sidebar-foreground/60">Robot Mgmt</p>}
         </div>
 
-        <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {navItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = location.pathname === item.path;
+        {rolesLoading ? (
+          <div className="p-4 space-y-2">
+            <div className="h-8 bg-muted animate-pulse rounded" />
+            <div className="h-8 bg-muted animate-pulse rounded" />
+            <div className="h-8 bg-muted animate-pulse rounded" />
+          </div>
+        ) : (
+          <>
+            {navItems.length > 0 && (
+              <SidebarGroup>
+                <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {navItems.map((item) => {
+                      const Icon = item.icon;
+                      const isActive = location.pathname === item.path;
 
-                return (
-                  <SidebarMenuItem key={item.path}>
-                    <SidebarMenuButton asChild isActive={isActive}>
-                      <NavLink to={item.path}>
-                        <Icon className="w-5 h-5" />
-                        <span>{item.label}</span>
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+                      return (
+                        <SidebarMenuItem key={item.path}>
+                          <SidebarMenuButton asChild isActive={isActive}>
+                            <NavLink to={item.path}>
+                              <Icon className="w-5 h-5" />
+                              <span>{item.label}</span>
+                            </NavLink>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      );
+                    })}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            )}
 
-        <SidebarGroup>
-          <Collapsible open={reportsOpen} onOpenChange={setReportsOpen}>
-            <SidebarGroupLabel asChild>
-              <CollapsibleTrigger className="flex items-center justify-between w-full group/collapsible">
-                <span className="flex items-center gap-2">
-                  <BarChart3 className="w-4 h-4" />
-                  Reports
-                </span>
-                <ChevronDown className="w-4 h-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-180" />
-              </CollapsibleTrigger>
-            </SidebarGroupLabel>
-            <CollapsibleContent>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {filteredReportItems.map((item) => {
-                    const Icon = item.icon;
-                    const isActive = location.pathname === item.path;
+            {filteredReportItems.length > 0 && (
+              <SidebarGroup>
+                <Collapsible open={reportsOpen} onOpenChange={setReportsOpen}>
+                  <SidebarGroupLabel asChild>
+                    <CollapsibleTrigger className="flex items-center justify-between w-full group/collapsible">
+                      <span className="flex items-center gap-2">
+                        <BarChart3 className="w-4 h-4" />
+                        Reports
+                      </span>
+                      <ChevronDown className="w-4 h-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-180" />
+                    </CollapsibleTrigger>
+                  </SidebarGroupLabel>
+                  <CollapsibleContent>
+                    <SidebarGroupContent>
+                      <SidebarMenu>
+                        {filteredReportItems.map((item) => {
+                          const Icon = item.icon;
+                          const isActive = location.pathname === item.path;
 
-                    return (
-                      <SidebarMenuItem key={item.path}>
-                        <SidebarMenuButton asChild isActive={isActive}>
-                          <NavLink to={item.path} className="pl-7">
-                            <Icon className="w-4 h-4" />
-                            <span>{item.label}</span>
-                          </NavLink>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    );
-                  })}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </CollapsibleContent>
-          </Collapsible>
-        </SidebarGroup>
+                          return (
+                            <SidebarMenuItem key={item.path}>
+                              <SidebarMenuButton asChild isActive={isActive}>
+                                <NavLink to={item.path} className="pl-7">
+                                  <Icon className="w-4 h-4" />
+                                  <span>{item.label}</span>
+                                </NavLink>
+                              </SidebarMenuButton>
+                            </SidebarMenuItem>
+                          );
+                        })}
+                      </SidebarMenu>
+                    </SidebarGroupContent>
+                  </CollapsibleContent>
+                </Collapsible>
+              </SidebarGroup>
+            )}
+          </>
+        )}
       </SidebarContent>
 
       <SidebarFooter>
