@@ -28,7 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Shield, UserPlus, Pencil } from "lucide-react";
+import { Shield, UserPlus, Pencil, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -499,7 +499,15 @@ export default function AdminUsers() {
                     </div>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Dialog open={dialogOpen && editingUser?.id === user.id} onOpenChange={(open) => {
+                    <div className="flex gap-2 justify-end">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => navigate(`/admin/users/${user.id}`)}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Dialog open={dialogOpen && editingUser?.id === user.id} onOpenChange={(open) => {
                       setDialogOpen(open);
                       if (!open) {
                         setEditingUser(null);
@@ -551,6 +559,7 @@ export default function AdminUsers() {
                         </div>
                       </DialogContent>
                     </Dialog>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
