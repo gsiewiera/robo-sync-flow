@@ -8,6 +8,7 @@ import { DictionariesSettings } from "@/components/settings/DictionariesSettings
 import { VatSettings } from "@/components/settings/VatSettings";
 import { PrintoutTemplatesSettings } from "@/components/settings/PrintoutTemplatesSettings";
 import { ContractsSettings } from "@/components/settings/ContractsSettings";
+import { ReportSubscriptionsSettings } from "@/components/settings/ReportSubscriptionsSettings";
 
 const Settings = () => {
   return (
@@ -19,7 +20,7 @@ const Settings = () => {
         </div>
 
         <Tabs defaultValue="profile" className="w-full">
-          <TabsList className="grid w-full grid-cols-8 lg:w-auto">
+          <TabsList className="grid w-full grid-cols-9 lg:w-auto">
             <TabsTrigger value="profile">Profile</TabsTrigger>
             <TabsTrigger value="password">Password</TabsTrigger>
             <TabsTrigger value="theme">Theme</TabsTrigger>
@@ -28,6 +29,7 @@ const Settings = () => {
             <TabsTrigger value="vat">VAT</TabsTrigger>
             <TabsTrigger value="printouts">Printouts</TabsTrigger>
             <TabsTrigger value="contracts">Contracts</TabsTrigger>
+            <TabsTrigger value="reports">Reports</TabsTrigger>
           </TabsList>
 
           <TabsContent value="profile" className="mt-6">
@@ -60,6 +62,10 @@ const Settings = () => {
 
           <TabsContent value="contracts" className="mt-6">
             <ContractsSettings />
+          </TabsContent>
+
+          <TabsContent value="reports" className="mt-6">
+            <ReportSubscriptionsSettings />
           </TabsContent>
         </Tabs>
       </div>
