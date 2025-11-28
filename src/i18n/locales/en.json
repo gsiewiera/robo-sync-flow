@@ -55,7 +55,55 @@
     "clear": "Clear",
     "send": "Send",
     "sending": "Sending...",
-    "filters": "Filters"
+    "filters": "Filters",
+    "description": "Description",
+    "price": "Price",
+    "quantity": "Quantity",
+    "total": "Total",
+    "date": "Date",
+    "notes": "Notes",
+    "type": "Type",
+    "priority": "Priority",
+    "assignedTo": "Assigned To"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "description": "Overview of key metrics and activities"
+  },
+  "tasks": {
+    "title": "Tasks",
+    "description": "Manage your tasks and activities",
+    "addTask": "Add Task",
+    "editTask": "Edit Task",
+    "dueDate": "Due Date",
+    "noTasks": "No tasks found",
+    "taskTitle": "Task Title",
+    "taskDescription": "Task Description"
+  },
+  "leads": {
+    "title": "Leads",
+    "description": "Manage sales leads and opportunities",
+    "addLead": "Add Lead",
+    "leadStatus": "Lead Status",
+    "noLeads": "No leads found"
+  },
+  "offers": {
+    "title": "Offers",
+    "description": "Manage customer offers and proposals",
+    "addOffer": "Add Offer",
+    "offerNumber": "Offer Number",
+    "noOffers": "No offers found",
+    "stage": "Stage",
+    "totalPrice": "Total Price"
+  },
+  "clients": {
+    "title": "Clients",
+    "description": "Manage client information",
+    "addClient": "Add Client",
+    "editClient": "Edit Client",
+    "noClients": "No clients found",
+    "primaryContact": "Primary Contact",
+    "nip": "Tax ID"
   },
   "resellers": {
     "title": "Resellers",
@@ -81,13 +129,69 @@
     "allClients": "All Clients",
     "allStatuses": "All Statuses"
   },
+  "invoices": {
+    "title": "Invoices",
+    "description": "Manage invoices and billing",
+    "addInvoice": "Add Invoice",
+    "invoiceNumber": "Invoice Number",
+    "noInvoices": "No invoices found",
+    "issueDate": "Issue Date",
+    "dueDate": "Due Date",
+    "amount": "Amount"
+  },
+  "service": {
+    "title": "Service",
+    "description": "Manage service tickets and maintenance",
+    "addTicket": "Add Ticket",
+    "ticketNumber": "Ticket Number",
+    "noTickets": "No tickets found"
+  },
+  "robots": {
+    "title": "Robots",
+    "description": "Manage robot inventory",
+    "addRobot": "Add Robot",
+    "serialNumber": "Serial Number",
+    "model": "Model",
+    "noRobots": "No robots found",
+    "manufacturer": "Manufacturer"
+  },
+  "items": {
+    "title": "Items",
+    "description": "Manage product items and catalog",
+    "addItem": "Add Item",
+    "noItems": "No items found",
+    "itemType": "Item Type",
+    "isActive": "Active"
+  },
+  "pricing": {
+    "title": "Pricing",
+    "description": "Manage pricing and price lists"
+  },
+  "leaderboard": {
+    "title": "Leaderboard",
+    "description": "Sales performance rankings"
+  },
+  "goals": {
+    "title": "Goals",
+    "description": "Performance goals and targets",
+    "addGoal": "Add Goal",
+    "noGoals": "No goals found"
+  },
+  "settings": {
+    "title": "Settings",
+    "description": "Configure your preferences"
+  },
   "status": {
     "active": "Active",
     "inactive": "Inactive",
     "draft": "Draft",
     "pending_signature": "Pending Signature",
     "expired": "Expired",
-    "cancelled": "Cancelled"
+    "cancelled": "Cancelled",
+    "pending": "Pending",
+    "in_progress": "In Progress",
+    "completed": "Completed",
+    "overdue": "Overdue"
   },
   "language": {
     "select": "Select Language"

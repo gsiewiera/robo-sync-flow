@@ -55,13 +55,61 @@
     "clear": "Wyczyść",
     "send": "Wyślij",
     "sending": "Wysyłanie...",
-    "filters": "Filtry"
+    "filters": "Filtry",
+    "description": "Opis",
+    "price": "Cena",
+    "quantity": "Ilość",
+    "total": "Razem",
+    "date": "Data",
+    "notes": "Notatki",
+    "type": "Typ",
+    "priority": "Priorytet",
+    "assignedTo": "Przypisane do"
+  },
+  "dashboard": {
+    "title": "Panel główny",
+    "description": "Przegląd kluczowych wskaźników i aktywności"
+  },
+  "tasks": {
+    "title": "Zadania",
+    "description": "Zarządzaj swoimi zadaniami i aktywnościami",
+    "addTask": "Dodaj zadanie",
+    "editTask": "Edytuj zadanie",
+    "dueDate": "Termin",
+    "noTasks": "Nie znaleziono zadań",
+    "taskTitle": "Tytuł zadania",
+    "taskDescription": "Opis zadania"
+  },
+  "leads": {
+    "title": "Leady",
+    "description": "Zarządzaj leadami sprzedażowymi i możliwościami",
+    "addLead": "Dodaj leada",
+    "leadStatus": "Status leada",
+    "noLeads": "Nie znaleziono leadów"
+  },
+  "offers": {
+    "title": "Oferty",
+    "description": "Zarządzaj ofertami dla klientów",
+    "addOffer": "Dodaj ofertę",
+    "offerNumber": "Numer oferty",
+    "noOffers": "Nie znaleziono ofert",
+    "stage": "Etap",
+    "totalPrice": "Cena całkowita"
+  },
+  "clients": {
+    "title": "Klienci",
+    "description": "Zarządzaj informacjami o klientach",
+    "addClient": "Dodaj klienta",
+    "editClient": "Edytuj klienta",
+    "noClients": "Nie znaleziono klientów",
+    "primaryContact": "Kontakt główny",
+    "nip": "NIP"
   },
   "resellers": {
     "title": "Resellerzy",
     "description": "Zarządzaj partnerami resellerskimi",
-    "addReseller": "Dodaj Resellera",
-    "editReseller": "Edytuj Resellera",
+    "addReseller": "Dodaj resellera",
+    "editReseller": "Edytuj resellera",
     "nip": "NIP",
     "primaryContact": "Kontakt główny",
     "noResellers": "Nie znaleziono resellerów"
@@ -81,13 +129,69 @@
     "allClients": "Wszyscy klienci",
     "allStatuses": "Wszystkie statusy"
   },
+  "invoices": {
+    "title": "Faktury",
+    "description": "Zarządzaj fakturami i rozliczeniami",
+    "addInvoice": "Dodaj fakturę",
+    "invoiceNumber": "Numer faktury",
+    "noInvoices": "Nie znaleziono faktur",
+    "issueDate": "Data wystawienia",
+    "dueDate": "Termin płatności",
+    "amount": "Kwota"
+  },
+  "service": {
+    "title": "Serwis",
+    "description": "Zarządzaj zgłoszeniami serwisowymi",
+    "addTicket": "Dodaj zgłoszenie",
+    "ticketNumber": "Numer zgłoszenia",
+    "noTickets": "Nie znaleziono zgłoszeń"
+  },
+  "robots": {
+    "title": "Roboty",
+    "description": "Zarządzaj inwentarzem robotów",
+    "addRobot": "Dodaj robota",
+    "serialNumber": "Numer seryjny",
+    "model": "Model",
+    "noRobots": "Nie znaleziono robotów",
+    "manufacturer": "Producent"
+  },
+  "items": {
+    "title": "Produkty",
+    "description": "Zarządzaj produktami i katalogiem",
+    "addItem": "Dodaj produkt",
+    "noItems": "Nie znaleziono produktów",
+    "itemType": "Typ produktu",
+    "isActive": "Aktywny"
+  },
+  "pricing": {
+    "title": "Cennik",
+    "description": "Zarządzaj cenami i cennikami"
+  },
+  "leaderboard": {
+    "title": "Rankingi",
+    "description": "Rankingi wyników sprzedaży"
+  },
+  "goals": {
+    "title": "Cele",
+    "description": "Cele i wskaźniki wydajności",
+    "addGoal": "Dodaj cel",
+    "noGoals": "Nie znaleziono celów"
+  },
+  "settings": {
+    "title": "Ustawienia",
+    "description": "Skonfiguruj swoje preferencje"
+  },
   "status": {
     "active": "Aktywny",
     "inactive": "Nieaktywny",
     "draft": "Szkic",
     "pending_signature": "Oczekuje na podpis",
     "expired": "Wygasły",
-    "cancelled": "Anulowany"
+    "cancelled": "Anulowany",
+    "pending": "Oczekujący",
+    "in_progress": "W trakcie",
+    "completed": "Ukończony",
+    "overdue": "Przeterminowany"
   },
   "language": {
     "select": "Wybierz język"

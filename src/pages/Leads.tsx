@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -38,6 +39,7 @@ interface Lead {
 }
 
 const Leads = () => {
+  const { t } = useTranslation();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
@@ -212,9 +214,9 @@ const Leads = () => {
           <div>
             <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
               <UserPlus className="w-8 h-8" />
-              Leads
+              {t("leads.title")}
             </h1>
-            <p className="text-muted-foreground">Manage and track potential opportunities</p>
+            <p className="text-muted-foreground">{t("leads.description")}</p>
           </div>
         </div>
 

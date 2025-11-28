@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useTranslation } from "react-i18next";
 import { CheckCircle, Circle, MoreHorizontal, Eye, Edit, Filter, X, ChevronDown, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -77,6 +78,7 @@ const statusColors: Record<string, string> = {
 };
 
 const Tasks = () => {
+  const { t } = useTranslation();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [forToday, setForToday] = useState(false);
@@ -318,11 +320,11 @@ const Tasks = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Tasks</h1>
-            <p className="text-muted-foreground">Manage your daily tasks and follow-ups</p>
+            <h1 className="text-3xl font-bold text-foreground">{t("tasks.title")}</h1>
+            <p className="text-muted-foreground">{t("tasks.description")}</p>
           </div>
           <Button size="lg" className="h-11 px-6" onClick={handleNewTask}>
-            New Task
+            {t("tasks.addTask")}
           </Button>
         </div>
 

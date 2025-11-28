@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useTranslation } from "react-i18next";
 import { Plus, Search, ArrowUpDown, ArrowUp, ArrowDown, Eye, Edit } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -52,6 +53,7 @@ interface Reseller {
 }
 
 const Resellers = () => {
+  const { t } = useTranslation();
   const [resellers, setResellers] = useState<Reseller[]>([]);
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -255,12 +257,12 @@ const Resellers = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Resellers</h1>
-            <p className="text-muted-foreground">Manage your reseller partnerships</p>
+            <h1 className="text-3xl font-bold text-foreground">{t("resellers.title")}</h1>
+            <p className="text-muted-foreground">{t("resellers.description")}</p>
           </div>
           <Button onClick={() => setIsDialogOpen(true)}>
             <Plus className="w-4 h-4 mr-2" />
-            Add Reseller
+            {t("resellers.addReseller")}
           </Button>
         </div>
 
@@ -268,7 +270,7 @@ const Resellers = () => {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
-              placeholder="Search resellers by name or NIP..."
+              placeholder={t("common.search")}
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
@@ -289,34 +291,34 @@ const Resellers = () => {
                     onClick={() => handleSort("name")}
                     className="hover:bg-transparent p-0"
                   >
-                    Name
+                    {t("common.name")}
                     {getSortIcon("name")}
                   </Button>
                 </TableHead>
-                <TableHead>NIP</TableHead>
+                <TableHead>{t("resellers.nip")}</TableHead>
                 <TableHead>
                   <Button
                     variant="ghost"
                     onClick={() => handleSort("city")}
                     className="hover:bg-transparent p-0"
                   >
-                    City
+                    {t("common.city")}
                     {getSortIcon("city")}
                   </Button>
                 </TableHead>
-                <TableHead>Contact</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>{t("resellers.primaryContact")}</TableHead>
+                <TableHead>{t("common.status")}</TableHead>
                 <TableHead>
                   <Button
                     variant="ghost"
                     onClick={() => handleSort("created_at")}
                     className="hover:bg-transparent p-0"
                   >
-                    Created
+                    {t("common.created")}
                     {getSortIcon("created_at")}
                   </Button>
                 </TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead className="text-right">{t("common.actions")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -335,7 +337,7 @@ const Resellers = () => {
                   </TableCell>
                   <TableCell>
                     <Badge className={statusColors[reseller.status] || "bg-muted"}>
-                      {reseller.status}
+                      {t(`status.${reseller.status}`)}
                     </Badge>
                   </TableCell>
                   <TableCell>

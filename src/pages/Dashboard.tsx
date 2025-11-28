@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -57,6 +58,7 @@ interface ChartData {
 }
 
 const Dashboard = () => {
+  const { t } = useTranslation();
   const [activeFilter, setActiveFilter] = useState<DateFilter>("this_month");
   const [customDateRange, setCustomDateRange] = useState<DateRange>({
     from: new Date(),
@@ -408,8 +410,8 @@ const Dashboard = () => {
     <Layout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
-          <p className="text-muted-foreground">Welcome to your RoboCRM overview</p>
+          <h1 className="text-3xl font-bold text-foreground">{t("dashboard.title")}</h1>
+          <p className="text-muted-foreground">{t("dashboard.description")}</p>
         </div>
 
         {/* Date Filter Buttons */}
