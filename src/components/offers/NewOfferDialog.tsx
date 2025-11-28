@@ -686,14 +686,17 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer }: NewOffe
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Reseller Partner (Optional)</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <Select 
+                        onValueChange={(value) => field.onChange(value === "none" ? undefined : value)} 
+                        value={field.value || "none"}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select reseller" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="">No Reseller</SelectItem>
+                          <SelectItem value="none">No Reseller</SelectItem>
                           {resellers.map((reseller) => (
                             <SelectItem key={reseller.id} value={reseller.id}>
                               {reseller.name}
