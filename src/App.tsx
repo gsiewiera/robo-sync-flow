@@ -26,6 +26,10 @@ import ServiceDetail from "./pages/ServiceDetail";
 import Items from "./pages/Items";
 import Pricing from "./pages/Pricing";
 import Settings from "./pages/Settings";
+import ActivityReport from "./pages/reports/ActivityReport";
+import SalesReport from "./pages/reports/SalesReport";
+import ResellerReport from "./pages/reports/ResellerReport";
+import EndingReport from "./pages/reports/EndingReport";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -210,6 +214,38 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <Settings />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/reports/activity"
+            element={
+              <ProtectedRoute>
+                <ActivityReport />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/reports/sales"
+            element={
+              <ProtectedRoute>
+                <SalesReport />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/reports/reseller"
+            element={
+              <ProtectedRoute>
+                <ResellerReport />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/reports/ending"
+            element={
+              <ProtectedRoute>
+                <EndingReport />
               </ProtectedRoute>
             }
           />
