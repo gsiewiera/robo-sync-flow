@@ -920,8 +920,12 @@ export type Database = {
           currency: string | null
           delivery_date: string | null
           deployment_location: string | null
+          follow_up_notes: string | null
           id: string
           initial_payment: number | null
+          last_contact_date: string | null
+          lead_status: string | null
+          next_action_date: string | null
           notes: string | null
           offer_number: string
           person_contact: string | null
@@ -940,8 +944,12 @@ export type Database = {
           currency?: string | null
           delivery_date?: string | null
           deployment_location?: string | null
+          follow_up_notes?: string | null
           id?: string
           initial_payment?: number | null
+          last_contact_date?: string | null
+          lead_status?: string | null
+          next_action_date?: string | null
           notes?: string | null
           offer_number: string
           person_contact?: string | null
@@ -960,8 +968,12 @@ export type Database = {
           currency?: string | null
           delivery_date?: string | null
           deployment_location?: string | null
+          follow_up_notes?: string | null
           id?: string
           initial_payment?: number | null
+          last_contact_date?: string | null
+          lead_status?: string | null
+          next_action_date?: string | null
           notes?: string | null
           offer_number?: string
           person_contact?: string | null
