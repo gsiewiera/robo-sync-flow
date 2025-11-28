@@ -13,7 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Mail, Phone, Shield, User, Building, FileText, CheckSquare, Calendar } from "lucide-react";
+import { ArrowLeft, Mail, Phone, Shield, User, Building, FileText, CheckSquare, Calendar, TrendingUp, DollarSign, Target, Award } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -65,6 +65,19 @@ interface Contract {
   clients: { name: string } | null;
 }
 
+interface PerformanceMetrics {
+  totalOffers: number;
+  wonOffers: number;
+  conversionRate: number;
+  averageDealSize: number;
+  totalRevenue: number;
+  activeTasks: number;
+  completedTasks: number;
+  taskCompletionRate: number;
+  activeClients: number;
+  monthlyOffersCreated: number;
+}
+
 export default function UserProfile() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -75,6 +88,18 @@ export default function UserProfile() {
   const [offers, setOffers] = useState<Offer[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [contracts, setContracts] = useState<Contract[]>([]);
+  const [metrics, setMetrics] = useState<PerformanceMetrics>({
+    totalOffers: 0,
+    wonOffers: 0,
+    conversionRate: 0,
+    averageDealSize: 0,
+    totalRevenue: 0,
+    activeTasks: 0,
+    completedTasks: 0,
+    taskCompletionRate: 0,
+    activeClients: 0,
+    monthlyOffersCreated: 0,
+  });
 
   useEffect(() => {
     if (id) {
@@ -186,12 +211,70 @@ export default function UserProfile() {
 
       if (contractsData) setContracts(contractsData as any);
 
+      // Calculate performance metrics
+      calculateMetrics(offersData as any, tasksData as any, clientsData);
+
     } catch (error: any) {
       console.error("Error fetching user data:", error);
       toast.error("Failed to load user profile");
     } finally {
       setLoading(false);
     }
+  };
+
+  const calculateMetrics = (
+    offersData: Offer[],
+    tasksData: Task[],
+    clientsData: Client[]
+  ) => {
+    const totalOffers = offersData.length;
+    const wonOffers = offersData.filter(
+      (o) => o.stage === "closed_won"
+    ).length;
+    const conversionRate = totalOffers > 0 ? (wonOffers / totalOffers) * 100 : 0;
+
+    const wonOffersWithValue = offersData.filter(
+      (o) => o.stage === "closed_won" && o.total_price
+    );
+    const totalRevenue = wonOffersWithValue.reduce(
+      (sum, o) => sum + (o.total_price || 0),
+      0
+    );
+    const averageDealSize =
+      wonOffers > 0 ? totalRevenue / wonOffers : 0;
+
+    const activeTasks = tasksData.filter(
+      (t) => t.status !== "completed"
+    ).length;
+    const completedTasks = tasksData.filter(
+      (t) => t.status === "completed"
+    ).length;
+    const taskCompletionRate =
+      tasksData.length > 0 ? (completedTasks / tasksData.length) * 100 : 0;
+
+    const activeClients = clientsData.filter(
+      (c) => c.status === "active"
+    ).length;
+
+    // Monthly offers (last 30 days)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const monthlyOffersCreated = offersData.filter(
+      (o) => new Date(o.created_at) >= thirtyDaysAgo
+    ).length;
+
+    setMetrics({
+      totalOffers,
+      wonOffers,
+      conversionRate,
+      averageDealSize,
+      totalRevenue,
+      activeTasks,
+      completedTasks,
+      taskCompletionRate,
+      activeClients,
+      monthlyOffersCreated,
+    });
   };
 
   const getStatusColor = (status: string | null) => {
@@ -284,6 +367,112 @@ export default function UserProfile() {
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Calendar className="h-4 w-4" />
               Member since {format(new Date(profile.created_at), "MMM dd, yyyy")}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Performance Metrics */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Conversion Rate
+            </CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {metrics.conversionRate.toFixed(1)}%
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {metrics.wonOffers} of {metrics.totalOffers} offers won
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Average Deal Size
+            </CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {metrics.averageDealSize.toLocaleString()} PLN
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {metrics.totalRevenue.toLocaleString()} PLN total revenue
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Task Completion
+            </CardTitle>
+            <Target className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {metrics.taskCompletionRate.toFixed(0)}%
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {metrics.completedTasks} of {metrics.activeTasks + metrics.completedTasks} tasks
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Monthly Activity
+            </CardTitle>
+            <Award className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {metrics.monthlyOffersCreated}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Offers created (last 30 days)
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Additional Stats Card */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Performance Overview</CardTitle>
+          <CardDescription>
+            Detailed performance statistics
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="space-y-2">
+              <div className="text-sm text-muted-foreground">Active Clients</div>
+              <div className="text-2xl font-bold">{metrics.activeClients}</div>
+              <div className="text-xs text-muted-foreground">
+                Out of {clients.length} total
+              </div>
+            </div>
+            <div className="space-y-2">
+              <div className="text-sm text-muted-foreground">Active Tasks</div>
+              <div className="text-2xl font-bold">{metrics.activeTasks}</div>
+              <div className="text-xs text-muted-foreground">
+                Currently in progress
+              </div>
+            </div>
+            <div className="space-y-2">
+              <div className="text-sm text-muted-foreground">Total Contracts</div>
+              <div className="text-2xl font-bold">{contracts.length}</div>
+              <div className="text-xs text-muted-foreground">
+                Contracts created
+              </div>
             </div>
           </div>
         </CardContent>
