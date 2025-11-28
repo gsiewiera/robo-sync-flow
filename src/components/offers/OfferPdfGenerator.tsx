@@ -175,7 +175,7 @@ export const OfferPdfGenerator = ({
       yPos += 7;
       doc.text(`Date: ${new Date(offerData.created_at).toLocaleDateString()}`, 14, yPos);
       yPos += 7;
-      doc.text(`Status: ${offerData.status.toUpperCase()}`, 14, yPos);
+      doc.text(`Stage: ${offerData.stage?.split('_').map((word: string) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') || 'N/A'}`, 14, yPos);
       yPos += 10;
 
       // Client Information
