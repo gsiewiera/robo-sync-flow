@@ -1,4 +1,4 @@
-import { ReactNode, useState, useEffect } from "react";
+import { ReactNode, useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -90,6 +90,16 @@ function AppSidebar() {
   );
   const [userRoles, setUserRoles] = useState<string[]>([]);
   const [rolesLoading, setRolesLoading] = useState(true);
+  const reportsRef = useRef<HTMLDivElement>(null);
+
+  const handleReportsToggle = (open: boolean) => {
+    setReportsOpen(open);
+    if (open && reportsRef.current) {
+      setTimeout(() => {
+        reportsRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }, 100);
+    }
+  };
 
   useEffect(() => {
     fetchUserRoles();
@@ -175,8 +185,8 @@ function AppSidebar() {
             )}
 
             {filteredReportItems.length > 0 && (
-              <SidebarGroup>
-                <Collapsible open={reportsOpen} onOpenChange={setReportsOpen}>
+              <SidebarGroup ref={reportsRef}>
+                <Collapsible open={reportsOpen} onOpenChange={handleReportsToggle}>
                   <SidebarGroupLabel asChild>
                     <CollapsibleTrigger className="flex items-center justify-between w-full group/collapsible">
                       <span className="flex items-center gap-2">
