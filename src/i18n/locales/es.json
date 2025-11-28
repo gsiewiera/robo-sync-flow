@@ -31,6 +31,64 @@
     "reseller": "Revendedor",
     "ending": "Finalizando"
   },
+  "common": {
+    "search": "Buscar",
+    "add": "Agregar",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "close": "Cerrar",
+    "view": "Ver",
+    "actions": "Acciones",
+    "status": "Estado",
+    "name": "Nombre",
+    "email": "Correo electrónico",
+    "phone": "Teléfono",
+    "address": "Dirección",
+    "city": "Ciudad",
+    "country": "País",
+    "created": "Creado",
+    "updated": "Actualizado",
+    "loading": "Cargando...",
+    "noData": "No se encontraron datos",
+    "clear": "Limpiar",
+    "send": "Enviar",
+    "sending": "Enviando...",
+    "filters": "Filtros"
+  },
+  "resellers": {
+    "title": "Revendedores",
+    "description": "Gestionar socios revendedores",
+    "addReseller": "Agregar Revendedor",
+    "editReseller": "Editar Revendedor",
+    "nip": "NIF",
+    "primaryContact": "Contacto principal",
+    "noResellers": "No se encontraron revendedores"
+  },
+  "contracts": {
+    "title": "Contratos",
+    "description": "Gestionar contratos y acuerdos con clientes",
+    "contractNumber": "Número de contrato",
+    "client": "Cliente",
+    "startDate": "Fecha de inicio",
+    "endDate": "Fecha de finalización",
+    "monthlyPayment": "Pago mensual",
+    "noContracts": "No se encontraron contratos",
+    "sendEmail": "Enviar correo de contrato",
+    "emailDescription": "Enviar la última versión PDF del contrato al cliente por correo electrónico.",
+    "recipientEmail": "Correo del destinatario",
+    "allClients": "Todos los clientes",
+    "allStatuses": "Todos los estados"
+  },
+  "status": {
+    "active": "Activo",
+    "inactive": "Inactivo",
+    "draft": "Borrador",
+    "pending_signature": "Pendiente de firma",
+    "expired": "Expirado",
+    "cancelled": "Cancelado"
+  },
   "language": {
     "select": "Seleccionar idioma"
   }

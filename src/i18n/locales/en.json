@@ -31,6 +31,64 @@
     "reseller": "Reseller",
     "ending": "Ending"
   },
+  "common": {
+    "search": "Search",
+    "add": "Add",
+    "edit": "Edit",
+    "delete": "Delete",
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close",
+    "view": "View",
+    "actions": "Actions",
+    "status": "Status",
+    "name": "Name",
+    "email": "Email",
+    "phone": "Phone",
+    "address": "Address",
+    "city": "City",
+    "country": "Country",
+    "created": "Created",
+    "updated": "Updated",
+    "loading": "Loading...",
+    "noData": "No data found",
+    "clear": "Clear",
+    "send": "Send",
+    "sending": "Sending...",
+    "filters": "Filters"
+  },
+  "resellers": {
+    "title": "Resellers",
+    "description": "Manage reseller partners",
+    "addReseller": "Add Reseller",
+    "editReseller": "Edit Reseller",
+    "nip": "NIP",
+    "primaryContact": "Primary Contact",
+    "noResellers": "No resellers found"
+  },
+  "contracts": {
+    "title": "Contracts",
+    "description": "Manage client contracts and agreements",
+    "contractNumber": "Contract Number",
+    "client": "Client",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "monthlyPayment": "Monthly Payment",
+    "noContracts": "No contracts found",
+    "sendEmail": "Send Contract Email",
+    "emailDescription": "Send the latest contract PDF version to the client via email.",
+    "recipientEmail": "Recipient Email",
+    "allClients": "All Clients",
+    "allStatuses": "All Statuses"
+  },
+  "status": {
+    "active": "Active",
+    "inactive": "Inactive",
+    "draft": "Draft",
+    "pending_signature": "Pending Signature",
+    "expired": "Expired",
+    "cancelled": "Cancelled"
+  },
   "language": {
     "select": "Select Language"
   }
