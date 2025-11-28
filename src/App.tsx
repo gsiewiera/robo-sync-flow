@@ -25,6 +25,7 @@ import Service from "./pages/Service";
 import ServiceDetail from "./pages/ServiceDetail";
 import Items from "./pages/Items";
 import Pricing from "./pages/Pricing";
+import Invoices from "./pages/Invoices";
 import Settings from "./pages/Settings";
 import ActivityReport from "./pages/reports/ActivityReport";
 import SalesReport from "./pages/reports/SalesReport";
@@ -206,6 +207,14 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <Pricing />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/invoices"
+            element={
+              <ProtectedRoute>
+                <Invoices />
               </ProtectedRoute>
             }
           />
