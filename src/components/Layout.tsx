@@ -19,7 +19,8 @@ import {
   Building,
   CalendarClock,
   ChevronDown,
-  Receipt
+  Receipt,
+  UserPlus
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -47,6 +48,7 @@ interface LayoutProps {
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
   { icon: CheckSquare, label: "Tasks", path: "/tasks" },
+  { icon: UserPlus, label: "Leads", path: "/leads" },
   { icon: ShoppingCart, label: "Offers", path: "/offers" },
   { icon: TrendingUp, label: "Funnel", path: "/funnel" },
   { icon: Users, label: "Clients", path: "/clients" },
