@@ -747,6 +747,72 @@ export type Database = {
           },
         ]
       }
+      monthly_sales_funnel: {
+        Row: {
+          actual_count: number
+          actual_value: number
+          created_at: string
+          created_by: string | null
+          currency: string
+          forecast_count: number
+          forecast_value: number
+          id: string
+          month: number
+          notes: string | null
+          stage: string
+          updated_at: string
+          updated_by: string | null
+          year: number
+        }
+        Insert: {
+          actual_count?: number
+          actual_value?: number
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          forecast_count?: number
+          forecast_value?: number
+          id?: string
+          month: number
+          notes?: string | null
+          stage: string
+          updated_at?: string
+          updated_by?: string | null
+          year: number
+        }
+        Update: {
+          actual_count?: number
+          actual_value?: number
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          forecast_count?: number
+          forecast_value?: number
+          id?: string
+          month?: number
+          notes?: string | null
+          stage?: string
+          updated_at?: string
+          updated_by?: string | null
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "monthly_sales_funnel_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "monthly_sales_funnel_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       offer_items: {
         Row: {
           contract_type: string | null
