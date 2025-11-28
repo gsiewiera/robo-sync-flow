@@ -636,6 +636,63 @@ export type Database = {
         }
         Relationships: []
       }
+      monthly_revenue: {
+        Row: {
+          actual_amount: number
+          created_at: string
+          created_by: string | null
+          currency: string
+          forecast_amount: number
+          id: string
+          month: number
+          notes: string | null
+          updated_at: string
+          updated_by: string | null
+          year: number
+        }
+        Insert: {
+          actual_amount?: number
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          forecast_amount?: number
+          id?: string
+          month: number
+          notes?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          year: number
+        }
+        Update: {
+          actual_amount?: number
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          forecast_amount?: number
+          id?: string
+          month?: number
+          notes?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "monthly_revenue_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "monthly_revenue_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       offer_items: {
         Row: {
           contract_type: string | null
