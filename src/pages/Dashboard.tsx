@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { RobotsSoldChart } from "@/components/dashboard/RobotsSoldChart";
 import { ServiceTicketsChart } from "@/components/dashboard/ServiceTicketsChart";
 import { OpportunitiesChart } from "@/components/dashboard/OpportunitiesChart";
+import { RevenueChart } from "@/components/dashboard/RevenueChart";
 import { RevenueTable } from "@/components/dashboard/RevenueTable";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -499,6 +500,7 @@ const Dashboard = () => {
           {isLoading ? (
             <>
               <Skeleton className="h-[350px] w-full" />
+              <Skeleton className="h-[350px] w-full" />
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <Skeleton className="h-[350px] w-full" />
                 <Skeleton className="h-[350px] w-full" />
@@ -506,6 +508,7 @@ const Dashboard = () => {
             </>
           ) : (
             <>
+              <RevenueChart />
               <RobotsSoldChart data={chartData.robotsSold} />
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <ServiceTicketsChart data={chartData.serviceTickets} />
