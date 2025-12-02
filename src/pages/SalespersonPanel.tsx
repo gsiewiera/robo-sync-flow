@@ -341,13 +341,13 @@ const SalespersonPanel = () => {
               </PopoverContent>
             </Popover>
             <Select value={selectedSalesperson} onValueChange={setSelectedSalesperson}>
-              <SelectTrigger className="w-64">
+              <SelectTrigger className="w-72">
                 <SelectValue placeholder="Select salesperson" />
               </SelectTrigger>
               <SelectContent>
                 {salespeople.map((sp) => (
                   <SelectItem key={sp.id} value={sp.id}>
-                    {sp.full_name}
+                    {sp.full_name} ({sp.email})
                   </SelectItem>
                 ))}
               </SelectContent>
