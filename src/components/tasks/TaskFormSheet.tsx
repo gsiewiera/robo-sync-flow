@@ -550,6 +550,26 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
               )}
             />
 
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description</FormLabel>
+                  {isViewMode ? (
+                    <div className="text-sm py-2 px-3 border rounded-md bg-muted min-h-[60px] whitespace-pre-wrap">
+                      {field.value || "-"}
+                    </div>
+                  ) : (
+                    <FormControl>
+                      <Textarea {...field} placeholder="Task description (optional)" rows={2} />
+                    </FormControl>
+                  )}
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             {showClientField && (
               <FormField
                 control={form.control}
