@@ -435,7 +435,7 @@ export const OfferPdfGenerator = ({
           ) : (
             <>
               <FileText className="w-4 h-4 mr-2" />
-              Generate New PDF
+              Generate offer
             </>
           )}
         </Button>
