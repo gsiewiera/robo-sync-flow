@@ -145,26 +145,15 @@ const SalespersonPanel = () => {
         return;
       }
 
-      // Fetch all salespeople
-      const { data: salespeopleRoles } = await supabase
-        .from("user_roles")
-        .select("user_id")
-        .eq("role", "salesperson");
+      // Fetch all users (admins can view all user performance)
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, full_name, email")
+        .order("full_name");
 
-      if (salespeopleRoles && salespeopleRoles.length > 0) {
-        const userIds = salespeopleRoles.map(r => r.user_id);
-        const { data: profiles } = await supabase
-          .from("profiles")
-          .select("id, full_name, email")
-          .in("id", userIds)
-          .order("full_name");
-
-        if (profiles) {
-          setSalespeople(profiles);
-          if (profiles.length > 0) {
-            setSelectedSalesperson(profiles[0].id);
-          }
-        }
+      if (profiles && profiles.length > 0) {
+        setSalespeople(profiles);
+        setSelectedSalesperson(profiles[0].id);
       }
     } catch (error) {
       console.error("Error fetching data:", error);
