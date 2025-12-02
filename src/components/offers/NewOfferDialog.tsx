@@ -34,6 +34,7 @@ import { CalendarIcon, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { ClientCombobox } from "@/components/ui/client-combobox";
 
 const formSchema = z.object({
   client_id: z.string().min(1, "Client is required"),
@@ -647,20 +648,14 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer }: NewOffe
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Client *</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select client" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {clients.map((client) => (
-                            <SelectItem key={client.id} value={client.id}>
-                              {client.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <FormControl>
+                        <ClientCombobox
+                          clients={clients}
+                          value={field.value}
+                          onValueChange={field.onChange}
+                          placeholder="Select client"
+                        />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
