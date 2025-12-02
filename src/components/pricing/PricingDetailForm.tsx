@@ -256,20 +256,20 @@ export const PricingDetailForm = ({
     const gross = calculateGross(value);
 
     return (
-      <div className="grid grid-cols-3 gap-4 items-center py-1">
-        <Label className="text-sm text-muted-foreground">{currencyCode}</Label>
+      <div className="flex items-center justify-between py-1 gap-2">
+        <Label className="text-sm text-muted-foreground w-10 shrink-0">{currencyCode}</Label>
         {isEditing ? (
           <Input
             type="number"
             step="0.01"
             value={value || ""}
             onChange={(e) => handleLeaseChange(months, field, e.target.value)}
-            className="h-8 text-sm"
+            className="h-8 text-sm flex-1"
           />
         ) : (
-          <span className="text-right text-sm">{formatCurrency(value, currencyCode)}/mo</span>
+          <span className="text-sm whitespace-nowrap">{formatCurrency(value, currencyCode)}/mo</span>
         )}
-        <span className="text-right text-xs text-muted-foreground">
+        <span className="text-xs text-muted-foreground whitespace-nowrap">
           {formatCurrency(gross, currencyCode)}/mo
         </span>
       </div>
@@ -436,17 +436,17 @@ export const PricingDetailForm = ({
           </CardHeader>
           <CardContent className="pt-0">
             {leasePricing.length > 0 ? (
-              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {leasePricing.map((lease) => (
                   <div key={lease.id} className="space-y-3 p-4 border rounded-lg">
                     <Label className="font-semibold text-base">{lease.months} Months</Label>
                     
                     <div className="space-y-1">
                       <p className="text-xs text-muted-foreground font-medium">Lease Price</p>
-                      <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground">
-                        <span>Currency</span>
-                        <span className="text-right">Net/mo</span>
-                        <span className="text-right">Gross/mo</span>
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span className="w-10">Currency</span>
+                        <span>Net/mo</span>
+                        <span>Gross/mo</span>
                       </div>
                       <LeaseField months={lease.months} currency="pln" currencyCode="PLN" field="pln" />
                       <LeaseField months={lease.months} currency="usd" currencyCode="USD" field="usd" />
