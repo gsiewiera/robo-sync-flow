@@ -53,6 +53,7 @@ interface ContractRobotItem {
   robotPricingId: string;
   model: string;
   quantity: number;
+  contractType: 'purchase' | 'lease';
   unitPrice: number;
   leaseMonths?: number;
   monthlyPrice?: number;
@@ -97,7 +98,6 @@ export function NewContractDialog({ open, onOpenChange, onSuccess }: NewContract
   const [status, setStatus] = useState<"draft" | "pending_signature" | "active">("draft");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [paymentModel, setPaymentModel] = useState("purchase");
   const [billingSchedule, setBillingSchedule] = useState("monthly");
   const [currency, setCurrency] = useState("PLN");
   const [terms, setTerms] = useState("");
@@ -113,7 +113,6 @@ export function NewContractDialog({ open, onOpenChange, onSuccess }: NewContract
       setContractRobots([]);
       setContractItems([]);
       setSelectedClientId("all");
-      setPaymentModel("purchase");
       setCurrency("PLN");
     }
   }, [open]);
@@ -183,23 +182,15 @@ export function NewContractDialog({ open, onOpenChange, onSuccess }: NewContract
     const firstRobot = robotPricing[0];
     const price = getPriceForCurrency(firstRobot);
     
-    let leaseMonths: number | undefined;
-    let monthlyPrice: number | undefined;
-    
-    if (paymentModel === "lease" && leaseMonthOptions.length > 0) {
-      leaseMonths = leaseMonthOptions[0];
-      const lease = leasePricing.find(l => l.robot_pricing_id === firstRobot.id && l.months === leaseMonths);
-      monthlyPrice = lease ? getLeasePriceForCurrency(lease) : price / leaseMonths;
-    }
-    
     setContractRobots([...contractRobots, {
       id: crypto.randomUUID(),
       robotPricingId: firstRobot.id,
       model: firstRobot.robot_model,
       quantity: 1,
+      contractType: 'purchase',
       unitPrice: price,
-      leaseMonths,
-      monthlyPrice,
+      leaseMonths: leaseMonthOptions[0] || 12,
+      monthlyPrice: price / (leaseMonthOptions[0] || 12),
     }]);
   };
 
@@ -216,7 +207,7 @@ export function NewContractDialog({ open, onOpenChange, onSuccess }: NewContract
           updated.model = pricing.robot_model;
           updated.unitPrice = getPriceForCurrency(pricing);
           
-          if (paymentModel === "lease" && updated.leaseMonths) {
+          if (updated.leaseMonths) {
             const lease = leasePricing.find(l => l.robot_pricing_id === pricing.id && l.months === updated.leaseMonths);
             updated.monthlyPrice = lease ? getLeasePriceForCurrency(lease) : updated.unitPrice / updated.leaseMonths;
           }
@@ -224,9 +215,15 @@ export function NewContractDialog({ open, onOpenChange, onSuccess }: NewContract
       }
       
       // If lease months changed, update monthly price
-      if (updates.leaseMonths && paymentModel === "lease") {
+      if (updates.leaseMonths) {
         const lease = leasePricing.find(l => l.robot_pricing_id === updated.robotPricingId && l.months === updates.leaseMonths);
         updated.monthlyPrice = lease ? getLeasePriceForCurrency(lease) : updated.unitPrice / updates.leaseMonths;
+      }
+
+      // If contract type changed to lease and no lease price set, calculate it
+      if (updates.contractType === 'lease' && updated.leaseMonths) {
+        const lease = leasePricing.find(l => l.robot_pricing_id === updated.robotPricingId && l.months === updated.leaseMonths);
+        updated.monthlyPrice = lease ? getLeasePriceForCurrency(lease) : updated.unitPrice / updated.leaseMonths;
       }
       
       return updated;
@@ -276,26 +273,26 @@ export function NewContractDialog({ open, onOpenChange, onSuccess }: NewContract
 
   // Calculate summary
   const summary = useMemo(() => {
-    const robotsPurchaseTotal = contractRobots.reduce((sum, r) => sum + (r.quantity * r.unitPrice), 0);
-    const robotsMonthlyTotal = contractRobots.reduce((sum, r) => sum + (r.quantity * (r.monthlyPrice || 0)), 0);
+    const purchaseRobots = contractRobots.filter(r => r.contractType === 'purchase');
+    const leaseRobots = contractRobots.filter(r => r.contractType === 'lease');
+    
+    const robotsPurchaseTotal = purchaseRobots.reduce((sum, r) => sum + (r.quantity * r.unitPrice), 0);
+    const robotsLeaseMonthlyTotal = leaseRobots.reduce((sum, r) => sum + (r.quantity * (r.monthlyPrice || 0)), 0);
     const itemsTotal = contractItems.reduce((sum, i) => sum + (i.quantity * i.unitPrice), 0);
     
-    if (paymentModel === "purchase") {
-      return {
-        totalPurchaseValue: robotsPurchaseTotal + itemsTotal,
-        totalMonthly: 0,
-        robotsTotal: robotsPurchaseTotal,
-        itemsTotal,
-      };
-    } else {
-      return {
-        totalPurchaseValue: itemsTotal,
-        totalMonthly: robotsMonthlyTotal,
-        robotsTotal: robotsMonthlyTotal,
-        itemsTotal,
-      };
-    }
-  }, [contractRobots, contractItems, paymentModel]);
+    const totalPurchaseValue = robotsPurchaseTotal + itemsTotal;
+    const totalMonthly = robotsLeaseMonthlyTotal;
+    
+    return {
+      robotsPurchaseTotal,
+      robotsLeaseMonthlyTotal,
+      itemsTotal,
+      totalPurchaseValue,
+      totalMonthly,
+      hasPurchase: purchaseRobots.length > 0 || contractItems.length > 0,
+      hasLease: leaseRobots.length > 0,
+    };
+  }, [contractRobots, contractItems]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -310,6 +307,11 @@ export function NewContractDialog({ open, onOpenChange, onSuccess }: NewContract
     try {
       const { data: session } = await supabase.auth.getSession();
       await generateContractNumber();
+      
+      // Determine payment model based on robots
+      const hasLease = contractRobots.some(r => r.contractType === 'lease');
+      const hasPurchase = contractRobots.some(r => r.contractType === 'purchase');
+      const paymentModel = hasLease && hasPurchase ? 'mixed' : hasLease ? 'lease' : 'purchase';
       
       const { data: contractData, error: contractError } = await supabase
         .from("contracts")
@@ -380,7 +382,7 @@ export function NewContractDialog({ open, onOpenChange, onSuccess }: NewContract
             </div>
 
             {/* Contract Details */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               <div>
                 <Label>{t("contracts.contractNumber")}</Label>
                 <Input value={contractNumber} onChange={(e) => setContractNumber(e.target.value)} required />
@@ -393,16 +395,6 @@ export function NewContractDialog({ open, onOpenChange, onSuccess }: NewContract
                     <SelectItem value="draft">{t("status.draft")}</SelectItem>
                     <SelectItem value="pending_signature">{t("status.pending_signature")}</SelectItem>
                     <SelectItem value="active">{t("status.active")}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>{t("contracts.paymentModel")}</Label>
-                <Select value={paymentModel} onValueChange={setPaymentModel}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="purchase">{t("contracts.purchase")}</SelectItem>
-                    <SelectItem value="lease">{t("contracts.lease")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -467,6 +459,16 @@ export function NewContractDialog({ open, onOpenChange, onSuccess }: NewContract
                           </Select>
                         </div>
                         <div>
+                          <Label>{t("contracts.contractType")}</Label>
+                          <Select value={robot.contractType} onValueChange={(v) => updateRobot(robot.id, { contractType: v as 'purchase' | 'lease' })}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="purchase">{t("contracts.purchase")}</SelectItem>
+                              <SelectItem value="lease">{t("contracts.lease")}</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
                           <Label>{t("common.quantity")}</Label>
                           <Input 
                             type="number" 
@@ -475,7 +477,7 @@ export function NewContractDialog({ open, onOpenChange, onSuccess }: NewContract
                             onChange={(e) => updateRobot(robot.id, { quantity: parseInt(e.target.value) || 1 })} 
                           />
                         </div>
-                        {paymentModel === "purchase" ? (
+                        {robot.contractType === "purchase" ? (
                           <div>
                             <Label>{t("contracts.unitPrice")}</Label>
                             <Input 
@@ -519,7 +521,7 @@ export function NewContractDialog({ open, onOpenChange, onSuccess }: NewContract
                         </div>
                       </div>
                       <div className="mt-2 text-right text-sm text-muted-foreground">
-                        {paymentModel === "purchase" 
+                        {robot.contractType === "purchase" 
                           ? `${t("common.total")}: ${formatMoney(robot.quantity * robot.unitPrice)} ${currency}`
                           : `${t("contracts.monthly")}: ${formatMoney(robot.quantity * (robot.monthlyPrice || 0))} ${currency}`
                         }
@@ -612,36 +614,45 @@ export function NewContractDialog({ open, onOpenChange, onSuccess }: NewContract
             <Card className="p-4 bg-muted/50">
               <h3 className="font-semibold mb-4">{t("contracts.financialSummary")}</h3>
               <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span>{t("contracts.robots")}:</span>
-                  <span className="font-medium">
-                    {paymentModel === "purchase" 
-                      ? `${formatMoney(summary.robotsTotal)} ${currency}`
-                      : `${formatMoney(summary.robotsTotal)} ${currency}/${t("contracts.month")}`
-                    }
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span>{t("contracts.additionalItems")}:</span>
-                  <span className="font-medium">{formatMoney(summary.itemsTotal)} {currency}</span>
-                </div>
-                <Separator className="my-2" />
-                {paymentModel === "purchase" ? (
-                  <div className="flex justify-between text-lg font-semibold">
-                    <span>{t("contracts.totalPurchaseValue")}:</span>
-                    <span className="text-primary">{formatMoney(summary.totalPurchaseValue)} {currency}</span>
-                  </div>
-                ) : (
+                {summary.hasPurchase && (
                   <>
-                    <div className="flex justify-between">
-                      <span>{t("contracts.oneTimeCosts")}:</span>
-                      <span className="font-medium">{formatMoney(summary.itemsTotal)} {currency}</span>
+                    <div className="text-sm font-medium text-muted-foreground mb-2">{t("contracts.purchaseSection")}</div>
+                    {summary.robotsPurchaseTotal > 0 && (
+                      <div className="flex justify-between">
+                        <span>{t("contracts.robotsPurchase")}:</span>
+                        <span className="font-medium">{formatMoney(summary.robotsPurchaseTotal)} {currency}</span>
+                      </div>
+                    )}
+                    {summary.itemsTotal > 0 && (
+                      <div className="flex justify-between">
+                        <span>{t("contracts.additionalItems")}:</span>
+                        <span className="font-medium">{formatMoney(summary.itemsTotal)} {currency}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between font-semibold">
+                      <span>{t("contracts.totalPurchaseValue")}:</span>
+                      <span className="text-primary">{formatMoney(summary.totalPurchaseValue)} {currency}</span>
                     </div>
-                    <div className="flex justify-between text-lg font-semibold">
+                  </>
+                )}
+                
+                {summary.hasLease && (
+                  <>
+                    {summary.hasPurchase && <Separator className="my-3" />}
+                    <div className="text-sm font-medium text-muted-foreground mb-2">{t("contracts.leaseSection")}</div>
+                    <div className="flex justify-between">
+                      <span>{t("contracts.robotsLease")}:</span>
+                      <span className="font-medium">{formatMoney(summary.robotsLeaseMonthlyTotal)} {currency}/{t("contracts.month")}</span>
+                    </div>
+                    <div className="flex justify-between font-semibold">
                       <span>{t("contracts.monthlyPayment")}:</span>
                       <span className="text-primary">{formatMoney(summary.totalMonthly)} {currency}/{t("contracts.month")}</span>
                     </div>
                   </>
+                )}
+                
+                {!summary.hasPurchase && !summary.hasLease && (
+                  <p className="text-sm text-muted-foreground text-center">{t("contracts.noItemsForSummary")}</p>
                 )}
               </div>
             </Card>

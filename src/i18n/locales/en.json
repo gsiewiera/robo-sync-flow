@@ -165,7 +165,13 @@
     "additionalItems": "Additional Items",
     "addItem": "Add Item",
     "noItemsAdded": "No items added yet",
-    "oneTimeCosts": "One-time Costs"
+    "oneTimeCosts": "One-time Costs",
+    "contractType": "Type",
+    "purchaseSection": "Purchase",
+    "leaseSection": "Lease",
+    "robotsPurchase": "Robots (Purchase)",
+    "robotsLease": "Robots (Lease)",
+    "noItemsForSummary": "Add robots or items to see summary"
   },
   "invoices": {
     "title": "Invoices",
