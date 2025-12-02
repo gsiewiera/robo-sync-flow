@@ -633,11 +633,11 @@ const ClientDetail = () => {
           </div>
         </Card>
 
-        <Tabs defaultValue="contracts" className="w-full">
+        <Tabs defaultValue="tasks" className="w-full">
           <TabsList className="flex-wrap">
-            <TabsTrigger value="contracts">
-              <FileText className="w-4 h-4 mr-2" />
-              Contracts ({contracts.length})
+            <TabsTrigger value="tasks">
+              <CheckSquare className="w-4 h-4 mr-2" />
+              Tasks ({tasks.length})
             </TabsTrigger>
             <TabsTrigger value="offers">
               <ShoppingCart className="w-4 h-4 mr-2" />
@@ -647,21 +647,21 @@ const ClientDetail = () => {
               <Users className="w-4 h-4 mr-2" />
               Contacts ({contacts.length})
             </TabsTrigger>
+            <TabsTrigger value="robots">
+              <Bot className="w-4 h-4 mr-2" />
+              Robots ({robots.length})
+            </TabsTrigger>
+            <TabsTrigger value="contracts">
+              <FileText className="w-4 h-4 mr-2" />
+              Contracts ({contracts.length})
+            </TabsTrigger>
             <TabsTrigger value="invoices">
               <Receipt className="w-4 h-4 mr-2" />
               Invoices & Payments ({invoices.length})
             </TabsTrigger>
-            <TabsTrigger value="tasks">
-              <CheckSquare className="w-4 h-4 mr-2" />
-              Tasks ({tasks.length})
-            </TabsTrigger>
             <TabsTrigger value="tickets">
               <FileText className="w-4 h-4 mr-2" />
               Support Tickets (0)
-            </TabsTrigger>
-            <TabsTrigger value="robots">
-              <Bot className="w-4 h-4 mr-2" />
-              Robots ({robots.length})
             </TabsTrigger>
             <TabsTrigger value="documents">
               <FolderOpen className="w-4 h-4 mr-2" />
