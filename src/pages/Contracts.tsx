@@ -333,7 +333,11 @@ const Contracts = () => {
                 </TableRow>
               ) : (
                 currentRecords.map((contract) => (
-                  <TableRow key={contract.id} className="h-12">
+                  <TableRow 
+                    key={contract.id} 
+                    className="h-12 cursor-pointer hover:bg-muted/50"
+                    onClick={() => navigate(`/contracts/${contract.id}`)}
+                  >
                     <TableCell className="font-medium">{contract.contract_number}</TableCell>
                     <TableCell>{contract.clients?.name || "-"}</TableCell>
                     <TableCell>
@@ -361,7 +365,7 @@ const Contracts = () => {
                         ? new Date(contract.created_at).toLocaleDateString()
                         : "-"}
                     </TableCell>
-                    <TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center gap-1">
                         <Button
                           variant="ghost"
