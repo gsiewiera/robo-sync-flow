@@ -124,6 +124,7 @@ interface Document {
   uploaded_by: string | null;
   created_at: string;
   notes: string | null;
+  category: string | null;
   uploader_name?: string;
 }
 
@@ -178,13 +179,26 @@ const ClientDetail = () => {
   const [salesperson, setSalesperson] = useState<{ id: string; full_name: string } | null>(null);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [isUploading, setIsUploading] = useState(false);
-  const [documentToDelete, setDocumentToDelete] = useState<Document | null>(null);
+  const [documentCategories, setDocumentCategories] = useState<string[]>([]);
+  const [selectedUploadCategory, setSelectedUploadCategory] = useState<string>("General");
+  const [isDragging, setIsDragging] = useState(false);
 
   useEffect(() => {
     if (id) {
       fetchClientData();
+      fetchDocumentCategories();
     }
   }, [id]);
+
+  const fetchDocumentCategories = async () => {
+    const { data } = await supabase
+      .from("document_category_dictionary")
+      .select("name")
+      .order("name");
+    if (data) {
+      setDocumentCategories(data.map(d => d.name));
+    }
+  };
 
   const fetchClientData = async () => {
     const { data: clientData } = await supabase
@@ -422,6 +436,7 @@ const ClientDetail = () => {
             file_size: file.size,
             file_type: file.type || fileExt,
             uploaded_by: user?.id,
+            category: selectedUploadCategory,
           });
 
         if (dbError) throw dbError;
@@ -463,38 +478,6 @@ const ClientDetail = () => {
         description: error.message,
         variant: "destructive",
       });
-    }
-  };
-
-  const handleDeleteDocument = async () => {
-    if (!documentToDelete) return;
-
-    try {
-      // Delete from storage
-      const { error: storageError } = await supabase.storage
-        .from('client-documents')
-        .remove([documentToDelete.file_path]);
-
-      if (storageError) throw storageError;
-
-      // Delete from database
-      const { error: dbError } = await supabase
-        .from('client_documents')
-        .delete()
-        .eq('id', documentToDelete.id);
-
-      if (dbError) throw dbError;
-
-      toast({ title: "Document deleted successfully" });
-      fetchClientData();
-    } catch (error: any) {
-      toast({
-        title: "Delete failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setDocumentToDelete(null);
     }
   };
 
@@ -979,12 +962,47 @@ const ClientDetail = () => {
           </TabsContent>
 
           <TabsContent value="documents" className="space-y-4">
-            <div className="flex justify-end mb-4">
+            <div 
+              className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                isDragging ? 'border-primary bg-primary/5' : 'border-muted-foreground/25'
+              }`}
+              onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+              onDragLeave={() => setIsDragging(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setIsDragging(false);
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                  const input = document.getElementById('file-upload') as HTMLInputElement;
+                  if (input) {
+                    const dt = new DataTransfer();
+                    Array.from(files).forEach(f => dt.items.add(f));
+                    input.files = dt.files;
+                    input.dispatchEvent(new Event('change', { bubbles: true }));
+                  }
+                }
+              }}
+            >
+              <Upload className="w-10 h-10 mx-auto text-muted-foreground mb-3" />
+              <p className="text-muted-foreground mb-2">
+                Drag & drop files here, or click to select
+              </p>
+              <div className="flex items-center justify-center gap-4 mb-4">
+                <label className="text-sm text-muted-foreground">Category:</label>
+                <select
+                  value={selectedUploadCategory}
+                  onChange={(e) => setSelectedUploadCategory(e.target.value)}
+                  className="h-9 px-3 rounded-md border border-input bg-background text-sm"
+                >
+                  {documentCategories.map((cat) => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
               <label htmlFor="file-upload">
                 <Button asChild disabled={isUploading}>
                   <span>
-                    <Upload className="w-4 h-4 mr-2" />
-                    {isUploading ? "Uploading..." : "Upload Documents"}
+                    {isUploading ? "Uploading..." : "Select Files"}
                   </span>
                 </Button>
               </label>
@@ -1003,7 +1021,14 @@ const ClientDetail = () => {
                   <div className="flex items-center gap-3 flex-1">
                     <File className="w-8 h-8 text-muted-foreground" />
                     <div>
-                      <h3 className="font-semibold">{doc.file_name}</h3>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold">{doc.file_name}</h3>
+                        {doc.category && (
+                          <Badge variant="secondary" className="text-xs">
+                            {doc.category}
+                          </Badge>
+                        )}
+                      </div>
                       <div className="flex gap-4 text-sm text-muted-foreground">
                         <span>{formatFileSize(doc.file_size)}</span>
                         <span>{doc.file_type}</span>
@@ -1012,22 +1037,13 @@ const ClientDetail = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDownloadDocument(doc)}
-                    >
-                      <Download className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setDocumentToDelete(doc)}
-                    >
-                      <Trash2 className="w-4 h-4 text-destructive" />
-                    </Button>
-                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleDownloadDocument(doc)}
+                  >
+                    <Download className="w-4 h-4" />
+                  </Button>
                 </div>
               </Card>
             ))}
@@ -1071,23 +1087,6 @@ const ClientDetail = () => {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteContact} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <AlertDialog open={!!documentToDelete} onOpenChange={() => setDocumentToDelete(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Document</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete "{documentToDelete?.file_name}"? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteDocument} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>

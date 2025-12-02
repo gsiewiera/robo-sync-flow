@@ -123,6 +123,7 @@ export type Database = {
       }
       client_documents: {
         Row: {
+          category: string | null
           client_id: string
           created_at: string
           file_name: string
@@ -134,6 +135,7 @@ export type Database = {
           uploaded_by: string | null
         }
         Insert: {
+          category?: string | null
           client_id: string
           created_at?: string
           file_name: string
@@ -145,6 +147,7 @@ export type Database = {
           uploaded_by?: string | null
         }
         Update: {
+          category?: string | null
           client_id?: string
           created_at?: string
           file_name?: string
@@ -542,6 +545,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      document_category_dictionary: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
       }
       invoices: {
         Row: {
