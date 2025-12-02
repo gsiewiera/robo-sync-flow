@@ -13,10 +13,11 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { UserPlus, Phone, Mail, Building2, Calendar as CalendarIcon, Edit, AlertCircle, Clock } from "lucide-react";
+import { UserPlus, Phone, Mail, Building2, Calendar as CalendarIcon, Edit, AlertCircle, Clock, Plus } from "lucide-react";
 import { format, isAfter, isBefore, startOfDay, addDays } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { NewOfferDialog } from "@/components/offers/NewOfferDialog";
 
 interface Lead {
   id: string;
@@ -44,6 +45,7 @@ const Leads = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isNewLeadOpen, setIsNewLeadOpen] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [editForm, setEditForm] = useState({
     lead_status: "",
@@ -218,7 +220,17 @@ const Leads = () => {
             </h1>
             <p className="text-muted-foreground">{t("leads.description")}</p>
           </div>
+          <Button onClick={() => setIsNewLeadOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            {t("leads.addLead")}
+          </Button>
         </div>
+
+        <NewOfferDialog
+          open={isNewLeadOpen}
+          onOpenChange={setIsNewLeadOpen}
+          onSuccess={fetchLeads}
+        />
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <Card className="hover-scale animate-fade-in bg-gradient-to-br from-primary/5 to-transparent">
