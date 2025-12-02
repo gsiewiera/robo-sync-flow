@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   ArrowLeft, Mail, Phone, MapPin, FileText, ShoppingCart, Bot, 
-  Globe, Edit, DollarSign, Receipt, CreditCard 
+  Globe, Edit, DollarSign, Receipt, CreditCard, CheckSquare, Calendar
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -79,6 +79,18 @@ interface Payment {
   payment_method: string | null;
 }
 
+interface Task {
+  id: string;
+  title: string;
+  description: string | null;
+  status: string;
+  due_date: string | null;
+  meeting_date_time: string | null;
+  meeting_type: string | null;
+  assigned_to: string | null;
+  profiles?: { full_name: string } | null;
+}
+
 const statusColors: Record<string, string> = {
   // Contract/Offer statuses
   draft: "bg-muted text-muted-foreground",
@@ -117,6 +129,7 @@ const ClientDetail = () => {
   const [clientTags, setClientTags] = useState<any[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [reseller, setReseller] = useState<{ id: string; name: string } | null>(null);
 
   useEffect(() => {
@@ -208,6 +221,17 @@ const ClientDetail = () => {
 
     if (paymentsData) {
       setPayments(paymentsData);
+    }
+
+    // Fetch tasks
+    const { data: tasksData } = await supabase
+      .from("tasks")
+      .select("*, profiles(full_name)")
+      .eq("client_id", id)
+      .order("created_at", { ascending: false });
+
+    if (tasksData) {
+      setTasks(tasksData);
     }
   };
 
@@ -423,6 +447,10 @@ const ClientDetail = () => {
               <Receipt className="w-4 h-4 mr-2" />
               Invoices & Payments ({invoices.length})
             </TabsTrigger>
+            <TabsTrigger value="tasks">
+              <CheckSquare className="w-4 h-4 mr-2" />
+              Tasks ({tasks.length})
+            </TabsTrigger>
             <TabsTrigger value="tickets">
               <FileText className="w-4 h-4 mr-2" />
               Support Tickets (0)
@@ -578,6 +606,53 @@ const ClientDetail = () => {
                 )}
               </div>
             </div>
+          </TabsContent>
+
+          <TabsContent value="tasks" className="space-y-4">
+            {tasks.map((task) => (
+              <Card
+                key={task.id}
+                className="p-4 hover:shadow-lg transition-shadow"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3">
+                      <h3 className="font-semibold">{task.title}</h3>
+                      <Badge className={statusColors[task.status] || "bg-muted text-muted-foreground"}>
+                        {task.status?.replace("_", " ")}
+                      </Badge>
+                    </div>
+                    {task.description && (
+                      <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                        {task.description}
+                      </p>
+                    )}
+                    <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
+                      {task.due_date && (
+                        <div className="flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          Due: {new Date(task.due_date).toLocaleDateString()}
+                        </div>
+                      )}
+                      {task.meeting_date_time && (
+                        <div className="flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          Meeting: {new Date(task.meeting_date_time).toLocaleString()}
+                        </div>
+                      )}
+                      {task.profiles?.full_name && (
+                        <span>Assigned to: {task.profiles.full_name}</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            ))}
+            {tasks.length === 0 && (
+              <Card className="p-8 text-center">
+                <p className="text-muted-foreground">No tasks found for this client</p>
+              </Card>
+            )}
           </TabsContent>
 
           <TabsContent value="tickets" className="space-y-4">
