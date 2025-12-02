@@ -32,6 +32,27 @@ export const OfferStageSelector = ({ offerId, currentStage, onStageChange }: Off
   const handleStageChange = async (newStage: string) => {
     setIsUpdating(true);
     try {
+      // Validate: moving from "leads" to any other stage requires at least one item
+      if (currentStage === "leads" && newStage !== "leads") {
+        const { data: items, error: itemsError } = await supabase
+          .from("offer_items")
+          .select("id")
+          .eq("offer_id", offerId)
+          .limit(1);
+
+        if (itemsError) throw itemsError;
+
+        if (!items || items.length === 0) {
+          toast({
+            title: "Cannot change stage",
+            description: "Please add at least one robot/item to the offer before moving to qualified stage",
+            variant: "destructive",
+          });
+          setIsUpdating(false);
+          return;
+        }
+      }
+
       const { error } = await supabase
         .from("offers")
         .update({ stage: newStage })
