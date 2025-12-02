@@ -6,6 +6,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { 
@@ -16,9 +18,12 @@ import {
   TrendingUp,
   UserPlus,
   Eye,
-  DollarSign
+  DollarSign,
+  CalendarIcon
 } from "lucide-react";
-import { format } from "date-fns";
+import { format, subDays, startOfMonth, endOfMonth, subMonths } from "date-fns";
+import { cn } from "@/lib/utils";
+import { DateRange } from "react-day-picker";
 
 interface Profile {
   id: string;
@@ -81,6 +86,10 @@ interface Client {
 const SalespersonPanel = () => {
   const [salespeople, setSalespeople] = useState<Profile[]>([]);
   const [selectedSalesperson, setSelectedSalesperson] = useState<string>("");
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: startOfMonth(new Date()),
+    to: endOfMonth(new Date()),
+  });
   const [kpiData, setKpiData] = useState<KPIData>({
     totalSales: 0,
     totalTasks: 0,
@@ -100,15 +109,23 @@ const SalespersonPanel = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const navigate = useNavigate();
 
+  const datePresets = [
+    { label: "This Month", from: startOfMonth(new Date()), to: endOfMonth(new Date()) },
+    { label: "Last Month", from: startOfMonth(subMonths(new Date(), 1)), to: endOfMonth(subMonths(new Date(), 1)) },
+    { label: "Last 7 Days", from: subDays(new Date(), 7), to: new Date() },
+    { label: "Last 30 Days", from: subDays(new Date(), 30), to: new Date() },
+    { label: "Last 90 Days", from: subDays(new Date(), 90), to: new Date() },
+  ];
+
   useEffect(() => {
     checkAdminAndFetchSalespeople();
   }, []);
 
   useEffect(() => {
-    if (selectedSalesperson) {
+    if (selectedSalesperson && dateRange?.from && dateRange?.to) {
       fetchSalespersonData(selectedSalesperson);
     }
-  }, [selectedSalesperson]);
+  }, [selectedSalesperson, dateRange]);
 
   const checkAdminAndFetchSalespeople = async () => {
     try {
@@ -158,38 +175,57 @@ const SalespersonPanel = () => {
 
   const fetchSalespersonData = async (salespersonId: string) => {
     setLoading(true);
+    const fromDate = dateRange?.from?.toISOString();
+    const toDate = dateRange?.to?.toISOString();
+    
     try {
       // Fetch tasks
-      const { data: tasksData } = await supabase
+      let tasksQuery = supabase
         .from("tasks")
         .select("id, title, status, due_date, clients(name)")
-        .eq("assigned_to", salespersonId)
-        .order("due_date", { ascending: true });
+        .eq("assigned_to", salespersonId);
+      
+      if (fromDate && toDate) {
+        tasksQuery = tasksQuery.gte("created_at", fromDate).lte("created_at", toDate);
+      }
+      const { data: tasksData } = await tasksQuery.order("due_date", { ascending: true });
 
       // Fetch leads (offers with stage = 'leads')
-      const { data: leadsData } = await supabase
+      let leadsQuery = supabase
         .from("offers")
         .select("id, offer_number, lead_status, created_at, clients(name)")
         .eq("assigned_salesperson_id", salespersonId)
-        .eq("stage", "leads")
-        .order("created_at", { ascending: false });
+        .eq("stage", "leads");
+      
+      if (fromDate && toDate) {
+        leadsQuery = leadsQuery.gte("created_at", fromDate).lte("created_at", toDate);
+      }
+      const { data: leadsData } = await leadsQuery.order("created_at", { ascending: false });
 
       // Fetch offers (non-lead stages)
-      const { data: offersData } = await supabase
+      let offersQuery = supabase
         .from("offers")
         .select("id, offer_number, stage, total_price, currency, clients(name)")
         .eq("assigned_salesperson_id", salespersonId)
-        .neq("stage", "leads")
-        .order("created_at", { ascending: false });
+        .neq("stage", "leads");
+      
+      if (fromDate && toDate) {
+        offersQuery = offersQuery.gte("created_at", fromDate).lte("created_at", toDate);
+      }
+      const { data: offersData } = await offersQuery.order("created_at", { ascending: false });
 
       // Fetch contracts
-      const { data: contractsData } = await supabase
+      let contractsQuery = supabase
         .from("contracts")
         .select("id, contract_number, status, total_purchase_value, clients(name)")
-        .eq("created_by", salespersonId)
-        .order("created_at", { ascending: false });
+        .eq("created_by", salespersonId);
+      
+      if (fromDate && toDate) {
+        contractsQuery = contractsQuery.gte("created_at", fromDate).lte("created_at", toDate);
+      }
+      const { data: contractsData } = await contractsQuery.order("created_at", { ascending: false });
 
-      // Fetch assigned clients
+      // Fetch assigned clients (no date filter - shows all assigned)
       const { data: clientsData } = await supabase
         .from("clients")
         .select("id, name, city, status, created_at")
@@ -259,23 +295,75 @@ const SalespersonPanel = () => {
   return (
     <Layout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Salesperson Panel</h1>
             <p className="text-muted-foreground">Monitor salesperson performance and activities</p>
           </div>
-          <Select value={selectedSalesperson} onValueChange={setSelectedSalesperson}>
-            <SelectTrigger className="w-64">
-              <SelectValue placeholder="Select salesperson" />
-            </SelectTrigger>
-            <SelectContent>
-              {salespeople.map((sp) => (
-                <SelectItem key={sp.id} value={sp.id}>
-                  {sp.full_name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-[280px] justify-start text-left font-normal",
+                    !dateRange && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {dateRange?.from ? (
+                    dateRange.to ? (
+                      <>
+                        {format(dateRange.from, "LLL dd, y")} - {format(dateRange.to, "LLL dd, y")}
+                      </>
+                    ) : (
+                      format(dateRange.from, "LLL dd, y")
+                    )
+                  ) : (
+                    <span>Pick a date range</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="end">
+                <div className="flex">
+                  <div className="border-r p-2 space-y-1">
+                    {datePresets.map((preset) => (
+                      <Button
+                        key={preset.label}
+                        variant="ghost"
+                        size="sm"
+                        className="w-full justify-start"
+                        onClick={() => setDateRange({ from: preset.from, to: preset.to })}
+                      >
+                        {preset.label}
+                      </Button>
+                    ))}
+                  </div>
+                  <Calendar
+                    initialFocus
+                    mode="range"
+                    defaultMonth={dateRange?.from}
+                    selected={dateRange}
+                    onSelect={setDateRange}
+                    numberOfMonths={2}
+                    className="pointer-events-auto"
+                  />
+                </div>
+              </PopoverContent>
+            </Popover>
+            <Select value={selectedSalesperson} onValueChange={setSelectedSalesperson}>
+              <SelectTrigger className="w-64">
+                <SelectValue placeholder="Select salesperson" />
+              </SelectTrigger>
+              <SelectContent>
+                {salespeople.map((sp) => (
+                  <SelectItem key={sp.id} value={sp.id}>
+                    {sp.full_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {/* KPI Cards */}
