@@ -64,7 +64,10 @@
     "notes": "Notatki",
     "type": "Typ",
     "priority": "Priorytet",
-    "assignedTo": "Przypisane do"
+    "assignedTo": "Przypisane do",
+    "success": "Sukces",
+    "error": "Błąd",
+    "creating": "Tworzenie..."
   },
   "dashboard": {
     "title": "Panel główny",
@@ -103,7 +106,8 @@
     "editClient": "Edytuj klienta",
     "noClients": "Nie znaleziono klientów",
     "primaryContact": "Kontakt główny",
-    "nip": "NIP"
+    "nip": "NIP",
+    "newClient": "Nowy klient"
   },
   "resellers": {
     "title": "Resellerzy",
@@ -127,7 +131,27 @@
     "emailDescription": "Wyślij najnowszą wersję PDF kontraktu do klienta przez email.",
     "recipientEmail": "Email odbiorcy",
     "allClients": "Wszyscy klienci",
-    "allStatuses": "Wszystkie statusy"
+    "allStatuses": "Wszystkie statusy",
+    "newContract": "Nowy kontrakt",
+    "selectClient": "Wybierz klienta",
+    "paymentModel": "Model płatności",
+    "purchase": "Zakup",
+    "lease": "Leasing",
+    "billingSchedule": "Harmonogram rozliczeń",
+    "terms": "Warunki kontraktu",
+    "termsPlaceholder": "Wprowadź warunki kontraktu",
+    "financialSummary": "Podsumowanie finansowe",
+    "totalPurchaseValue": "Wartość zakupu",
+    "totalMonthlyContracted": "Suma miesięczna kontraktu",
+    "warrantyCost": "Koszt gwarancji",
+    "implementationCost": "Koszt wdrożenia",
+    "otherServicesCost": "Koszt innych usług",
+    "otherServicesDescription": "Opis innych usług",
+    "otherServicesPlaceholder": "Opisz inne usługi",
+    "createContract": "Utwórz kontrakt",
+    "created": "Kontrakt został utworzony",
+    "createError": "Nie udało się utworzyć kontraktu",
+    "duplicateNumber": "Numer kontraktu już istnieje. Spróbuj ponownie."
   },
   "invoices": {
     "title": "Faktury",
