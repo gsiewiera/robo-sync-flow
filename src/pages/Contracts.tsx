@@ -14,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { SearchableSelectDropdown } from "@/components/ui/searchable-filter-dropdown";
 import {
   Table,
   TableBody,
@@ -226,19 +227,14 @@ const Contracts = () => {
             <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-medium mb-2 block">{t("contracts.client")}</label>
-                <Select value={filterClient} onValueChange={setFilterClient}>
-                  <SelectTrigger>
-                    <SelectValue placeholder={t("contracts.allClients")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{t("contracts.allClients")}</SelectItem>
-                    {clients.map((client) => (
-                      <SelectItem key={client.id} value={client.id}>
-                        {client.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <SearchableSelectDropdown
+                  options={clients.map((c) => ({ id: c.id, label: c.name }))}
+                  value={filterClient}
+                  onChange={setFilterClient}
+                  placeholder={t("contracts.allClients")}
+                  searchPlaceholder="Search client..."
+                  allLabel={t("contracts.allClients")}
+                />
               </div>
 
               <div>
