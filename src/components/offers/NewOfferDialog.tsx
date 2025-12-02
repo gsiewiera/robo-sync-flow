@@ -102,10 +102,12 @@ interface NewOfferDialogProps {
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
   offer?: OfferData | null;
+  mode?: "lead" | "offer";
 }
 
-export function NewOfferDialog({ open, onOpenChange, onSuccess, offer }: NewOfferDialogProps) {
+export function NewOfferDialog({ open, onOpenChange, onSuccess, offer, mode = "offer" }: NewOfferDialogProps) {
   const isEditMode = !!offer;
+  const isLeadMode = mode === "lead" && !isEditMode;
   const { toast } = useToast();
   const [clients, setClients] = useState<Client[]>([]);
   const [robotPricing, setRobotPricing] = useState<RobotPricing[]>([]);
@@ -468,26 +470,29 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer }: NewOffe
   };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    if (robotSelections.length === 0) {
-      toast({
-        title: "No robots selected",
-        description: "Please add at least one robot to the offer",
-        variant: "destructive",
-      });
-      return;
-    }
+    // Skip robot validation for lead mode
+    if (!isLeadMode) {
+      if (robotSelections.length === 0) {
+        toast({
+          title: "No robots selected",
+          description: "Please add at least one robot to the offer",
+          variant: "destructive",
+        });
+        return;
+      }
 
-    // Validate all robots have required fields
-    const invalidRobots = robotSelections.filter(
-      (r) => !r.robot_model || (r.contract_type === "lease" && !r.lease_months)
-    );
-    if (invalidRobots.length > 0) {
-      toast({
-        title: "Incomplete robot selections",
-        description: "Please complete all robot details",
-        variant: "destructive",
-      });
-      return;
+      // Validate all robots have required fields
+      const invalidRobots = robotSelections.filter(
+        (r) => !r.robot_model || (r.contract_type === "lease" && !r.lease_months)
+      );
+      if (invalidRobots.length > 0) {
+        toast({
+          title: "Incomplete robot selections",
+          description: "Please complete all robot details",
+          variant: "destructive",
+        });
+        return;
+      }
     }
 
     setIsSubmitting(true);
@@ -629,10 +634,12 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer }: NewOffe
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] p-0">
         <DialogHeader className="px-6 pt-6">
-          <DialogTitle>{isEditMode ? "Edit Offer" : "New Offer"}</DialogTitle>
+          <DialogTitle>{isEditMode ? "Edit Offer" : isLeadMode ? "New Lead" : "New Offer"}</DialogTitle>
           <DialogDescription>
             {isEditMode
               ? "Update offer details, robots, pricing, and delivery information"
+              : isLeadMode
+              ? "Add a new lead with client and contact information"
               : "Create a new offer with robots, pricing, and delivery details"}
           </DialogDescription>
         </DialogHeader>
@@ -705,222 +712,15 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer }: NewOffe
                 />
               </div>
 
-              {/* Currency and Status */}
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="currency"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Currency *</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="PLN">PLN</SelectItem>
-                          <SelectItem value="USD">USD</SelectItem>
-                          <SelectItem value="EUR">EUR</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {isEditMode && (
-                  <FormField
-                    control={form.control}
-                    name="stage"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Funnel Stage *</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="leads">Leads</SelectItem>
-                            <SelectItem value="qualified">Qualified</SelectItem>
-                            <SelectItem value="proposal_sent">Proposal Sent</SelectItem>
-                            <SelectItem value="negotiation">Negotiation</SelectItem>
-                            <SelectItem value="closed_won">Closed Won</SelectItem>
-                            <SelectItem value="closed_lost">Closed Lost</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
-              </div>
-
-              {/* Robots Section */}
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-semibold">Robots</h3>
-                  <Button type="button" onClick={addRobotSelection} variant="outline" size="sm">
-                    Add Robot
-                  </Button>
-                </div>
-
-                {robotSelections.map((robot) => (
-                  <div key={robot.id} className="border rounded-lg p-4 space-y-4">
-                    <div className="flex justify-between items-start">
-                      <h4 className="font-medium">Robot Configuration</h4>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeRobotSelection(robot.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <FormLabel>Robot Model *</FormLabel>
-                        <Select
-                          value={robot.robot_model}
-                          onValueChange={(value) =>
-                            updateRobotSelection(robot.id, { robot_model: value })
-                          }
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select robot" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {robotPricing.map((pricing) => (
-                              <SelectItem key={pricing.id} value={pricing.robot_model}>
-                                {pricing.robot_model}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div>
-                        <FormLabel>Contract Type *</FormLabel>
-                        <Select
-                          value={robot.contract_type}
-                          onValueChange={(value: "purchase" | "lease") =>
-                            updateRobotSelection(robot.id, { contract_type: value })
-                          }
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="purchase">Purchase</SelectItem>
-                            <SelectItem value="lease">Lease</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-
-                    {robot.contract_type === "lease" && (
-                      <div>
-                        <FormLabel>Lease Plan *</FormLabel>
-                        <Select
-                          value={robot.lease_months?.toString()}
-                          onValueChange={(value) =>
-                            updateRobotSelection(robot.id, { lease_months: parseInt(value) })
-                          }
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select months" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {availableLeaseMonths.map((months) => (
-                              <SelectItem key={months} value={months.toString()}>
-                                {months} months
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    )}
-
-                    {robot.contract_type === "purchase" && (
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <FormLabel>Warranty (months)</FormLabel>
-                          <Input
-                            type="number"
-                            placeholder="0"
-                            value={robot.warranty_months || ""}
-                            onChange={(e) =>
-                              updateRobotSelection(robot.id, {
-                                warranty_months: parseInt(e.target.value) || undefined,
-                              })
-                            }
-                          />
-                        </div>
-                        <div>
-                          <FormLabel>Warranty Price</FormLabel>
-                          <Input
-                            type="number"
-                            placeholder="0"
-                            value={robot.warranty_price || ""}
-                            onChange={(e) =>
-                              updateRobotSelection(robot.id, {
-                                warranty_price: parseFloat(e.target.value) || undefined,
-                              })
-                            }
-                          />
-                        </div>
-                      </div>
-                    )}
-
-                    <div>
-                      <FormLabel>Price</FormLabel>
-                      <Input
-                        type="number"
-                        value={robot.price}
-                        onChange={(e) =>
-                          updateRobotSelection(robot.id, { price: parseFloat(e.target.value) })
-                        }
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Payment Details */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Payment Details</h3>
-                
-                <FormField
-                  control={form.control}
-                  name="initial_payment"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Initial Payment (for lease)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="0"
-                          {...field}
-                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
+              {/* Currency and Status - Hidden for lead mode */}
+              {!isLeadMode && (
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
-                    name="prepayment_type"
+                    name="currency"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Prepayment Type</FormLabel>
+                        <FormLabel>Currency *</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger>
@@ -928,9 +728,9 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer }: NewOffe
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="none">None</SelectItem>
-                            <SelectItem value="percent">Percent</SelectItem>
-                            <SelectItem value="amount">Amount</SelectItem>
+                            <SelectItem value="PLN">PLN</SelectItem>
+                            <SelectItem value="USD">USD</SelectItem>
+                            <SelectItem value="EUR">EUR</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -938,113 +738,330 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer }: NewOffe
                     )}
                   />
 
-                  {form.watch("prepayment_type") !== "none" && (
+                  {isEditMode && (
                     <FormField
                       control={form.control}
-                      name="prepayment_value"
+                      name="stage"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>
-                            {form.watch("prepayment_type") === "percent" ? "Percent (%)" : "Amount"}
-                          </FormLabel>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              placeholder="0"
-                              {...field}
-                              onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                            />
-                          </FormControl>
+                          <FormLabel>Funnel Stage *</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="leads">Leads</SelectItem>
+                              <SelectItem value="qualified">Qualified</SelectItem>
+                              <SelectItem value="proposal_sent">Proposal Sent</SelectItem>
+                              <SelectItem value="negotiation">Negotiation</SelectItem>
+                              <SelectItem value="closed_won">Closed Won</SelectItem>
+                              <SelectItem value="closed_lost">Closed Lost</SelectItem>
+                            </SelectContent>
+                          </Select>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
                   )}
                 </div>
-              </div>
+              )}
 
-              {/* Delivery Details */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Delivery Details</h3>
-                
-                <FormField
-                  control={form.control}
-                  name="warranty_period"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Warranty Period (months)</FormLabel>
-                      <FormControl>
+              {/* Robots Section - Hidden for lead mode */}
+              {!isLeadMode && (
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-lg font-semibold">Robots</h3>
+                    <Button type="button" onClick={addRobotSelection} variant="outline" size="sm">
+                      Add Robot
+                    </Button>
+                  </div>
+
+                  {robotSelections.map((robot) => (
+                    <div key={robot.id} className="border rounded-lg p-4 space-y-4">
+                      <div className="flex justify-between items-start">
+                        <h4 className="font-medium">Robot Configuration</h4>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeRobotSelection(robot.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <FormLabel>Robot Model *</FormLabel>
+                          <Select
+                            value={robot.robot_model}
+                            onValueChange={(value) =>
+                              updateRobotSelection(robot.id, { robot_model: value })
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select robot" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {robotPricing.map((pricing) => (
+                                <SelectItem key={pricing.id} value={pricing.robot_model}>
+                                  {pricing.robot_model}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div>
+                          <FormLabel>Contract Type *</FormLabel>
+                          <Select
+                            value={robot.contract_type}
+                            onValueChange={(value: "purchase" | "lease") =>
+                              updateRobotSelection(robot.id, { contract_type: value })
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="purchase">Purchase</SelectItem>
+                              <SelectItem value="lease">Lease</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+
+                      {robot.contract_type === "lease" && (
+                        <div>
+                          <FormLabel>Lease Plan *</FormLabel>
+                          <Select
+                            value={robot.lease_months?.toString()}
+                            onValueChange={(value) =>
+                              updateRobotSelection(robot.id, { lease_months: parseInt(value) })
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select months" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {availableLeaseMonths.map((months) => (
+                                <SelectItem key={months} value={months.toString()}>
+                                  {months} months
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+
+                      {robot.contract_type === "purchase" && (
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <FormLabel>Warranty (months)</FormLabel>
+                            <Input
+                              type="number"
+                              placeholder="0"
+                              value={robot.warranty_months || ""}
+                              onChange={(e) =>
+                                updateRobotSelection(robot.id, {
+                                  warranty_months: parseInt(e.target.value) || undefined,
+                                })
+                              }
+                            />
+                          </div>
+                          <div>
+                            <FormLabel>Warranty Price</FormLabel>
+                            <Input
+                              type="number"
+                              placeholder="0"
+                              value={robot.warranty_price || ""}
+                              onChange={(e) =>
+                                updateRobotSelection(robot.id, {
+                                  warranty_price: parseFloat(e.target.value) || undefined,
+                                })
+                              }
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      <div>
+                        <FormLabel>Price</FormLabel>
                         <Input
                           type="number"
-                          {...field}
-                          onChange={(e) => field.onChange(parseInt(e.target.value) || 12)}
+                          value={robot.price}
+                          onChange={(e) =>
+                            updateRobotSelection(robot.id, { price: parseFloat(e.target.value) })
+                          }
                         />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="delivery_date"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>Requested Delivery Date</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant="outline"
-                              className={cn(
-                                "pl-3 text-left font-normal",
-                                !field.value && "text-muted-foreground"
-                              )}
-                            >
-                              {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            initialFocus
-                            className="pointer-events-auto"
-                          />
-                        </PopoverContent>
-                      </Popover>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="deployment_location"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Deployment Location</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Location" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              {/* Total */}
-              <div className="border-t pt-4">
-                <div className="flex justify-between text-lg font-semibold">
-                  <span>Total Price:</span>
-                  <span>
-                    {calculateTotalPrice().toFixed(2)} {form.watch("currency")}
-                  </span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              </div>
+              )}
+
+              {/* Payment Details - Hidden for lead mode */}
+              {!isLeadMode && (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Payment Details</h3>
+                  
+                  <FormField
+                    control={form.control}
+                    name="initial_payment"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Initial Payment (for lease)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="0"
+                            {...field}
+                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="prepayment_type"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Prepayment Type</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="none">None</SelectItem>
+                              <SelectItem value="percent">Percent</SelectItem>
+                              <SelectItem value="amount">Amount</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {form.watch("prepayment_type") !== "none" && (
+                      <FormField
+                        control={form.control}
+                        name="prepayment_value"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>
+                              {form.watch("prepayment_type") === "percent" ? "Percent (%)" : "Amount"}
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                placeholder="0"
+                                {...field}
+                                onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Delivery Details - Hidden for lead mode */}
+              {!isLeadMode && (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Delivery Details</h3>
+                  
+                  <FormField
+                    control={form.control}
+                    name="warranty_period"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Warranty Period (months)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            {...field}
+                            onChange={(e) => field.onChange(parseInt(e.target.value) || 12)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="delivery_date"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>Requested Delivery Date</FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant="outline"
+                                className={cn(
+                                  "pl-3 text-left font-normal",
+                                  !field.value && "text-muted-foreground"
+                                )}
+                              >
+                                {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={field.value}
+                              onSelect={field.onChange}
+                              initialFocus
+                              className="pointer-events-auto"
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="deployment_location"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Deployment Location</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Location" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              )}
+
+              {/* Total - Hidden for lead mode */}
+              {!isLeadMode && (
+                <div className="border-t pt-4">
+                  <div className="flex justify-between text-lg font-semibold">
+                    <span>Total Price:</span>
+                    <span>
+                      {calculateTotalPrice().toFixed(2)} {form.watch("currency")}
+                    </span>
+                  </div>
+                </div>
+              )}
 
               {/* Actions */}
               <div className="flex justify-end gap-4 sticky bottom-0 bg-background pt-4 border-t">
@@ -1063,6 +1080,8 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer }: NewOffe
                       : "Creating..."
                     : isEditMode
                     ? "Update Offer"
+                    : isLeadMode
+                    ? "Create Lead"
                     : "Create Offer"}
                 </Button>
               </div>
