@@ -269,7 +269,7 @@ export const OfferPdfGenerator = ({
         .from("offer-pdfs")
         .upload(filePath, pdfBlob, {
           contentType: "application/pdf",
-          upsert: false,
+          upsert: true,
         });
 
       if (uploadError) throw uploadError;
