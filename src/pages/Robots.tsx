@@ -105,7 +105,7 @@ const Robots = () => {
   };
 
   return (
-    <>
+    <Layout>
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Robot Registry</h1>
@@ -261,7 +261,7 @@ const Robots = () => {
           </Pagination>
         )}
       </div>
-    </>
+    </Layout>
   );
 };
 

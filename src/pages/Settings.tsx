@@ -12,7 +12,7 @@ import { ReportSubscriptionsSettings } from "@/components/settings/ReportSubscri
 
 const Settings = () => {
   return (
-    <>
+    <Layout>
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Settings</h1>
@@ -69,7 +69,7 @@ const Settings = () => {
           </TabsContent>
         </Tabs>
       </div>
-    </>
+    </Layout>
   );
 };
 
