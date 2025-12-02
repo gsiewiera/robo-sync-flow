@@ -577,340 +577,372 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Customer {clientIsOptional && "(optional)"}</FormLabel>
-                    <FormControl>
-                      <ClientCombobox
-                        clients={clients}
-                        value={field.value}
-                        onValueChange={(value) => {
-                          field.onChange(value);
-                          // Reset contract, offer, and robots when client changes
-                          form.setValue("contract_id", undefined);
-                          form.setValue("offer_id", undefined);
-                          form.setValue("robot_ids", []);
-                        }}
-                        disabled={isViewMode}
-                        placeholder={`Select customer ${clientIsOptional ? "(optional)" : ""}`}
-                      />
-                    </FormControl>
+                    {isViewMode ? (
+                      <div className="text-sm py-2 px-3 border rounded-md bg-muted">
+                        {clients.find(c => c.id === field.value)?.name || "-"}
+                      </div>
+                    ) : (
+                      <FormControl>
+                        <ClientCombobox
+                          clients={clients}
+                          value={field.value}
+                          onValueChange={(value) => {
+                            field.onChange(value);
+                            form.setValue("contract_id", undefined);
+                            form.setValue("offer_id", undefined);
+                            form.setValue("robot_ids", []);
+                          }}
+                          placeholder={`Select customer ${clientIsOptional ? "(optional)" : ""}`}
+                        />
+                      </FormControl>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}
               />
             )}
 
-            {selectedClientId && showOfferField && filteredOffers.length > 0 && (
+            {(isViewMode ? form.watch("offer_id") : (selectedClientId && showOfferField && filteredOffers.length > 0)) && (
               <FormField
                 control={form.control}
                 name="offer_id"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Offer</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange} 
-                      value={field.value}
-                      disabled={isViewMode}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select offer (optional)" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {filteredOffers.map((offer) => (
-                          <SelectItem key={offer.id} value={offer.id}>
-                            {offer.offer_number}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    {isViewMode ? (
+                      <div className="text-sm py-2 px-3 border rounded-md bg-muted">
+                        {offers.find(o => o.id === field.value)?.offer_number || "-"}
+                      </div>
+                    ) : (
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select offer (optional)" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {filteredOffers.map((offer) => (
+                            <SelectItem key={offer.id} value={offer.id}>
+                              {offer.offer_number}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}
               />
             )}
 
-            {selectedClientId && showContractField && filteredContracts.length > 0 && (
+            {(isViewMode ? form.watch("contract_id") : (selectedClientId && showContractField && filteredContracts.length > 0)) && (
               <FormField
                 control={form.control}
                 name="contract_id"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Contract</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange} 
-                      value={field.value}
-                      disabled={isViewMode}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select contract" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {filteredContracts.map((contract) => (
-                          <SelectItem key={contract.id} value={contract.id}>
-                            {contract.contract_number}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    {isViewMode ? (
+                      <div className="text-sm py-2 px-3 border rounded-md bg-muted">
+                        {contracts.find(c => c.id === field.value)?.contract_number || "-"}
+                      </div>
+                    ) : (
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select contract" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {filteredContracts.map((contract) => (
+                            <SelectItem key={contract.id} value={contract.id}>
+                              {contract.contract_number}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}
               />
             )}
 
-            {showMeetingTypeField && (
+            {(isViewMode ? form.watch("meeting_type") : showMeetingTypeField) && (
               <FormField
                 control={form.control}
                 name="meeting_type"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Meeting Type</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange} 
-                      value={field.value}
-                      disabled={isViewMode}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select meeting type" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {meetingTypes.map((type) => (
-                          <SelectItem key={type.id} value={type.type_name}>
-                            {type.type_name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    {isViewMode ? (
+                      <div className="text-sm py-2 px-3 border rounded-md bg-muted">
+                        {field.value || "-"}
+                      </div>
+                    ) : (
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select meeting type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {meetingTypes.map((type) => (
+                            <SelectItem key={type.id} value={type.type_name}>
+                              {type.type_name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}
               />
             )}
 
-            {showPersonToMeetField && (
+            {(isViewMode ? form.watch("person_to_meet") : showPersonToMeetField) && (
               <FormField
                 control={form.control}
                 name="person_to_meet"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Person to Meet</FormLabel>
-                    <FormControl>
-                      <Input {...field} disabled={isViewMode} placeholder="Enter person name" />
-                    </FormControl>
+                    {isViewMode ? (
+                      <div className="text-sm py-2 px-3 border rounded-md bg-muted">
+                        {field.value || "-"}
+                      </div>
+                    ) : (
+                      <FormControl>
+                        <Input {...field} placeholder="Enter person name" />
+                      </FormControl>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}
               />
             )}
 
-            {showMeetingDateTimeField && (
+            {(isViewMode ? form.watch("meeting_date_time") : showMeetingDateTimeField) && (
               <FormField
                 control={form.control}
                 name="meeting_date_time"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
                     <FormLabel>Meeting Date & Time</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant="outline"
-                            disabled={isViewMode}
-                            className={cn(
-                              "pl-3 text-left font-normal",
-                              !field.value && "text-muted-foreground"
-                            )}
-                          >
-                            {field.value ? (
-                              format(field.value, "PPP HH:mm")
-                            ) : (
-                              <span>Pick a date and time</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          disabled={isViewMode}
-                          initialFocus
-                        />
-                        <div className="p-3 border-t">
-                          <Input
-                            type="time"
-                            value={field.value ? format(field.value, "HH:mm") : ""}
-                            onChange={(e) => {
-                              const [hours, minutes] = e.target.value.split(":");
-                              const newDate = field.value ? new Date(field.value) : new Date();
-                              newDate.setHours(parseInt(hours), parseInt(minutes));
-                              field.onChange(newDate);
-                            }}
-                            disabled={isViewMode}
-                          />
-                        </div>
-                      </PopoverContent>
-                    </Popover>
+                    {isViewMode ? (
+                      <div className="text-sm py-2 px-3 border rounded-md bg-muted">
+                        {field.value ? format(field.value, "PPP HH:mm") : "-"}
+                      </div>
+                    ) : (
+                      <>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant="outline"
+                                className={cn(
+                                  "pl-3 text-left font-normal",
+                                  !field.value && "text-muted-foreground"
+                                )}
+                              >
+                                {field.value ? format(field.value, "PPP HH:mm") : <span>Pick a date and time</span>}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={field.value}
+                              onSelect={field.onChange}
+                              initialFocus
+                            />
+                            <div className="p-3 border-t">
+                              <Input
+                                type="time"
+                                value={field.value ? format(field.value, "HH:mm") : ""}
+                                onChange={(e) => {
+                                  const [hours, minutes] = e.target.value.split(":");
+                                  const newDate = field.value ? new Date(field.value) : new Date();
+                                  newDate.setHours(parseInt(hours), parseInt(minutes));
+                                  field.onChange(newDate);
+                                }}
+                              />
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                      </>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}
               />
             )}
 
-            {showPlaceField && (
+            {(isViewMode ? form.watch("place") : showPlaceField) && (
               <FormField
                 control={form.control}
                 name="place"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Place</FormLabel>
-                    <FormControl>
-                      <Input {...field} disabled={isViewMode} placeholder="Enter location" />
-                    </FormControl>
+                    {isViewMode ? (
+                      <div className="text-sm py-2 px-3 border rounded-md bg-muted">
+                        {field.value || "-"}
+                      </div>
+                    ) : (
+                      <FormControl>
+                        <Input {...field} placeholder="Enter location" />
+                      </FormControl>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}
               />
             )}
 
-            {showReminderField && (
+            {(isViewMode ? form.watch("reminder_date_time") : showReminderField) && (
               <FormField
                 control={form.control}
                 name="reminder_date_time"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
                     <FormLabel>Reminder Date & Time</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant="outline"
-                            disabled={isViewMode}
-                            className={cn(
-                              "pl-3 text-left font-normal",
-                              !field.value && "text-muted-foreground"
-                            )}
-                          >
-                            {field.value ? (
-                              format(field.value, "PPP HH:mm")
-                            ) : (
-                              <span>Auto-set 3 hours before meeting</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          disabled={isViewMode}
-                          initialFocus
-                        />
-                        <div className="p-3 border-t">
-                          <Input
-                            type="time"
-                            value={field.value ? format(field.value, "HH:mm") : ""}
-                            onChange={(e) => {
-                              const [hours, minutes] = e.target.value.split(":");
-                              const newDate = field.value ? new Date(field.value) : new Date();
-                              newDate.setHours(parseInt(hours), parseInt(minutes));
-                              field.onChange(newDate);
-                            }}
-                            disabled={isViewMode}
+                    {isViewMode ? (
+                      <div className="text-sm py-2 px-3 border rounded-md bg-muted">
+                        {field.value ? format(field.value, "PPP HH:mm") : "-"}
+                      </div>
+                    ) : (
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "pl-3 text-left font-normal",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {field.value ? format(field.value, "PPP HH:mm") : <span>Auto-set 3 hours before meeting</span>}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            initialFocus
                           />
-                        </div>
-                      </PopoverContent>
-                    </Popover>
+                          <div className="p-3 border-t">
+                            <Input
+                              type="time"
+                              value={field.value ? format(field.value, "HH:mm") : ""}
+                              onChange={(e) => {
+                                const [hours, minutes] = e.target.value.split(":");
+                                const newDate = field.value ? new Date(field.value) : new Date();
+                                newDate.setHours(parseInt(hours), parseInt(minutes));
+                                field.onChange(newDate);
+                              }}
+                            />
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}
               />
             )}
 
-            {selectedClientId && showRobotsField && filteredRobots.length > 0 && (
+            {(isViewMode ? (form.watch("robot_ids")?.length ?? 0) > 0 : (selectedClientId && showRobotsField && filteredRobots.length > 0)) && (
               <FormField
                 control={form.control}
                 name="robot_ids"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Robots (Select one or more)</FormLabel>
-                    <div className="space-y-2 border rounded-md p-3 max-h-[200px] overflow-y-auto">
-                      {filteredRobots.map((robot) => (
-                        <div key={robot.id} className="flex items-center space-x-2">
-                          <Checkbox
-                            checked={field.value?.includes(robot.id)}
-                            disabled={isViewMode}
-                            onCheckedChange={(checked) => {
-                              const current = field.value || [];
-                              if (checked) {
-                                field.onChange([...current, robot.id]);
-                              } else {
-                                field.onChange(current.filter(id => id !== robot.id));
-                              }
-                            }}
-                          />
-                          <label className="text-sm flex-1 cursor-pointer">
-                            <span className="font-medium">{robot.type}</span>
-                            {" - "}
-                            <span>{robot.model}</span>
-                            {" ("}
-                            <span className="text-muted-foreground">{robot.serial_number}</span>
-                            {")"}
-                          </label>
-                        </div>
-                      ))}
-                    </div>
+                    <FormLabel>Robots</FormLabel>
+                    {isViewMode ? (
+                      <div className="text-sm py-2 px-3 border rounded-md bg-muted">
+                        {field.value && field.value.length > 0 
+                          ? robots.filter(r => field.value?.includes(r.id)).map(r => 
+                              `${r.type} - ${r.model} (${r.serial_number})`
+                            ).join(", ")
+                          : "-"
+                        }
+                      </div>
+                    ) : (
+                      <div className="space-y-2 border rounded-md p-3 max-h-[200px] overflow-y-auto">
+                        {filteredRobots.map((robot) => (
+                          <div key={robot.id} className="flex items-center space-x-2">
+                            <Checkbox
+                              checked={field.value?.includes(robot.id)}
+                              onCheckedChange={(checked) => {
+                                const current = field.value || [];
+                                if (checked) {
+                                  field.onChange([...current, robot.id]);
+                                } else {
+                                  field.onChange(current.filter(id => id !== robot.id));
+                                }
+                              }}
+                            />
+                            <label className="text-sm flex-1 cursor-pointer">
+                              <span className="font-medium">{robot.type}</span>
+                              {" - "}
+                              <span>{robot.model}</span>
+                              {" ("}
+                              <span className="text-muted-foreground">{robot.serial_number}</span>
+                              {")"}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}
               />
             )}
 
-            {showDueDateField && (
+            {(isViewMode ? form.watch("due_date") : showDueDateField) && (
               <FormField
                 control={form.control}
                 name="due_date"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
                     <FormLabel>Due Date</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant="outline"
-                            disabled={isViewMode}
-                            className={cn(
-                              "pl-3 text-left font-normal",
-                              !field.value && "text-muted-foreground"
-                            )}
-                          >
-                            {field.value ? (
-                              format(field.value, "PPP")
-                            ) : (
-                              <span>Pick a due date</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          disabled={isViewMode}
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
+                    {isViewMode ? (
+                      <div className="text-sm py-2 px-3 border rounded-md bg-muted">
+                        {field.value ? format(field.value, "PPP") : "-"}
+                      </div>
+                    ) : (
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "pl-3 text-left font-normal",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {field.value ? format(field.value, "PPP") : <span>Pick a due date</span>}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}
@@ -945,53 +977,57 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Status</FormLabel>
-                  <Select 
-                    onValueChange={field.onChange} 
-                    value={field.value}
-                    disabled={isViewMode}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select status" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="in_progress">In Progress</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
-                      <SelectItem value="overdue">Overdue</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  {isViewMode ? (
+                    <div className="text-sm py-2 px-3 border rounded-md bg-muted capitalize">
+                      {field.value?.replace("_", " ") || "-"}
+                    </div>
+                  ) : (
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="in_progress">In Progress</SelectItem>
+                        <SelectItem value="completed">Completed</SelectItem>
+                        <SelectItem value="overdue">Overdue</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            {canAssignEmployee && (
+            {(canAssignEmployee || isViewMode) && (
               <FormField
                 control={form.control}
                 name="assigned_to"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Assign To</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange} 
-                      value={field.value}
-                      disabled={isViewMode}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select employee (optional)" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {employees.map((employee) => (
-                          <SelectItem key={employee.id} value={employee.id}>
-                            {employee.full_name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormLabel>Assigned To</FormLabel>
+                    {isViewMode ? (
+                      <div className="text-sm py-2 px-3 border rounded-md bg-muted">
+                        {employees.find(e => e.id === field.value)?.full_name || "-"}
+                      </div>
+                    ) : (
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select employee (optional)" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {employees.map((employee) => (
+                            <SelectItem key={employee.id} value={employee.id}>
+                              {employee.full_name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}
