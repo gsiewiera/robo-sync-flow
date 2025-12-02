@@ -1,9 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Card } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import {
   Select,
   SelectContent,
@@ -15,9 +17,55 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Plus, UserPlus } from "lucide-react";
+import { Plus, UserPlus, Trash2, Bot, Package } from "lucide-react";
 import { SearchableSelectDropdown } from "@/components/ui/searchable-filter-dropdown";
 import { ClientFormDialog } from "@/components/clients/ClientFormDialog";
+import { formatMoney } from "@/lib/utils";
+
+interface RobotPricing {
+  id: string;
+  robot_model: string;
+  sale_price_pln_net: number;
+  sale_price_eur_net: number;
+  sale_price_usd_net: number;
+}
+
+interface LeasePricing {
+  id: string;
+  robot_pricing_id: string;
+  months: number;
+  price_pln_net: number;
+  price_eur_net: number;
+  price_usd_net: number;
+}
+
+interface Item {
+  id: string;
+  name: string;
+  description: string | null;
+  item_type: string;
+  price_net: number;
+  vat_rate: number;
+}
+
+interface ContractRobotItem {
+  id: string;
+  robotPricingId: string;
+  model: string;
+  quantity: number;
+  unitPrice: number;
+  leaseMonths?: number;
+  monthlyPrice?: number;
+}
+
+interface ContractItem {
+  id: string;
+  itemId: string;
+  name: string;
+  quantity: number;
+  unitPrice: number;
+  vatRate: number;
+}
 
 interface NewContractDialogProps {
   open: boolean;
@@ -34,43 +82,67 @@ export function NewContractDialog({ open, onOpenChange, onSuccess }: NewContract
   const [selectedClientId, setSelectedClientId] = useState<string>("all");
   const [showClientForm, setShowClientForm] = useState(false);
   
+  // Pricing data
+  const [robotPricing, setRobotPricing] = useState<RobotPricing[]>([]);
+  const [leasePricing, setLeasePricing] = useState<LeasePricing[]>([]);
+  const [items, setItems] = useState<Item[]>([]);
+  const [leaseMonthOptions, setLeaseMonthOptions] = useState<number[]>([]);
+  
+  // Contract items
+  const [contractRobots, setContractRobots] = useState<ContractRobotItem[]>([]);
+  const [contractItems, setContractItems] = useState<ContractItem[]>([]);
+  
   // Contract fields
   const [contractNumber, setContractNumber] = useState("");
-  const [status, setStatus] = useState<"draft" | "pending_signature" | "active" | "expired" | "cancelled">("draft");
+  const [status, setStatus] = useState<"draft" | "pending_signature" | "active">("draft");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [monthlyPayment, setMonthlyPayment] = useState("0");
   const [paymentModel, setPaymentModel] = useState("purchase");
   const [billingSchedule, setBillingSchedule] = useState("monthly");
+  const [currency, setCurrency] = useState("PLN");
   const [terms, setTerms] = useState("");
-  const [totalPurchaseValue, setTotalPurchaseValue] = useState("");
-  const [totalMonthlyContracted, setTotalMonthlyContracted] = useState("");
-  const [warrantyCost, setWarrantyCost] = useState("");
-  const [implementationCost, setImplementationCost] = useState("");
-  const [otherServicesCost, setOtherServicesCost] = useState("");
-  const [otherServicesDescription, setOtherServicesDescription] = useState("");
 
   useEffect(() => {
     if (open) {
       fetchClients();
+      fetchRobotPricing();
+      fetchItems();
+      fetchLeaseMonths();
       generateContractNumber();
+      // Reset form
+      setContractRobots([]);
+      setContractItems([]);
+      setSelectedClientId("all");
+      setPaymentModel("purchase");
+      setCurrency("PLN");
     }
   }, [open]);
 
   const fetchClients = async () => {
-    const { data } = await supabase
-      .from("clients")
-      .select("id, name")
-      .order("name");
+    const { data } = await supabase.from("clients").select("id, name").order("name");
+    if (data) setClients(data);
+  };
+
+  const fetchRobotPricing = async () => {
+    const { data } = await supabase.from("robot_pricing").select("*").order("robot_model");
+    if (data) setRobotPricing(data);
     
-    if (data) {
-      setClients(data);
-    }
+    const { data: leaseData } = await supabase.from("lease_pricing").select("*");
+    if (leaseData) setLeasePricing(leaseData);
+  };
+
+  const fetchItems = async () => {
+    const { data } = await supabase.from("items").select("*").eq("is_active", true).order("name");
+    if (data) setItems(data);
+  };
+
+  const fetchLeaseMonths = async () => {
+    const { data } = await supabase.from("lease_month_dictionary").select("months").order("months");
+    if (data) setLeaseMonthOptions(data.map(d => d.months));
   };
 
   const generateContractNumber = async () => {
     const currentYear = new Date().getFullYear();
-    
     const { data: contracts } = await supabase
       .from("contracts")
       .select("contract_number")
@@ -82,26 +154,154 @@ export function NewContractDialog({ open, onOpenChange, onSuccess }: NewContract
         const match = contract.contract_number.match(/-(\d+)$/);
         if (match) {
           const num = parseInt(match[1]);
-          if (num > maxNumber) {
-            maxNumber = num;
-          }
+          if (num > maxNumber) maxNumber = num;
         }
       });
     }
-    
-    const nextNumber = maxNumber + 1;
-    setContractNumber(`CNT-${currentYear}-${String(nextNumber).padStart(3, "0")}`);
+    setContractNumber(`CNT-${currentYear}-${String(maxNumber + 1).padStart(3, "0")}`);
   };
+
+  const getPriceForCurrency = (pricing: RobotPricing) => {
+    switch (currency) {
+      case "EUR": return pricing.sale_price_eur_net;
+      case "USD": return pricing.sale_price_usd_net;
+      default: return pricing.sale_price_pln_net;
+    }
+  };
+
+  const getLeasePriceForCurrency = (lease: LeasePricing) => {
+    switch (currency) {
+      case "EUR": return lease.price_eur_net;
+      case "USD": return lease.price_usd_net;
+      default: return lease.price_pln_net;
+    }
+  };
+
+  const addRobot = () => {
+    if (robotPricing.length === 0) return;
+    
+    const firstRobot = robotPricing[0];
+    const price = getPriceForCurrency(firstRobot);
+    
+    let leaseMonths: number | undefined;
+    let monthlyPrice: number | undefined;
+    
+    if (paymentModel === "lease" && leaseMonthOptions.length > 0) {
+      leaseMonths = leaseMonthOptions[0];
+      const lease = leasePricing.find(l => l.robot_pricing_id === firstRobot.id && l.months === leaseMonths);
+      monthlyPrice = lease ? getLeasePriceForCurrency(lease) : price / leaseMonths;
+    }
+    
+    setContractRobots([...contractRobots, {
+      id: crypto.randomUUID(),
+      robotPricingId: firstRobot.id,
+      model: firstRobot.robot_model,
+      quantity: 1,
+      unitPrice: price,
+      leaseMonths,
+      monthlyPrice,
+    }]);
+  };
+
+  const updateRobot = (id: string, updates: Partial<ContractRobotItem>) => {
+    setContractRobots(robots => robots.map(r => {
+      if (r.id !== id) return r;
+      
+      const updated = { ...r, ...updates };
+      
+      // If robot model changed, update prices
+      if (updates.robotPricingId) {
+        const pricing = robotPricing.find(p => p.id === updates.robotPricingId);
+        if (pricing) {
+          updated.model = pricing.robot_model;
+          updated.unitPrice = getPriceForCurrency(pricing);
+          
+          if (paymentModel === "lease" && updated.leaseMonths) {
+            const lease = leasePricing.find(l => l.robot_pricing_id === pricing.id && l.months === updated.leaseMonths);
+            updated.monthlyPrice = lease ? getLeasePriceForCurrency(lease) : updated.unitPrice / updated.leaseMonths;
+          }
+        }
+      }
+      
+      // If lease months changed, update monthly price
+      if (updates.leaseMonths && paymentModel === "lease") {
+        const lease = leasePricing.find(l => l.robot_pricing_id === updated.robotPricingId && l.months === updates.leaseMonths);
+        updated.monthlyPrice = lease ? getLeasePriceForCurrency(lease) : updated.unitPrice / updates.leaseMonths;
+      }
+      
+      return updated;
+    }));
+  };
+
+  const removeRobot = (id: string) => {
+    setContractRobots(robots => robots.filter(r => r.id !== id));
+  };
+
+  const addItem = () => {
+    if (items.length === 0) return;
+    
+    const firstItem = items[0];
+    setContractItems([...contractItems, {
+      id: crypto.randomUUID(),
+      itemId: firstItem.id,
+      name: firstItem.name,
+      quantity: 1,
+      unitPrice: firstItem.price_net,
+      vatRate: firstItem.vat_rate,
+    }]);
+  };
+
+  const updateItem = (id: string, updates: Partial<ContractItem>) => {
+    setContractItems(prevItems => prevItems.map(item => {
+      if (item.id !== id) return item;
+      
+      const updated = { ...item, ...updates };
+      
+      if (updates.itemId) {
+        const itemData = items.find(i => i.id === updates.itemId);
+        if (itemData) {
+          updated.name = itemData.name;
+          updated.unitPrice = itemData.price_net;
+          updated.vatRate = itemData.vat_rate;
+        }
+      }
+      
+      return updated;
+    }));
+  };
+
+  const removeItem = (id: string) => {
+    setContractItems(items => items.filter(i => i.id !== id));
+  };
+
+  // Calculate summary
+  const summary = useMemo(() => {
+    const robotsPurchaseTotal = contractRobots.reduce((sum, r) => sum + (r.quantity * r.unitPrice), 0);
+    const robotsMonthlyTotal = contractRobots.reduce((sum, r) => sum + (r.quantity * (r.monthlyPrice || 0)), 0);
+    const itemsTotal = contractItems.reduce((sum, i) => sum + (i.quantity * i.unitPrice), 0);
+    
+    if (paymentModel === "purchase") {
+      return {
+        totalPurchaseValue: robotsPurchaseTotal + itemsTotal,
+        totalMonthly: 0,
+        robotsTotal: robotsPurchaseTotal,
+        itemsTotal,
+      };
+    } else {
+      return {
+        totalPurchaseValue: itemsTotal,
+        totalMonthly: robotsMonthlyTotal,
+        robotsTotal: robotsMonthlyTotal,
+        itemsTotal,
+      };
+    }
+  }, [contractRobots, contractItems, paymentModel]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (selectedClientId === "all") {
-      toast({
-        title: t("common.error"),
-        description: t("contracts.selectClient"),
-        variant: "destructive",
-      });
+      toast({ title: t("common.error"), description: t("contracts.selectClient"), variant: "destructive" });
       return;
     }
 
@@ -109,8 +309,6 @@ export function NewContractDialog({ open, onOpenChange, onSuccess }: NewContract
 
     try {
       const { data: session } = await supabase.auth.getSession();
-      
-      // Regenerate contract number just before inserting
       await generateContractNumber();
       
       const { data: contractData, error: contractError } = await supabase
@@ -121,16 +319,13 @@ export function NewContractDialog({ open, onOpenChange, onSuccess }: NewContract
           status,
           start_date: startDate || null,
           end_date: endDate || null,
-          monthly_payment: parseFloat(monthlyPayment) || 0,
+          monthly_payment: summary.totalMonthly,
           payment_model: paymentModel,
           billing_schedule: billingSchedule,
           terms,
-          total_purchase_value: totalPurchaseValue ? parseFloat(totalPurchaseValue) : 0,
-          total_monthly_contracted: totalMonthlyContracted ? parseFloat(totalMonthlyContracted) : 0,
-          warranty_cost: warrantyCost ? parseFloat(warrantyCost) : 0,
-          implementation_cost: implementationCost ? parseFloat(implementationCost) : 0,
-          other_services_cost: otherServicesCost ? parseFloat(otherServicesCost) : 0,
-          other_services_description: otherServicesDescription || null,
+          total_purchase_value: summary.totalPurchaseValue,
+          total_monthly_contracted: summary.totalMonthly,
+          other_services_cost: summary.itemsTotal,
           created_by: session?.session?.user?.id,
         }])
         .select()
@@ -143,39 +338,26 @@ export function NewContractDialog({ open, onOpenChange, onSuccess }: NewContract
         throw contractError;
       }
 
-      toast({
-        title: t("common.success"),
-        description: t("contracts.created"),
-      });
-
+      toast({ title: t("common.success"), description: t("contracts.created") });
       onSuccess?.();
       onOpenChange(false);
       navigate(`/contracts/${contractData.id}`);
     } catch (error: any) {
       console.error("Error creating contract:", error);
-      toast({
-        title: t("common.error"),
-        description: error.message || t("contracts.createError"),
-        variant: "destructive",
-      });
+      toast({ title: t("common.error"), description: error.message || t("contracts.createError"), variant: "destructive" });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleClientCreated = () => {
-    fetchClients();
-    setShowClientForm(false);
-  };
-
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{t("contracts.newContract")}</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-6">
             {/* Client Selection */}
             <div className="space-y-2">
               <Label>{t("contracts.client")} *</Label>
@@ -190,33 +372,23 @@ export function NewContractDialog({ open, onOpenChange, onSuccess }: NewContract
                     allLabel={t("contracts.selectClient")}
                   />
                 </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setShowClientForm(true)}
-                >
+                <Button type="button" variant="outline" onClick={() => setShowClientForm(true)}>
                   <UserPlus className="h-4 w-4 mr-2" />
                   {t("clients.newClient")}
                 </Button>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            {/* Contract Details */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div>
-                <Label htmlFor="contractNumber">{t("contracts.contractNumber")}</Label>
-                <Input
-                  id="contractNumber"
-                  value={contractNumber}
-                  onChange={(e) => setContractNumber(e.target.value)}
-                  required
-                />
+                <Label>{t("contracts.contractNumber")}</Label>
+                <Input value={contractNumber} onChange={(e) => setContractNumber(e.target.value)} required />
               </div>
               <div>
-                <Label htmlFor="status">{t("common.status")}</Label>
-                <Select value={status} onValueChange={(value) => setStatus(value as typeof status)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
+                <Label>{t("common.status")}</Label>
+                <Select value={status} onValueChange={(v) => setStatus(v as typeof status)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="draft">{t("status.draft")}</SelectItem>
                     <SelectItem value="pending_signature">{t("status.pending_signature")}</SelectItem>
@@ -224,36 +396,10 @@ export function NewContractDialog({ open, onOpenChange, onSuccess }: NewContract
                   </SelectContent>
                 </Select>
               </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="startDate">{t("contracts.startDate")}</Label>
-                <Input
-                  id="startDate"
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                />
-              </div>
-              <div>
-                <Label htmlFor="endDate">{t("contracts.endDate")}</Label>
-                <Input
-                  id="endDate"
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="paymentModel">{t("contracts.paymentModel")}</Label>
+                <Label>{t("contracts.paymentModel")}</Label>
                 <Select value={paymentModel} onValueChange={setPaymentModel}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="purchase">{t("contracts.purchase")}</SelectItem>
                     <SelectItem value="lease">{t("contracts.lease")}</SelectItem>
@@ -261,119 +407,253 @@ export function NewContractDialog({ open, onOpenChange, onSuccess }: NewContract
                 </Select>
               </div>
               <div>
-                <Label htmlFor="monthlyPayment">{t("contracts.monthlyPayment")}</Label>
-                <Input
-                  id="monthlyPayment"
-                  type="number"
-                  step="0.01"
-                  value={monthlyPayment}
-                  onChange={(e) => setMonthlyPayment(e.target.value)}
-                />
+                <Label>{t("contracts.currency")}</Label>
+                <Select value={currency} onValueChange={setCurrency}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="PLN">PLN</SelectItem>
+                    <SelectItem value="EUR">EUR</SelectItem>
+                    <SelectItem value="USD">USD</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
-            <div>
-              <Label htmlFor="billingSchedule">{t("contracts.billingSchedule")}</Label>
-              <Input
-                id="billingSchedule"
-                value={billingSchedule}
-                onChange={(e) => setBillingSchedule(e.target.value)}
-                placeholder="e.g., monthly, quarterly"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="terms">{t("contracts.terms")}</Label>
-              <Textarea
-                id="terms"
-                value={terms}
-                onChange={(e) => setTerms(e.target.value)}
-                rows={3}
-                placeholder={t("contracts.termsPlaceholder")}
-              />
-            </div>
-
-            <div className="space-y-4 pt-4 border-t">
-              <h3 className="font-semibold">{t("contracts.financialSummary")}</h3>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="totalPurchaseValue">{t("contracts.totalPurchaseValue")}</Label>
-                  <Input
-                    id="totalPurchaseValue"
-                    type="number"
-                    step="0.01"
-                    value={totalPurchaseValue}
-                    onChange={(e) => setTotalPurchaseValue(e.target.value)}
-                    placeholder="0.00"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="totalMonthlyContracted">{t("contracts.totalMonthlyContracted")}</Label>
-                  <Input
-                    id="totalMonthlyContracted"
-                    type="number"
-                    step="0.01"
-                    value={totalMonthlyContracted}
-                    onChange={(e) => setTotalMonthlyContracted(e.target.value)}
-                    placeholder="0.00"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <Label htmlFor="warrantyCost">{t("contracts.warrantyCost")}</Label>
-                  <Input
-                    id="warrantyCost"
-                    type="number"
-                    step="0.01"
-                    value={warrantyCost}
-                    onChange={(e) => setWarrantyCost(e.target.value)}
-                    placeholder="0.00"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="implementationCost">{t("contracts.implementationCost")}</Label>
-                  <Input
-                    id="implementationCost"
-                    type="number"
-                    step="0.01"
-                    value={implementationCost}
-                    onChange={(e) => setImplementationCost(e.target.value)}
-                    placeholder="0.00"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="otherServicesCost">{t("contracts.otherServicesCost")}</Label>
-                  <Input
-                    id="otherServicesCost"
-                    type="number"
-                    step="0.01"
-                    value={otherServicesCost}
-                    onChange={(e) => setOtherServicesCost(e.target.value)}
-                    placeholder="0.00"
-                  />
-                </div>
-              </div>
-
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               <div>
-                <Label htmlFor="otherServicesDescription">{t("contracts.otherServicesDescription")}</Label>
-                <Input
-                  id="otherServicesDescription"
-                  value={otherServicesDescription}
-                  onChange={(e) => setOtherServicesDescription(e.target.value)}
-                  placeholder={t("contracts.otherServicesPlaceholder")}
-                />
+                <Label>{t("contracts.startDate")}</Label>
+                <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
               </div>
+              <div>
+                <Label>{t("contracts.endDate")}</Label>
+                <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+              </div>
+              <div>
+                <Label>{t("contracts.billingSchedule")}</Label>
+                <Input value={billingSchedule} onChange={(e) => setBillingSchedule(e.target.value)} />
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Robots Section */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold flex items-center gap-2">
+                  <Bot className="h-5 w-5" />
+                  {t("contracts.robots")}
+                </h3>
+                <Button type="button" variant="outline" size="sm" onClick={addRobot}>
+                  <Plus className="h-4 w-4 mr-1" /> {t("contracts.addRobot")}
+                </Button>
+              </div>
+              
+              {contractRobots.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">{t("contracts.noRobotsAdded")}</p>
+              ) : (
+                <div className="space-y-3">
+                  {contractRobots.map((robot) => (
+                    <Card key={robot.id} className="p-4">
+                      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 items-end">
+                        <div className="col-span-2">
+                          <Label>{t("robots.model")}</Label>
+                          <Select value={robot.robotPricingId} onValueChange={(v) => updateRobot(robot.id, { robotPricingId: v })}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              {robotPricing.map(rp => (
+                                <SelectItem key={rp.id} value={rp.id}>{rp.robot_model}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label>{t("common.quantity")}</Label>
+                          <Input 
+                            type="number" 
+                            min="1" 
+                            value={robot.quantity} 
+                            onChange={(e) => updateRobot(robot.id, { quantity: parseInt(e.target.value) || 1 })} 
+                          />
+                        </div>
+                        {paymentModel === "purchase" ? (
+                          <div>
+                            <Label>{t("contracts.unitPrice")}</Label>
+                            <Input 
+                              type="number" 
+                              step="0.01" 
+                              value={robot.unitPrice} 
+                              onChange={(e) => updateRobot(robot.id, { unitPrice: parseFloat(e.target.value) || 0 })} 
+                            />
+                          </div>
+                        ) : (
+                          <>
+                            <div>
+                              <Label>{t("contracts.leaseMonths")}</Label>
+                              <Select 
+                                value={String(robot.leaseMonths || "")} 
+                                onValueChange={(v) => updateRobot(robot.id, { leaseMonths: parseInt(v) })}
+                              >
+                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                  {leaseMonthOptions.map(m => (
+                                    <SelectItem key={m} value={String(m)}>{m} {t("contracts.months")}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div>
+                              <Label>{t("contracts.monthlyPrice")}</Label>
+                              <Input 
+                                type="number" 
+                                step="0.01" 
+                                value={robot.monthlyPrice || 0} 
+                                onChange={(e) => updateRobot(robot.id, { monthlyPrice: parseFloat(e.target.value) || 0 })} 
+                              />
+                            </div>
+                          </>
+                        )}
+                        <div className="flex justify-end">
+                          <Button type="button" variant="ghost" size="icon" onClick={() => removeRobot(robot.id)}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="mt-2 text-right text-sm text-muted-foreground">
+                        {paymentModel === "purchase" 
+                          ? `${t("common.total")}: ${formatMoney(robot.quantity * robot.unitPrice)} ${currency}`
+                          : `${t("contracts.monthly")}: ${formatMoney(robot.quantity * (robot.monthlyPrice || 0))} ${currency}`
+                        }
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <Separator />
+
+            {/* Items Section */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold flex items-center gap-2">
+                  <Package className="h-5 w-5" />
+                  {t("contracts.additionalItems")}
+                </h3>
+                <Button type="button" variant="outline" size="sm" onClick={addItem}>
+                  <Plus className="h-4 w-4 mr-1" /> {t("contracts.addItem")}
+                </Button>
+              </div>
+              
+              {contractItems.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">{t("contracts.noItemsAdded")}</p>
+              ) : (
+                <div className="space-y-3">
+                  {contractItems.map((item) => (
+                    <Card key={item.id} className="p-4">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 items-end">
+                        <div className="col-span-2">
+                          <Label>{t("items.title")}</Label>
+                          <Select value={item.itemId} onValueChange={(v) => {
+                            const itemData = items.find(i => i.id === v);
+                            if (itemData) {
+                              setContractItems(prev => prev.map(ci => 
+                                ci.id === item.id ? { ...ci, itemId: v, name: itemData.name, unitPrice: itemData.price_net, vatRate: itemData.vat_rate } : ci
+                              ));
+                            }
+                          }}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              {items.map(i => (
+                                <SelectItem key={i.id} value={i.id}>{i.name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label>{t("common.quantity")}</Label>
+                          <Input 
+                            type="number" 
+                            min="1" 
+                            value={item.quantity} 
+                            onChange={(e) => setContractItems(prev => prev.map(ci => 
+                              ci.id === item.id ? { ...ci, quantity: parseInt(e.target.value) || 1 } : ci
+                            ))} 
+                          />
+                        </div>
+                        <div>
+                          <Label>{t("contracts.unitPrice")}</Label>
+                          <Input 
+                            type="number" 
+                            step="0.01" 
+                            value={item.unitPrice} 
+                            onChange={(e) => setContractItems(prev => prev.map(ci => 
+                              ci.id === item.id ? { ...ci, unitPrice: parseFloat(e.target.value) || 0 } : ci
+                            ))} 
+                          />
+                        </div>
+                        <div className="flex justify-end">
+                          <Button type="button" variant="ghost" size="icon" onClick={() => removeItem(item.id)}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="mt-2 text-right text-sm text-muted-foreground">
+                        {t("common.total")}: {formatMoney(item.quantity * item.unitPrice)} {currency}
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <Separator />
+
+            {/* Summary */}
+            <Card className="p-4 bg-muted/50">
+              <h3 className="font-semibold mb-4">{t("contracts.financialSummary")}</h3>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span>{t("contracts.robots")}:</span>
+                  <span className="font-medium">
+                    {paymentModel === "purchase" 
+                      ? `${formatMoney(summary.robotsTotal)} ${currency}`
+                      : `${formatMoney(summary.robotsTotal)} ${currency}/${t("contracts.month")}`
+                    }
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>{t("contracts.additionalItems")}:</span>
+                  <span className="font-medium">{formatMoney(summary.itemsTotal)} {currency}</span>
+                </div>
+                <Separator className="my-2" />
+                {paymentModel === "purchase" ? (
+                  <div className="flex justify-between text-lg font-semibold">
+                    <span>{t("contracts.totalPurchaseValue")}:</span>
+                    <span className="text-primary">{formatMoney(summary.totalPurchaseValue)} {currency}</span>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex justify-between">
+                      <span>{t("contracts.oneTimeCosts")}:</span>
+                      <span className="font-medium">{formatMoney(summary.itemsTotal)} {currency}</span>
+                    </div>
+                    <div className="flex justify-between text-lg font-semibold">
+                      <span>{t("contracts.monthlyPayment")}:</span>
+                      <span className="text-primary">{formatMoney(summary.totalMonthly)} {currency}/{t("contracts.month")}</span>
+                    </div>
+                  </>
+                )}
+              </div>
+            </Card>
+
+            {/* Terms */}
+            <div>
+              <Label>{t("contracts.terms")}</Label>
+              <Textarea value={terms} onChange={(e) => setTerms(e.target.value)} rows={3} placeholder={t("contracts.termsPlaceholder")} />
             </div>
 
             <div className="flex justify-end gap-2 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-              >
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 {t("common.cancel")}
               </Button>
               <Button type="submit" disabled={loading}>
@@ -384,11 +664,7 @@ export function NewContractDialog({ open, onOpenChange, onSuccess }: NewContract
         </DialogContent>
       </Dialog>
 
-      <ClientFormDialog
-        open={showClientForm}
-        onOpenChange={setShowClientForm}
-        onSuccess={handleClientCreated}
-      />
+      <ClientFormDialog open={showClientForm} onOpenChange={setShowClientForm} onSuccess={() => { fetchClients(); setShowClientForm(false); }} />
     </>
   );
 }
