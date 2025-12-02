@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronsUpDown, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,6 +9,7 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
+  CommandSeparator,
 } from "@/components/ui/command";
 import {
   Popover,
@@ -27,6 +28,7 @@ interface ClientComboboxProps {
   onValueChange: (value: string) => void;
   disabled?: boolean;
   placeholder?: string;
+  onAddNew?: () => void;
 }
 
 export function ClientCombobox({
@@ -35,6 +37,7 @@ export function ClientCombobox({
   onValueChange,
   disabled,
   placeholder = "Select client...",
+  onAddNew,
 }: ClientComboboxProps) {
   const [open, setOpen] = useState(false);
 
@@ -79,6 +82,23 @@ export function ClientCombobox({
                 </CommandItem>
               ))}
             </CommandGroup>
+            {onAddNew && (
+              <>
+                <CommandSeparator />
+                <CommandGroup>
+                  <CommandItem
+                    onSelect={() => {
+                      setOpen(false);
+                      onAddNew();
+                    }}
+                    className="text-primary"
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add New Client
+                  </CommandItem>
+                </CommandGroup>
+              </>
+            )}
           </CommandList>
         </Command>
       </PopoverContent>

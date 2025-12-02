@@ -71,7 +71,7 @@ const formSchema = z.object({
 interface ClientFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSuccess?: () => void;
+  onSuccess?: (newClientId?: string) => void;
   client?: any;
 }
 
@@ -256,6 +256,11 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
           title: "Client updated",
           description: `${values.name} has been updated successfully`,
         });
+
+        form.reset();
+        setSelectedTags([]);
+        onSuccess?.(client.id);
+        onOpenChange(false);
       } else {
         const { data: session } = await supabase.auth.getSession();
         
@@ -284,12 +289,12 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
           title: "Client created",
           description: `${values.name} has been created successfully`,
         });
-      }
 
-      form.reset();
-      setSelectedTags([]);
-      onSuccess?.();
-      onOpenChange(false);
+        form.reset();
+        setSelectedTags([]);
+        onSuccess?.(newClient?.id);
+        onOpenChange(false);
+      }
     } catch (error: any) {
       toast({
         title: isEditMode ? "Error updating client" : "Error creating client",

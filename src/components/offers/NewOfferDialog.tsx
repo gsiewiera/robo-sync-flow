@@ -31,11 +31,20 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Trash2 } from "lucide-react";
+import { CalendarIcon, Trash2, Plus } from "lucide-react";
 import { format } from "date-fns";
 import { cn, formatMoney } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ClientCombobox } from "@/components/ui/client-combobox";
+import { ClientFormDialog } from "@/components/clients/ClientFormDialog";
+
+interface ClientContact {
+  id: string;
+  full_name: string;
+  email: string | null;
+  phone: string | null;
+  role: string;
+}
 
 const formSchema = z.object({
   client_id: z.string().min(1, "Client is required"),
@@ -139,6 +148,8 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer, mode = "o
   const [availableItems, setAvailableItems] = useState<Item[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [resellers, setResellers] = useState<any[]>([]);
+  const [clientContacts, setClientContacts] = useState<ClientContact[]>([]);
+  const [isNewClientDialogOpen, setIsNewClientDialogOpen] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -150,6 +161,33 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer, mode = "o
       stage: "leads",
     },
   });
+
+  const selectedClientId = form.watch("client_id");
+
+  // Fetch contacts when client changes
+  useEffect(() => {
+    if (selectedClientId) {
+      fetchClientContacts(selectedClientId);
+    } else {
+      setClientContacts([]);
+      form.setValue("person_contact", "");
+    }
+  }, [selectedClientId]);
+
+  const fetchClientContacts = async (clientId: string) => {
+    const { data, error } = await supabase
+      .from("client_contacts")
+      .select("id, full_name, email, phone, role")
+      .eq("client_id", clientId)
+      .order("is_primary", { ascending: false });
+
+    if (error) {
+      console.error("Error fetching contacts:", error);
+      return;
+    }
+
+    setClientContacts(data || []);
+  };
 
   useEffect(() => {
     if (open) {
@@ -779,6 +817,7 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer, mode = "o
                           value={field.value}
                           onValueChange={field.onChange}
                           placeholder="Select client"
+                          onAddNew={() => setIsNewClientDialogOpen(true)}
                         />
                       </FormControl>
                       <FormMessage />
@@ -792,9 +831,35 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer, mode = "o
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Contact Person</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Contact person name" {...field} />
-                      </FormControl>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        value={field.value || ""}
+                        disabled={!selectedClientId}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder={selectedClientId ? "Select contact" : "Select client first"} />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {clientContacts.length === 0 ? (
+                            <SelectItem value="no-contacts" disabled>
+                              No contacts available
+                            </SelectItem>
+                          ) : (
+                            clientContacts.map((contact) => (
+                              <SelectItem key={contact.id} value={contact.full_name}>
+                                <div className="flex flex-col">
+                                  <span>{contact.full_name}</span>
+                                  <span className="text-xs text-muted-foreground">
+                                    {contact.role}{contact.email ? ` • ${contact.email}` : ""}
+                                  </span>
+                                </div>
+                              </SelectItem>
+                            ))
+                          )}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -1285,6 +1350,18 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer, mode = "o
           </Form>
         </ScrollArea>
       </DialogContent>
+
+      {/* New Client Dialog */}
+      <ClientFormDialog
+        open={isNewClientDialogOpen}
+        onOpenChange={setIsNewClientDialogOpen}
+        onSuccess={(newClientId?: string) => {
+          fetchClients();
+          if (newClientId) {
+            form.setValue("client_id", newClientId);
+          }
+        }}
+      />
     </Dialog>
   );
 }
