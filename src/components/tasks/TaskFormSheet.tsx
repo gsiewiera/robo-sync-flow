@@ -570,7 +570,7 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
               )}
             />
 
-            {showClientField && (
+            {(isViewMode ? (showClientField && form.watch("client_id")) : showClientField) && (
               <FormField
                 control={form.control}
                 name="client_id"
@@ -602,7 +602,7 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
               />
             )}
 
-            {(isViewMode ? form.watch("offer_id") : (selectedClientId && showOfferField && filteredOffers.length > 0)) && (
+            {(isViewMode ? (showOfferField && form.watch("offer_id")) : (selectedClientId && showOfferField && filteredOffers.length > 0)) && (
               <FormField
                 control={form.control}
                 name="offer_id"
@@ -635,7 +635,7 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
               />
             )}
 
-            {(isViewMode ? form.watch("contract_id") : (selectedClientId && showContractField && filteredContracts.length > 0)) && (
+            {(isViewMode ? (showContractField && form.watch("contract_id")) : (selectedClientId && showContractField && filteredContracts.length > 0)) && (
               <FormField
                 control={form.control}
                 name="contract_id"
@@ -668,7 +668,7 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
               />
             )}
 
-            {(isViewMode ? form.watch("meeting_type") : showMeetingTypeField) && (
+            {(isViewMode ? (showMeetingTypeField && form.watch("meeting_type")) : showMeetingTypeField) && (
               <FormField
                 control={form.control}
                 name="meeting_type"
@@ -701,7 +701,7 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
               />
             )}
 
-            {(isViewMode ? form.watch("person_to_meet") : showPersonToMeetField) && (
+            {(isViewMode ? (showPersonToMeetField && form.watch("person_to_meet")) : showPersonToMeetField) && (
               <FormField
                 control={form.control}
                 name="person_to_meet"
@@ -723,7 +723,7 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
               />
             )}
 
-            {(isViewMode ? form.watch("meeting_date_time") : showMeetingDateTimeField) && (
+            {(isViewMode ? (showMeetingDateTimeField && form.watch("meeting_date_time")) : showMeetingDateTimeField) && (
               <FormField
                 control={form.control}
                 name="meeting_date_time"
@@ -780,7 +780,7 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
               />
             )}
 
-            {(isViewMode ? form.watch("place") : showPlaceField) && (
+            {(isViewMode ? (showPlaceField && form.watch("place")) : showPlaceField) && (
               <FormField
                 control={form.control}
                 name="place"
@@ -802,7 +802,7 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
               />
             )}
 
-            {(isViewMode ? form.watch("reminder_date_time") : showReminderField) && (
+            {(isViewMode ? (showReminderField && form.watch("reminder_date_time")) : showReminderField) && (
               <FormField
                 control={form.control}
                 name="reminder_date_time"
@@ -857,7 +857,7 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
               />
             )}
 
-            {(isViewMode ? (form.watch("robot_ids")?.length ?? 0) > 0 : (selectedClientId && showRobotsField && filteredRobots.length > 0)) && (
+            {(isViewMode ? (showRobotsField && (form.watch("robot_ids")?.length ?? 0) > 0) : (selectedClientId && showRobotsField && filteredRobots.length > 0)) && (
               <FormField
                 control={form.control}
                 name="robot_ids"
@@ -906,7 +906,7 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
               />
             )}
 
-            {(isViewMode ? form.watch("due_date") : showDueDateField) && (
+            {(isViewMode ? (showDueDateField && form.watch("due_date")) : showDueDateField) && (
               <FormField
                 control={form.control}
                 name="due_date"
