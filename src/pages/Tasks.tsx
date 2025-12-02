@@ -521,8 +521,12 @@ const Tasks = () => {
                 </TableRow>
               ) : (
                 currentRecords.map((task) => (
-                  <TableRow key={task.id} className="h-12">
-                    <TableCell>
+                  <TableRow 
+                    key={task.id} 
+                    className="h-12 cursor-pointer hover:bg-muted/50"
+                    onClick={() => handleViewTask(task.id)}
+                  >
+                    <TableCell onClick={(e) => e.stopPropagation()}>
                       <button
                         onClick={() => handleMarkComplete(task.id)}
                         disabled={task.status === "completed"}
@@ -571,7 +575,7 @@ const Tasks = () => {
                         )}
                       </div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
                       <div className="flex gap-1">
                         <Button
                           variant="ghost"
