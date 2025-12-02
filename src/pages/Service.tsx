@@ -2,10 +2,11 @@ import { Layout } from "@/components/Layout";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useState, useEffect } from "react";
+import { Input } from "@/components/ui/input";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { ArrowUpDown, ArrowUp, ArrowDown, Eye } from "lucide-react";
+import { ArrowUpDown, ArrowUp, ArrowDown, Eye, Search, X } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -52,6 +53,7 @@ const Service = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState<"ticket_number" | "created_at">("created_at");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+  const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
   const recordsPerPage = 20;
 
@@ -75,10 +77,24 @@ const Service = () => {
     setCurrentPage(1);
   }, [sortField, sortDirection]);
 
+  const filteredTickets = useMemo(() => {
+    if (!searchQuery.trim()) return tickets;
+    
+    const query = searchQuery.toLowerCase();
+    return tickets.filter((ticket) => 
+      ticket.ticket_number.toLowerCase().includes(query) ||
+      (ticket.clients?.name || "").toLowerCase().includes(query)
+    );
+  }, [tickets, searchQuery]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
   const indexOfLastRecord = currentPage * recordsPerPage;
   const indexOfFirstRecord = indexOfLastRecord - recordsPerPage;
-  const currentRecords = tickets.slice(indexOfFirstRecord, indexOfLastRecord);
-  const totalPages = Math.ceil(tickets.length / recordsPerPage);
+  const currentRecords = filteredTickets.slice(indexOfFirstRecord, indexOfLastRecord);
+  const totalPages = Math.ceil(filteredTickets.length / recordsPerPage);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -105,9 +121,30 @@ const Service = () => {
   return (
     <Layout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Service Tickets</h1>
-          <p className="text-muted-foreground">Manage service requests and interventions</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Service Tickets</h1>
+            <p className="text-muted-foreground">Manage service requests and interventions</p>
+          </div>
+          <div className="relative w-80">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search by ticket number or client..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 pr-10"
+            />
+            {searchQuery && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0"
+                onClick={() => setSearchQuery("")}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
         </div>
 
         <Card>
@@ -148,7 +185,7 @@ const Service = () => {
               {currentRecords.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                    No service tickets found
+                    {searchQuery ? "No tickets matching your search" : "No service tickets found"}
                   </TableCell>
                 </TableRow>
               ) : (
