@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -42,6 +43,7 @@ interface LeasePricing {
 }
 
 const Pricing = () => {
+  const location = useLocation();
   const [isAdmin, setIsAdmin] = useState(false);
   const [pricings, setPricings] = useState<RobotPricing[]>([]);
   const [leasePricingData, setLeasePricingData] = useState<Record<string, LeasePricing[]>>({});
@@ -50,6 +52,11 @@ const Pricing = () => {
   const [selectedPricing, setSelectedPricing] = useState<RobotPricing | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const { toast } = useToast();
+
+  // Reset to list view when navigating to this route
+  useEffect(() => {
+    setSelectedPricing(null);
+  }, [location.key]);
 
   useEffect(() => {
     checkAdminRole();
