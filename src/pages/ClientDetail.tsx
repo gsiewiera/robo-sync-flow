@@ -386,10 +386,24 @@ const ClientDetail = () => {
     setIsUploading(true);
     const { data: { user } } = await supabase.auth.getUser();
 
+    // Sanitize file name for storage (remove special characters, keep extension)
+    const sanitizeFileName = (name: string) => {
+      const ext = name.split('.').pop() || '';
+      const baseName = name.replace(/\.[^/.]+$/, '');
+      const sanitized = baseName
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
+        .replace(/[^a-zA-Z0-9_-]/g, '_') // Replace special chars with underscore
+        .replace(/_+/g, '_') // Remove multiple underscores
+        .substring(0, 100); // Limit length
+      return `${sanitized}.${ext}`;
+    };
+
     try {
       for (const file of Array.from(files)) {
         const fileExt = file.name.split('.').pop();
-        const fileName = `${id}/${Date.now()}-${file.name}`;
+        const sanitizedName = sanitizeFileName(file.name);
+        const fileName = `${id}/${Date.now()}-${sanitizedName}`;
 
         // Upload to storage
         const { error: uploadError } = await supabase.storage
