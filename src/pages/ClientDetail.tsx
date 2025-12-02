@@ -5,13 +5,26 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   ArrowLeft, Mail, Phone, MapPin, FileText, ShoppingCart, Bot, 
-  Globe, Edit, DollarSign, Receipt, CreditCard, CheckSquare, Calendar
+  Globe, Edit, DollarSign, Receipt, CreditCard, CheckSquare, Calendar,
+  Users, Plus, Trash2, Pencil
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useParams, useNavigate } from "react-router-dom";
 import { ClientFormDialog } from "@/components/clients/ClientFormDialog";
+import { ContactFormDialog } from "@/components/clients/ContactFormDialog";
 import { formatMoney } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Client {
   id: string;
@@ -91,6 +104,18 @@ interface Task {
   profiles?: { full_name: string } | null;
 }
 
+interface Contact {
+  id: string;
+  full_name: string;
+  email: string | null;
+  phone: string | null;
+  role: string;
+  notes: string | null;
+  is_primary: boolean;
+}
+
+const DEFAULT_ROLES = ["contact", "billing", "technical", "decision maker", "manager"];
+
 const statusColors: Record<string, string> = {
   // Contract/Offer statuses
   draft: "bg-muted text-muted-foreground",
@@ -121,6 +146,7 @@ const statusColors: Record<string, string> = {
 const ClientDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [client, setClient] = useState<Client | null>(null);
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [offers, setOffers] = useState<Offer[]>([]);
@@ -130,7 +156,12 @@ const ClientDetail = () => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [contacts, setContacts] = useState<Contact[]>([]);
   const [reseller, setReseller] = useState<{ id: string; name: string } | null>(null);
+  const [isContactDialogOpen, setIsContactDialogOpen] = useState(false);
+  const [editingContact, setEditingContact] = useState<Contact | null>(null);
+  const [contactToDelete, setContactToDelete] = useState<Contact | null>(null);
+  const [roleOptions, setRoleOptions] = useState<string[]>(DEFAULT_ROLES);
 
   useEffect(() => {
     if (id) {
@@ -233,6 +264,58 @@ const ClientDetail = () => {
     if (tasksData) {
       setTasks(tasksData);
     }
+
+    // Fetch contacts
+    const { data: contactsData } = await supabase
+      .from("client_contacts")
+      .select("*")
+      .eq("client_id", id)
+      .order("is_primary", { ascending: false })
+      .order("created_at", { ascending: false });
+
+    if (contactsData) {
+      setContacts(contactsData);
+      // Update role options with any custom roles
+      const customRoles = contactsData
+        .map(c => c.role)
+        .filter(role => !DEFAULT_ROLES.includes(role));
+      const uniqueRoles = [...new Set([...DEFAULT_ROLES, ...customRoles])];
+      setRoleOptions(uniqueRoles);
+    }
+  };
+
+  const handleDeleteContact = async () => {
+    if (!contactToDelete) return;
+    
+    try {
+      const { error } = await supabase
+        .from("client_contacts")
+        .delete()
+        .eq("id", contactToDelete.id);
+
+      if (error) throw error;
+      
+      toast({ title: "Contact deleted successfully" });
+      fetchClientData();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setContactToDelete(null);
+    }
+  };
+
+  const handleEditContact = (contact: Contact) => {
+    setEditingContact(contact);
+    setIsContactDialogOpen(true);
+  };
+
+  const handleAddContact = () => {
+    setEditingContact(null);
+    setIsContactDialogOpen(true);
   };
 
   if (!client) {
@@ -371,70 +454,8 @@ const ClientDetail = () => {
           </div>
         </Card>
 
-        <div className="grid md:grid-cols-2 gap-6">
-          <Card className="p-6">
-            <h3 className="text-lg font-semibold mb-4">Contact Person</h3>
-            <div className="space-y-4">
-              {client.primary_contact_name && (
-                <div>
-                  <p className="text-sm text-muted-foreground">Name</p>
-                  <p className="font-medium">{client.primary_contact_name}</p>
-                </div>
-              )}
-              {client.primary_contact_email && (
-                <div className="flex gap-2">
-                  <Mail className="w-4 h-4 text-muted-foreground mt-1" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Email</p>
-                    <p className="font-medium">{client.primary_contact_email}</p>
-                  </div>
-                </div>
-              )}
-              {client.primary_contact_phone && (
-                <div className="flex gap-2">
-                  <Phone className="w-4 h-4 text-muted-foreground mt-1" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Phone</p>
-                    <p className="font-medium">{client.primary_contact_phone}</p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </Card>
-
-          <Card className="p-6">
-            <h3 className="text-lg font-semibold mb-4">Billing Contact</h3>
-            <div className="space-y-4">
-              {client.billing_person_name && (
-                <div>
-                  <p className="text-sm text-muted-foreground">Name</p>
-                  <p className="font-medium">{client.billing_person_name}</p>
-                </div>
-              )}
-              {client.billing_person_email && (
-                <div className="flex gap-2">
-                  <Mail className="w-4 h-4 text-muted-foreground mt-1" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Email</p>
-                    <p className="font-medium">{client.billing_person_email}</p>
-                  </div>
-                </div>
-              )}
-              {client.billing_person_phone && (
-                <div className="flex gap-2">
-                  <Phone className="w-4 h-4 text-muted-foreground mt-1" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Phone</p>
-                    <p className="font-medium">{client.billing_person_phone}</p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </Card>
-        </div>
-
         <Tabs defaultValue="contracts" className="w-full">
-          <TabsList>
+          <TabsList className="flex-wrap">
             <TabsTrigger value="contracts">
               <FileText className="w-4 h-4 mr-2" />
               Contracts ({contracts.length})
@@ -442,6 +463,10 @@ const ClientDetail = () => {
             <TabsTrigger value="offers">
               <ShoppingCart className="w-4 h-4 mr-2" />
               Offers ({offers.length})
+            </TabsTrigger>
+            <TabsTrigger value="contacts">
+              <Users className="w-4 h-4 mr-2" />
+              Contacts ({contacts.length})
             </TabsTrigger>
             <TabsTrigger value="invoices">
               <Receipt className="w-4 h-4 mr-2" />
@@ -527,6 +552,74 @@ const ClientDetail = () => {
             {offers.length === 0 && (
               <Card className="p-8 text-center">
                 <p className="text-muted-foreground">No offers found</p>
+              </Card>
+            )}
+          </TabsContent>
+
+          <TabsContent value="contacts" className="space-y-4">
+            <div className="flex justify-end mb-4">
+              <Button onClick={handleAddContact}>
+                <Plus className="w-4 h-4 mr-2" />
+                Add Contact
+              </Button>
+            </div>
+            {contacts.map((contact) => (
+              <Card key={contact.id} className="p-4 hover:shadow-lg transition-shadow">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3">
+                      <h3 className="font-semibold">{contact.full_name}</h3>
+                      <Badge variant="secondary">
+                        {contact.role.charAt(0).toUpperCase() + contact.role.slice(1)}
+                      </Badge>
+                      {contact.is_primary && (
+                        <Badge variant="default" className="bg-primary">
+                          Primary
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-4 mt-2 text-sm text-muted-foreground">
+                      {contact.email && (
+                        <div className="flex items-center gap-1">
+                          <Mail className="w-3 h-3" />
+                          <span>{contact.email}</span>
+                        </div>
+                      )}
+                      {contact.phone && (
+                        <div className="flex items-center gap-1">
+                          <Phone className="w-3 h-3" />
+                          <span>{contact.phone}</span>
+                        </div>
+                      )}
+                    </div>
+                    {contact.notes && (
+                      <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
+                        {contact.notes}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleEditContact(contact)}
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setContactToDelete(contact)}
+                    >
+                      <Trash2 className="w-4 h-4 text-destructive" />
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            ))}
+            {contacts.length === 0 && (
+              <Card className="p-8 text-center">
+                <p className="text-muted-foreground">No contacts found. Add your first contact above.</p>
               </Card>
             )}
           </TabsContent>
@@ -696,6 +789,32 @@ const ClientDetail = () => {
         onSuccess={fetchClientData}
         client={client}
       />
+
+      <ContactFormDialog
+        open={isContactDialogOpen}
+        onOpenChange={setIsContactDialogOpen}
+        onSuccess={fetchClientData}
+        clientId={id!}
+        contact={editingContact}
+        roleOptions={roleOptions}
+      />
+
+      <AlertDialog open={!!contactToDelete} onOpenChange={() => setContactToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Contact</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete {contactToDelete?.full_name}? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteContact} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Layout>
   );
 };
