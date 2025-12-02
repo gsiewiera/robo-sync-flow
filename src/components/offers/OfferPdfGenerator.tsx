@@ -83,7 +83,7 @@ export const OfferPdfGenerator = ({
     console.log("Fetching versions for offer:", offerId);
     const { data, error } = await supabase
       .from("offer_versions")
-      .select("*, profiles:generated_by(full_name, email)")
+      .select("*, profiles:profiles!fk_generated_by(full_name, email)")
       .eq("offer_id", offerId)
       .order("version_number", { ascending: false });
 
