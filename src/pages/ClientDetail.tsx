@@ -182,13 +182,30 @@ const ClientDetail = () => {
   const [documentCategories, setDocumentCategories] = useState<string[]>([]);
   const [selectedUploadCategory, setSelectedUploadCategory] = useState<string>("General");
   const [isDragging, setIsDragging] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [documentToDelete, setDocumentToDelete] = useState<Document | null>(null);
 
   useEffect(() => {
     if (id) {
       fetchClientData();
       fetchDocumentCategories();
+      checkAdminRole();
     }
   }, [id]);
+
+  const checkAdminRole = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    
+    const { data } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .eq("role", "admin")
+      .maybeSingle();
+    
+    setIsAdmin(!!data);
+  };
 
   const fetchDocumentCategories = async () => {
     const { data } = await supabase
@@ -486,6 +503,36 @@ const ClientDetail = () => {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  const handleDeleteDocument = async () => {
+    if (!documentToDelete) return;
+    
+    try {
+      // Delete from storage
+      await supabase.storage
+        .from('client-documents')
+        .remove([documentToDelete.file_path]);
+
+      // Delete from database
+      const { error } = await supabase
+        .from('client_documents')
+        .delete()
+        .eq('id', documentToDelete.id);
+
+      if (error) throw error;
+      
+      toast({ title: "Document deleted successfully" });
+      fetchClientData();
+    } catch (error: any) {
+      toast({
+        title: "Delete failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setDocumentToDelete(null);
+    }
   };
 
   if (!client) {
@@ -1037,13 +1084,24 @@ const ClientDetail = () => {
                       </div>
                     </div>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDownloadDocument(doc)}
-                  >
-                    <Download className="w-4 h-4" />
-                  </Button>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDownloadDocument(doc)}
+                    >
+                      <Download className="w-4 h-4" />
+                    </Button>
+                    {isAdmin && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setDocumentToDelete(doc)}
+                      >
+                        <Trash2 className="w-4 h-4 text-destructive" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </Card>
             ))}
@@ -1087,6 +1145,23 @@ const ClientDetail = () => {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteContact} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!documentToDelete} onOpenChange={() => setDocumentToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Document</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{documentToDelete?.file_name}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteDocument} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
