@@ -924,6 +924,7 @@ export type Database = {
           id: string
           initial_payment: number | null
           last_contact_date: string | null
+          lead_source: string | null
           lead_status: string | null
           next_action_date: string | null
           notes: string | null
@@ -948,6 +949,7 @@ export type Database = {
           id?: string
           initial_payment?: number | null
           last_contact_date?: string | null
+          lead_source?: string | null
           lead_status?: string | null
           next_action_date?: string | null
           notes?: string | null
@@ -972,6 +974,7 @@ export type Database = {
           id?: string
           initial_payment?: number | null
           last_contact_date?: string | null
+          lead_source?: string | null
           lead_status?: string | null
           next_action_date?: string | null
           notes?: string | null

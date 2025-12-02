@@ -27,6 +27,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -48,6 +49,8 @@ const formSchema = z.object({
   prepayment_value: z.number().min(0).optional(),
   stage: z.enum(["leads", "qualified", "proposal_sent", "negotiation", "closed_won", "closed_lost"]).default("leads"),
   reseller_id: z.string().optional(),
+  notes: z.string().optional(),
+  lead_source: z.string().optional(),
 });
 
 interface RobotSelection {
@@ -222,6 +225,8 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer, mode = "o
       prepayment_value: offer.prepayment_percent || offer.prepayment_amount || 0,
       stage: offer.stage as "leads" | "qualified" | "proposal_sent" | "negotiation" | "closed_won" | "closed_lost",
       reseller_id: (offer as any).reseller_id || "",
+      notes: (offer as any).notes || "",
+      lead_source: (offer as any).lead_source || "",
     });
 
     // Populate robot selections
@@ -522,6 +527,8 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer, mode = "o
         deployment_location: values.deployment_location,
         total_price: calculateTotalPrice(),
         reseller_id: values.reseller_id || null,
+        notes: values.notes || null,
+        lead_source: values.lead_source || null,
       };
 
       if (isEditMode && offer) {
@@ -711,6 +718,57 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer, mode = "o
                   )}
                 />
               </div>
+
+              {/* Lead Source and Notes - Shown for lead mode */}
+              {isLeadMode && (
+                <div className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="lead_source"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Lead Source</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value || ""}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select source" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="website">Website</SelectItem>
+                            <SelectItem value="referral">Referral</SelectItem>
+                            <SelectItem value="cold_call">Cold Call</SelectItem>
+                            <SelectItem value="event">Event / Trade Show</SelectItem>
+                            <SelectItem value="social_media">Social Media</SelectItem>
+                            <SelectItem value="partner">Partner</SelectItem>
+                            <SelectItem value="email_campaign">Email Campaign</SelectItem>
+                            <SelectItem value="other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="notes"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Notes</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="Add any initial notes about this lead..."
+                            className="min-h-[100px]"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              )}
 
               {/* Currency and Status - Hidden for lead mode */}
               {!isLeadMode && (
