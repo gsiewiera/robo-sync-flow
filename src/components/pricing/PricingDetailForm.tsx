@@ -20,6 +20,9 @@ interface RobotPricing {
   lowest_price_pln_net?: number;
   lowest_price_usd_net?: number;
   lowest_price_eur_net?: number;
+  evidence_price_pln_net?: number;
+  evidence_price_usd_net?: number;
+  evidence_price_eur_net?: number;
   created_at: string;
 }
 
@@ -30,6 +33,9 @@ interface LeasePricing {
   price_pln_net: number;
   price_usd_net: number;
   price_eur_net: number;
+  evidence_price_pln_net?: number;
+  evidence_price_usd_net?: number;
+  evidence_price_eur_net?: number;
 }
 
 interface PricingDetailFormProps {
@@ -63,19 +69,29 @@ export const PricingDetailForm = ({
     lowest_price_pln_net: pricing.lowest_price_pln_net || 0,
     lowest_price_usd_net: pricing.lowest_price_usd_net || 0,
     lowest_price_eur_net: pricing.lowest_price_eur_net || 0,
+    evidence_price_pln_net: pricing.evidence_price_pln_net || 0,
+    evidence_price_usd_net: pricing.evidence_price_usd_net || 0,
+    evidence_price_eur_net: pricing.evidence_price_eur_net || 0,
   });
 
-  const [leaseData, setLeaseData] = useState<Record<number, { pln: number; usd: number; eur: number }>>(
-    {}
-  );
+  const [leaseData, setLeaseData] = useState<Record<number, { 
+    pln: number; usd: number; eur: number;
+    evidence_pln: number; evidence_usd: number; evidence_eur: number;
+  }>>({});
 
   useEffect(() => {
-    const leaseMap: Record<number, { pln: number; usd: number; eur: number }> = {};
+    const leaseMap: Record<number, { 
+      pln: number; usd: number; eur: number;
+      evidence_pln: number; evidence_usd: number; evidence_eur: number;
+    }> = {};
     leasePricing.forEach((lease) => {
       leaseMap[lease.months] = {
         pln: lease.price_pln_net,
         usd: lease.price_usd_net,
         eur: lease.price_eur_net,
+        evidence_pln: lease.evidence_price_pln_net || 0,
+        evidence_usd: lease.evidence_price_usd_net || 0,
+        evidence_eur: lease.evidence_price_eur_net || 0,
       };
     });
     setLeaseData(leaseMap);
@@ -98,12 +114,12 @@ export const PricingDetailForm = ({
     }));
   };
 
-  const handleLeaseChange = (months: number, currency: "pln" | "usd" | "eur", value: string) => {
+  const handleLeaseChange = (months: number, field: string, value: string) => {
     setLeaseData((prev) => ({
       ...prev,
       [months]: {
         ...prev[months],
-        [currency]: parseFloat(value) || 0,
+        [field]: parseFloat(value) || 0,
       },
     }));
   };
@@ -125,6 +141,9 @@ export const PricingDetailForm = ({
           lowest_price_pln_net: formData.lowest_price_pln_net || null,
           lowest_price_usd_net: formData.lowest_price_usd_net || null,
           lowest_price_eur_net: formData.lowest_price_eur_net || null,
+          evidence_price_pln_net: formData.evidence_price_pln_net || null,
+          evidence_price_usd_net: formData.evidence_price_usd_net || null,
+          evidence_price_eur_net: formData.evidence_price_eur_net || null,
         })
         .eq("id", pricing.id);
 
@@ -140,6 +159,9 @@ export const PricingDetailForm = ({
               price_pln_net: prices.pln,
               price_usd_net: prices.usd,
               price_eur_net: prices.eur,
+              evidence_price_pln_net: prices.evidence_pln || null,
+              evidence_price_usd_net: prices.evidence_usd || null,
+              evidence_price_eur_net: prices.evidence_eur || null,
             })
             .eq("id", existingLease.id);
         }
@@ -166,13 +188,22 @@ export const PricingDetailForm = ({
       lowest_price_pln_net: pricing.lowest_price_pln_net || 0,
       lowest_price_usd_net: pricing.lowest_price_usd_net || 0,
       lowest_price_eur_net: pricing.lowest_price_eur_net || 0,
+      evidence_price_pln_net: pricing.evidence_price_pln_net || 0,
+      evidence_price_usd_net: pricing.evidence_price_usd_net || 0,
+      evidence_price_eur_net: pricing.evidence_price_eur_net || 0,
     });
-    const leaseMap: Record<number, { pln: number; usd: number; eur: number }> = {};
+    const leaseMap: Record<number, { 
+      pln: number; usd: number; eur: number;
+      evidence_pln: number; evidence_usd: number; evidence_eur: number;
+    }> = {};
     leasePricing.forEach((lease) => {
       leaseMap[lease.months] = {
         pln: lease.price_pln_net,
         usd: lease.price_usd_net,
         eur: lease.price_eur_net,
+        evidence_pln: lease.evidence_price_pln_net || 0,
+        evidence_usd: lease.evidence_price_usd_net || 0,
+        evidence_eur: lease.evidence_price_eur_net || 0,
       };
     });
     setLeaseData(leaseMap);
@@ -214,12 +245,14 @@ export const PricingDetailForm = ({
     months,
     currency,
     currencyCode,
+    field,
   }: {
     months: number;
-    currency: "pln" | "usd" | "eur";
+    currency: string;
     currencyCode: string;
+    field: "pln" | "usd" | "eur";
   }) => {
-    const value = leaseData[months]?.[currency] || 0;
+    const value = leaseData[months]?.[field] || 0;
     const gross = calculateGross(value);
 
     return (
@@ -230,7 +263,7 @@ export const PricingDetailForm = ({
             type="number"
             step="0.01"
             value={value || ""}
-            onChange={(e) => handleLeaseChange(months, currency, e.target.value)}
+            onChange={(e) => handleLeaseChange(months, field, e.target.value)}
             className="h-8 text-sm"
           />
         ) : (
@@ -239,6 +272,37 @@ export const PricingDetailForm = ({
         <span className="text-right text-xs text-muted-foreground">
           {formatCurrency(gross, currencyCode)}/mo
         </span>
+      </div>
+    );
+  };
+
+  const LeaseEvidenceField = ({
+    months,
+    currency,
+    currencyCode,
+    field,
+  }: {
+    months: number;
+    currency: string;
+    currencyCode: string;
+    field: "evidence_pln" | "evidence_usd" | "evidence_eur";
+  }) => {
+    const value = leaseData[months]?.[field] || 0;
+
+    return (
+      <div className="grid grid-cols-2 gap-4 items-center py-1">
+        <Label className="text-sm text-muted-foreground">{currencyCode}</Label>
+        {isEditing ? (
+          <Input
+            type="number"
+            step="0.01"
+            value={value || ""}
+            onChange={(e) => handleLeaseChange(months, field, e.target.value)}
+            className="h-8 text-sm"
+          />
+        ) : (
+          <span className="text-right text-sm">{formatCurrency(value, currencyCode)}/mo</span>
+        )}
       </div>
     );
   };
@@ -299,6 +363,28 @@ export const PricingDetailForm = ({
           </CardContent>
         </Card>
 
+        {/* Evidence Prices (Cost) - Admin Only */}
+        {isAdmin && (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                Evidence Prices
+                <Badge variant="secondary">Cost</Badge>
+              </CardTitle>
+              <div className="grid grid-cols-3 gap-4 text-xs text-muted-foreground pt-2">
+                <span>Currency</span>
+                <span className="text-right">Net</span>
+                <span className="text-right">Gross</span>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <PriceField label="PLN" field="evidence_price_pln_net" currency="PLN" />
+              <PriceField label="USD" field="evidence_price_usd_net" currency="USD" />
+              <PriceField label="EUR" field="evidence_price_eur_net" currency="EUR" />
+            </CardContent>
+          </Card>
+        )}
+
         {/* Promo Prices */}
         <Card>
           <CardHeader className="pb-3">
@@ -344,25 +430,44 @@ export const PricingDetailForm = ({
         )}
 
         {/* Lease Options */}
-        <Card className={isAdmin ? "" : "lg:col-span-1"}>
+        <Card className="lg:col-span-2">
           <CardHeader className="pb-3">
             <CardTitle className="text-base">Lease Options</CardTitle>
-            <div className="grid grid-cols-3 gap-4 text-xs text-muted-foreground pt-2">
-              <span>Currency</span>
-              <span className="text-right">Net/mo</span>
-              <span className="text-right">Gross/mo</span>
-            </div>
           </CardHeader>
-          <CardContent className="pt-0 space-y-4">
+          <CardContent className="pt-0">
             {leasePricing.length > 0 ? (
-              leasePricing.map((lease) => (
-                <div key={lease.id} className="space-y-1">
-                  <Label className="font-medium text-sm">{lease.months} Months</Label>
-                  <LeaseField months={lease.months} currency="pln" currencyCode="PLN" />
-                  <LeaseField months={lease.months} currency="usd" currencyCode="USD" />
-                  <LeaseField months={lease.months} currency="eur" currencyCode="EUR" />
-                </div>
-              ))
+              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {leasePricing.map((lease) => (
+                  <div key={lease.id} className="space-y-3 p-4 border rounded-lg">
+                    <Label className="font-semibold text-base">{lease.months} Months</Label>
+                    
+                    <div className="space-y-1">
+                      <p className="text-xs text-muted-foreground font-medium">Lease Price</p>
+                      <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground">
+                        <span>Currency</span>
+                        <span className="text-right">Net/mo</span>
+                        <span className="text-right">Gross/mo</span>
+                      </div>
+                      <LeaseField months={lease.months} currency="pln" currencyCode="PLN" field="pln" />
+                      <LeaseField months={lease.months} currency="usd" currencyCode="USD" field="usd" />
+                      <LeaseField months={lease.months} currency="eur" currencyCode="EUR" field="eur" />
+                    </div>
+
+                    {isAdmin && (
+                      <div className="space-y-1 pt-2 border-t">
+                        <p className="text-xs text-muted-foreground font-medium">Evidence (Cost)</p>
+                        <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+                          <span>Currency</span>
+                          <span className="text-right">Net/mo</span>
+                        </div>
+                        <LeaseEvidenceField months={lease.months} currency="pln" currencyCode="PLN" field="evidence_pln" />
+                        <LeaseEvidenceField months={lease.months} currency="usd" currencyCode="USD" field="evidence_usd" />
+                        <LeaseEvidenceField months={lease.months} currency="eur" currencyCode="EUR" field="evidence_eur" />
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
             ) : (
               <p className="text-sm text-muted-foreground">No lease options configured</p>
             )}

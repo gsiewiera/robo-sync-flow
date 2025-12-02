@@ -565,6 +565,9 @@ export type Database = {
       lease_pricing: {
         Row: {
           created_at: string | null
+          evidence_price_eur_net: number | null
+          evidence_price_pln_net: number | null
+          evidence_price_usd_net: number | null
           id: string
           months: number
           price_eur_net: number
@@ -574,6 +577,9 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          evidence_price_eur_net?: number | null
+          evidence_price_pln_net?: number | null
+          evidence_price_usd_net?: number | null
           id?: string
           months: number
           price_eur_net: number
@@ -583,6 +589,9 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          evidence_price_eur_net?: number | null
+          evidence_price_pln_net?: number | null
+          evidence_price_usd_net?: number | null
           id?: string
           months?: number
           price_eur_net?: number
@@ -1287,6 +1296,9 @@ export type Database = {
       robot_pricing: {
         Row: {
           created_at: string | null
+          evidence_price_eur_net: number | null
+          evidence_price_pln_net: number | null
+          evidence_price_usd_net: number | null
           id: string
           lowest_price_eur_net: number | null
           lowest_price_pln_net: number | null
@@ -1302,6 +1314,9 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          evidence_price_eur_net?: number | null
+          evidence_price_pln_net?: number | null
+          evidence_price_usd_net?: number | null
           id?: string
           lowest_price_eur_net?: number | null
           lowest_price_pln_net?: number | null
@@ -1317,6 +1332,9 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          evidence_price_eur_net?: number | null
+          evidence_price_pln_net?: number | null
+          evidence_price_usd_net?: number | null
           id?: string
           lowest_price_eur_net?: number | null
           lowest_price_pln_net?: number | null

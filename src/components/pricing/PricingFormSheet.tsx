@@ -41,10 +41,16 @@ const formSchema = z.object({
   lowest_price_pln_net: z.string().optional(),
   lowest_price_usd_net: z.string().optional(),
   lowest_price_eur_net: z.string().optional(),
+  evidence_price_pln_net: z.string().optional(),
+  evidence_price_usd_net: z.string().optional(),
+  evidence_price_eur_net: z.string().optional(),
   lease_pricing: z.record(z.object({
     pln: z.string().optional(),
     usd: z.string().optional(),
     eur: z.string().optional(),
+    evidence_pln: z.string().optional(),
+    evidence_usd: z.string().optional(),
+    evidence_eur: z.string().optional(),
   })).optional(),
 });
 
@@ -58,6 +64,9 @@ interface LeasePricing {
   price_pln_net: number;
   price_usd_net: number;
   price_eur_net: number;
+  evidence_price_pln_net?: number;
+  evidence_price_usd_net?: number;
+  evidence_price_eur_net?: number;
 }
 
 interface PricingFormSheetProps {
@@ -91,6 +100,9 @@ export const PricingFormSheet = ({
       lowest_price_pln_net: "",
       lowest_price_usd_net: "",
       lowest_price_eur_net: "",
+      evidence_price_pln_net: "",
+      evidence_price_usd_net: "",
+      evidence_price_eur_net: "",
       lease_pricing: {},
     },
   });
@@ -125,6 +137,9 @@ export const PricingFormSheet = ({
           pln: item.price_pln_net.toString(),
           usd: item.price_usd_net.toString(),
           eur: item.price_eur_net.toString(),
+          evidence_pln: item.evidence_price_pln_net?.toString() || "",
+          evidence_usd: item.evidence_price_usd_net?.toString() || "",
+          evidence_eur: item.evidence_price_eur_net?.toString() || "",
         };
       });
       form.setValue("lease_pricing", leaseObj);
@@ -144,6 +159,9 @@ export const PricingFormSheet = ({
         lowest_price_pln_net: pricing.lowest_price_pln_net?.toString() || "",
         lowest_price_usd_net: pricing.lowest_price_usd_net?.toString() || "",
         lowest_price_eur_net: pricing.lowest_price_eur_net?.toString() || "",
+        evidence_price_pln_net: pricing.evidence_price_pln_net?.toString() || "",
+        evidence_price_usd_net: pricing.evidence_price_usd_net?.toString() || "",
+        evidence_price_eur_net: pricing.evidence_price_eur_net?.toString() || "",
         lease_pricing: {},
       });
       fetchLeasePricing(pricing.id);
@@ -159,6 +177,9 @@ export const PricingFormSheet = ({
         lowest_price_pln_net: "",
         lowest_price_usd_net: "",
         lowest_price_eur_net: "",
+        evidence_price_pln_net: "",
+        evidence_price_usd_net: "",
+        evidence_price_eur_net: "",
         lease_pricing: {},
       });
       setExistingLeaseData([]);
@@ -177,6 +198,9 @@ export const PricingFormSheet = ({
       lowest_price_pln_net: values.lowest_price_pln_net ? parseFloat(values.lowest_price_pln_net) : null,
       lowest_price_usd_net: values.lowest_price_usd_net ? parseFloat(values.lowest_price_usd_net) : null,
       lowest_price_eur_net: values.lowest_price_eur_net ? parseFloat(values.lowest_price_eur_net) : null,
+      evidence_price_pln_net: values.evidence_price_pln_net ? parseFloat(values.evidence_price_pln_net) : null,
+      evidence_price_usd_net: values.evidence_price_usd_net ? parseFloat(values.evidence_price_usd_net) : null,
+      evidence_price_eur_net: values.evidence_price_eur_net ? parseFloat(values.evidence_price_eur_net) : null,
     };
 
     let robotPricingId: string;
@@ -226,6 +250,9 @@ export const PricingFormSheet = ({
             price_pln_net: prices.pln ? parseFloat(prices.pln) : 0,
             price_usd_net: prices.usd ? parseFloat(prices.usd) : 0,
             price_eur_net: prices.eur ? parseFloat(prices.eur) : 0,
+            evidence_price_pln_net: prices.evidence_pln ? parseFloat(prices.evidence_pln) : null,
+            evidence_price_usd_net: prices.evidence_usd ? parseFloat(prices.evidence_usd) : null,
+            evidence_price_eur_net: prices.evidence_eur ? parseFloat(prices.evidence_eur) : null,
           });
         }
       }
@@ -296,8 +323,9 @@ export const PricingFormSheet = ({
             />
 
             <Tabs defaultValue="sale" className="w-full">
-              <TabsList className="grid w-full grid-cols-4">
+              <TabsList className="grid w-full grid-cols-5">
                 <TabsTrigger value="sale">Sale</TabsTrigger>
+                <TabsTrigger value="evidence">Evidence</TabsTrigger>
                 <TabsTrigger value="promo">Promo</TabsTrigger>
                 <TabsTrigger value="lowest">Lowest</TabsTrigger>
                 <TabsTrigger value="lease">Lease</TabsTrigger>
@@ -334,6 +362,53 @@ export const PricingFormSheet = ({
                   <FormField
                     control={form.control}
                     name="sale_price_eur_net"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs">EUR (Net)</FormLabel>
+                        <FormControl>
+                          <Input type="number" step="0.01" placeholder="0.00" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </TabsContent>
+
+              <TabsContent value="evidence" className="space-y-3 mt-4">
+                <p className="text-sm text-muted-foreground">
+                  Cost/purchase price (admin-only internal pricing)
+                </p>
+                <div className="grid grid-cols-3 gap-3">
+                  <FormField
+                    control={form.control}
+                    name="evidence_price_pln_net"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs">PLN (Net)</FormLabel>
+                        <FormControl>
+                          <Input type="number" step="0.01" placeholder="0.00" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="evidence_price_usd_net"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs">USD (Net)</FormLabel>
+                        <FormControl>
+                          <Input type="number" step="0.01" placeholder="0.00" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="evidence_price_eur_net"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="text-xs">EUR (Net)</FormLabel>
@@ -441,56 +516,99 @@ export const PricingFormSheet = ({
 
               <TabsContent value="lease" className="space-y-3 mt-4">
                 <p className="text-sm text-muted-foreground mb-3">
-                  Monthly lease prices for different term lengths (all net prices)
+                  Monthly lease prices and costs for different term lengths (all net prices)
                 </p>
                 <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
                   {leaseMonths.map((leaseMonth) => (
-                    <div key={leaseMonth.id} className="space-y-2 pb-3 border-b last:border-b-0">
+                    <div key={leaseMonth.id} className="space-y-3 pb-4 border-b last:border-b-0">
                       <div className="flex items-center gap-2 mb-2">
                         <div className="w-16 h-8 rounded bg-primary/10 flex items-center justify-center">
                           <span className="text-sm font-semibold text-primary">{leaseMonth.months}mo</span>
                         </div>
                       </div>
-                      <div className="grid grid-cols-3 gap-2">
-                        <FormField
-                          control={form.control}
-                          name={`lease_pricing.${leaseMonth.months}.pln` as any}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-xs">PLN</FormLabel>
-                              <FormControl>
-                                <Input type="number" step="0.01" placeholder="0.00" className="h-9" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name={`lease_pricing.${leaseMonth.months}.usd` as any}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-xs">USD</FormLabel>
-                              <FormControl>
-                                <Input type="number" step="0.01" placeholder="0.00" className="h-9" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name={`lease_pricing.${leaseMonth.months}.eur` as any}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-xs">EUR</FormLabel>
-                              <FormControl>
-                                <Input type="number" step="0.01" placeholder="0.00" className="h-9" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                      
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-2">Lease Price</p>
+                        <div className="grid grid-cols-3 gap-2">
+                          <FormField
+                            control={form.control}
+                            name={`lease_pricing.${leaseMonth.months}.pln` as any}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-xs">PLN</FormLabel>
+                                <FormControl>
+                                  <Input type="number" step="0.01" placeholder="0.00" className="h-9" {...field} />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name={`lease_pricing.${leaseMonth.months}.usd` as any}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-xs">USD</FormLabel>
+                                <FormControl>
+                                  <Input type="number" step="0.01" placeholder="0.00" className="h-9" {...field} />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name={`lease_pricing.${leaseMonth.months}.eur` as any}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-xs">EUR</FormLabel>
+                                <FormControl>
+                                  <Input type="number" step="0.01" placeholder="0.00" className="h-9" {...field} />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-2">Evidence (Cost)</p>
+                        <div className="grid grid-cols-3 gap-2">
+                          <FormField
+                            control={form.control}
+                            name={`lease_pricing.${leaseMonth.months}.evidence_pln` as any}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-xs">PLN</FormLabel>
+                                <FormControl>
+                                  <Input type="number" step="0.01" placeholder="0.00" className="h-9" {...field} />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name={`lease_pricing.${leaseMonth.months}.evidence_usd` as any}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-xs">USD</FormLabel>
+                                <FormControl>
+                                  <Input type="number" step="0.01" placeholder="0.00" className="h-9" {...field} />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name={`lease_pricing.${leaseMonth.months}.evidence_eur` as any}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-xs">EUR</FormLabel>
+                                <FormControl>
+                                  <Input type="number" step="0.01" placeholder="0.00" className="h-9" {...field} />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+                        </div>
                       </div>
                     </div>
                   ))}
