@@ -45,12 +45,6 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { LanguageSelector } from "@/components/LanguageSelector";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 interface LayoutProps {
   children: ReactNode;
@@ -180,19 +174,12 @@ function AppSidebar() {
 
                       return (
                         <SidebarMenuItem key={item.path}>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <SidebarMenuButton asChild isActive={isActive}>
-                                <NavLink to={item.path}>
-                                  <Icon className="w-5 h-5" />
-                                  <span>{t(item.translationKey)}</span>
-                                </NavLink>
-                              </SidebarMenuButton>
-                            </TooltipTrigger>
-                            <TooltipContent side="right">
-                              {t(item.translationKey)}
-                            </TooltipContent>
-                          </Tooltip>
+                          <SidebarMenuButton asChild isActive={isActive} tooltip={t(item.translationKey)}>
+                            <NavLink to={item.path}>
+                              <Icon className="w-5 h-5" />
+                              <span>{t(item.translationKey)}</span>
+                            </NavLink>
+                          </SidebarMenuButton>
                         </SidebarMenuItem>
                       );
                     })}
@@ -220,23 +207,16 @@ function AppSidebar() {
                           const Icon = item.icon;
                           const isActive = location.pathname === item.path;
 
-                            return (
-                              <SidebarMenuItem key={item.path}>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <SidebarMenuButton asChild isActive={isActive}>
-                                      <NavLink to={item.path} className="pl-7">
-                                        <Icon className="w-4 h-4" />
-                                        <span>{t(item.translationKey)}</span>
-                                      </NavLink>
-                                    </SidebarMenuButton>
-                                  </TooltipTrigger>
-                                  <TooltipContent side="right">
-                                    {t(item.translationKey)}
-                                  </TooltipContent>
-                                </Tooltip>
-                              </SidebarMenuItem>
-                            );
+                          return (
+                            <SidebarMenuItem key={item.path}>
+                              <SidebarMenuButton asChild isActive={isActive} tooltip={t(item.translationKey)}>
+                                <NavLink to={item.path} className="pl-7">
+                                  <Icon className="w-4 h-4" />
+                                  <span>{t(item.translationKey)}</span>
+                                </NavLink>
+                              </SidebarMenuButton>
+                            </SidebarMenuItem>
+                          );
                         })}
                       </SidebarMenu>
                     </SidebarGroupContent>
@@ -254,32 +234,18 @@ function AppSidebar() {
             <LanguageSelector />
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <SidebarMenuButton asChild isActive={location.pathname === "/settings"}>
-                  <NavLink to="/settings">
-                    <SettingsIcon className="w-5 h-5" />
-                    <span>{t("nav.settings")}</span>
-                  </NavLink>
-                </SidebarMenuButton>
-              </TooltipTrigger>
-              <TooltipContent side="right">
-                {t("nav.settings")}
-              </TooltipContent>
-            </Tooltip>
+            <SidebarMenuButton asChild isActive={location.pathname === "/settings"} tooltip={t("nav.settings")}>
+              <NavLink to="/settings">
+                <SettingsIcon className="w-5 h-5" />
+                <span>{t("nav.settings")}</span>
+              </NavLink>
+            </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <SidebarMenuButton onClick={handleLogout}>
-                  <LogOut className="w-5 h-5" />
-                  <span>{t("nav.logout")}</span>
-                </SidebarMenuButton>
-              </TooltipTrigger>
-              <TooltipContent side="right">
-                {t("nav.logout")}
-              </TooltipContent>
-            </Tooltip>
+            <SidebarMenuButton onClick={handleLogout} tooltip={t("nav.logout")}>
+              <LogOut className="w-5 h-5" />
+              <span>{t("nav.logout")}</span>
+            </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
@@ -289,20 +255,18 @@ function AppSidebar() {
 
 export const Layout = ({ children }: LayoutProps) => {
   return (
-    <TooltipProvider delayDuration={0}>
-      <SidebarProvider>
-        <div className="flex min-h-screen w-full bg-background">
-          <AppSidebar />
-          <main className="flex-1 overflow-auto bg-background">
-            <div className="sticky top-0 z-10 flex h-14 items-center border-b bg-background px-4">
-              <SidebarTrigger />
-            </div>
-            <div className="p-6 max-w-7xl">
-              {children}
-            </div>
-          </main>
-        </div>
-      </SidebarProvider>
-    </TooltipProvider>
+    <SidebarProvider>
+      <div className="flex min-h-screen w-full bg-background">
+        <AppSidebar />
+        <main className="flex-1 overflow-auto bg-background">
+          <div className="sticky top-0 z-10 flex h-14 items-center border-b bg-background px-4">
+            <SidebarTrigger />
+          </div>
+          <div className="p-6 max-w-7xl">
+            {children}
+          </div>
+        </main>
+      </div>
+    </SidebarProvider>
   );
 };
