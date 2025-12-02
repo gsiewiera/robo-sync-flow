@@ -145,18 +145,15 @@ export default function Goals() {
 
   const fetchUsers = async () => {
     try {
-      const { data: rolesData } = await supabase
-        .from("user_roles")
-        .select("user_id, profiles!inner(id, full_name)")
-        .in("role", ["salesperson", "manager"]);
+      // Fetch all profiles for goal assignment
+      const { data: profilesData, error } = await supabase
+        .from("profiles")
+        .select("id, full_name")
+        .order("full_name");
 
-      if (rolesData) {
-        const uniqueUsers = Array.from(
-          new Map(
-            rolesData.map((r: any) => [r.profiles.id, r.profiles])
-          ).values()
-        );
-        setUsers(uniqueUsers as UserOption[]);
+      if (error) throw error;
+      if (profilesData) {
+        setUsers(profilesData as UserOption[]);
       }
     } catch (error: any) {
       console.error("Error fetching users:", error);
@@ -410,7 +407,7 @@ export default function Goals() {
                   <Label>Assign To *</Label>
                   <Select value={assignedUserId} onValueChange={setAssignedUserId}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select user" />
+                      <SelectValue placeholder="Select salesperson" />
                     </SelectTrigger>
                     <SelectContent>
                       {users.map((user) => (
