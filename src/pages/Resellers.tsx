@@ -323,7 +323,11 @@ const Resellers = () => {
             </TableHeader>
             <TableBody>
               {currentRecords.map((reseller) => (
-                <TableRow key={reseller.id} className="cursor-pointer hover:bg-muted/50">
+                <TableRow 
+                  key={reseller.id} 
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => navigate(`/resellers/${reseller.id}`)}
+                >
                   <TableCell className="font-medium">{reseller.name}</TableCell>
                   <TableCell>{reseller.nip || "-"}</TableCell>
                   <TableCell>{reseller.city || "-"}</TableCell>
@@ -345,24 +349,18 @@ const Resellers = () => {
                       ? new Date(reseller.created_at).toLocaleDateString()
                       : "-"}
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/resellers/${reseller.id}`);
-                      }}
+                      onClick={() => navigate(`/resellers/${reseller.id}`)}
                     >
                       <Eye className="w-4 h-4" />
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEdit(reseller);
-                      }}
+                      onClick={() => handleEdit(reseller)}
                     >
                       <Edit className="w-4 h-4" />
                     </Button>

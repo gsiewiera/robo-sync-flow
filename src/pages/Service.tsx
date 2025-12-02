@@ -153,7 +153,11 @@ const Service = () => {
                 </TableRow>
               ) : (
                 currentRecords.map((ticket) => (
-                  <TableRow key={ticket.id} className="h-12">
+                  <TableRow 
+                    key={ticket.id} 
+                    className="h-12 cursor-pointer hover:bg-muted/50"
+                    onClick={() => navigate(`/service/${ticket.id}`)}
+                  >
                     <TableCell className="font-medium">{ticket.ticket_number}</TableCell>
                     <TableCell>{ticket.title}</TableCell>
                     <TableCell>{ticket.clients?.name || "-"}</TableCell>
@@ -171,7 +175,7 @@ const Service = () => {
                     <TableCell>
                       {new Date(ticket.created_at).toLocaleDateString()}
                     </TableCell>
-                    <TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
                       <Button
                         variant="ghost"
                         size="sm"
