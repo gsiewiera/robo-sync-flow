@@ -770,15 +770,15 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer, mode = "o
                 </div>
               )}
 
-              {/* Currency and Status - Hidden for lead mode */}
-              {!isLeadMode && (
-                <div className="grid grid-cols-2 gap-4">
+              {/* Stage - Shown only in edit mode */}
+              {isEditMode && !isLeadMode && (
+                <div className="grid grid-cols-3 gap-4">
                   <FormField
                     control={form.control}
-                    name="currency"
+                    name="stage"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Currency *</FormLabel>
+                        <FormLabel>Funnel Stage *</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger>
@@ -786,43 +786,18 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer, mode = "o
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="PLN">PLN</SelectItem>
-                            <SelectItem value="USD">USD</SelectItem>
-                            <SelectItem value="EUR">EUR</SelectItem>
+                            <SelectItem value="leads">Leads</SelectItem>
+                            <SelectItem value="qualified">Qualified</SelectItem>
+                            <SelectItem value="proposal_sent">Proposal Sent</SelectItem>
+                            <SelectItem value="negotiation">Negotiation</SelectItem>
+                            <SelectItem value="closed_won">Closed Won</SelectItem>
+                            <SelectItem value="closed_lost">Closed Lost</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-
-                  {isEditMode && (
-                    <FormField
-                      control={form.control}
-                      name="stage"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Funnel Stage *</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="leads">Leads</SelectItem>
-                              <SelectItem value="qualified">Qualified</SelectItem>
-                              <SelectItem value="proposal_sent">Proposal Sent</SelectItem>
-                              <SelectItem value="negotiation">Negotiation</SelectItem>
-                              <SelectItem value="closed_won">Closed Won</SelectItem>
-                              <SelectItem value="closed_lost">Closed Lost</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  )}
                 </div>
               )}
 
@@ -960,31 +935,31 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer, mode = "o
                 </div>
               )}
 
-              {/* Payment Details - Hidden for lead mode */}
+              {/* Payment & Delivery Details - Hidden for lead mode */}
               {!isLeadMode && (
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Payment Details</h3>
+                  <h3 className="text-lg font-semibold">Payment & Delivery Details</h3>
                   
-                  <FormField
-                    control={form.control}
-                    name="initial_payment"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Initial Payment (for lease)</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            placeholder="0"
-                            {...field}
-                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <div className="grid grid-cols-3 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="initial_payment"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Initial Payment</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              placeholder="0"
+                              {...field}
+                              onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                  <div className="grid grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="prepayment_type"
@@ -1031,81 +1006,76 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer, mode = "o
                       />
                     )}
                   </div>
-                </div>
-              )}
 
-              {/* Delivery Details - Hidden for lead mode */}
-              {!isLeadMode && (
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Delivery Details</h3>
-                  
-                  <FormField
-                    control={form.control}
-                    name="warranty_period"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Warranty Period (months)</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            {...field}
-                            onChange={(e) => field.onChange(parseInt(e.target.value) || 12)}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="delivery_date"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel>Requested Delivery Date</FormLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                variant="outline"
-                                className={cn(
-                                  "pl-3 text-left font-normal",
-                                  !field.value && "text-muted-foreground"
-                                )}
-                              >
-                                {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              mode="single"
-                              selected={field.value}
-                              onSelect={field.onChange}
-                              initialFocus
-                              className="pointer-events-auto"
+                  <div className="grid grid-cols-3 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="warranty_period"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Warranty (months)</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              {...field}
+                              onChange={(e) => field.onChange(parseInt(e.target.value) || 12)}
                             />
-                          </PopoverContent>
-                        </Popover>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                  <FormField
-                    control={form.control}
-                    name="deployment_location"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Deployment Location</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Location" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                    <FormField
+                      control={form.control}
+                      name="delivery_date"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                          <FormLabel>Delivery Date</FormLabel>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant="outline"
+                                  className={cn(
+                                    "pl-3 text-left font-normal",
+                                    !field.value && "text-muted-foreground"
+                                  )}
+                                >
+                                  {field.value ? format(field.value, "PPP") : <span>Pick date</span>}
+                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                initialFocus
+                                className="pointer-events-auto"
+                              />
+                            </PopoverContent>
+                          </Popover>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="deployment_location"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Deployment Location</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Location" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 </div>
               )}
 
