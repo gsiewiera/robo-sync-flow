@@ -29,6 +29,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { ClientCombobox } from "@/components/ui/client-combobox";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -547,30 +548,21 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Customer {clientIsOptional && "(optional)"}</FormLabel>
-                    <Select 
-                      onValueChange={(value) => {
-                        field.onChange(value);
-                        // Reset contract, offer, and robots when client changes
-                        form.setValue("contract_id", undefined);
-                        form.setValue("offer_id", undefined);
-                        form.setValue("robot_ids", []);
-                      }} 
-                      value={field.value}
-                      disabled={isViewMode}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder={`Select customer ${clientIsOptional ? "(optional)" : ""}`} />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {clients.map((client) => (
-                          <SelectItem key={client.id} value={client.id}>
-                            {client.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormControl>
+                      <ClientCombobox
+                        clients={clients}
+                        value={field.value}
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                          // Reset contract, offer, and robots when client changes
+                          form.setValue("contract_id", undefined);
+                          form.setValue("offer_id", undefined);
+                          form.setValue("robot_ids", []);
+                        }}
+                        disabled={isViewMode}
+                        placeholder={`Select customer ${clientIsOptional ? "(optional)" : ""}`}
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
