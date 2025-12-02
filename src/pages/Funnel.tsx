@@ -7,24 +7,36 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TrendingUp, DollarSign, Target } from "lucide-react";
 import { FunnelVisualization } from "@/components/funnel/FunnelVisualization";
+import { formatMoney } from "@/lib/utils";
 
 interface FunnelMetrics {
-  leads: { count: number; value: number };
-  qualified: { count: number; value: number };
-  proposal_sent: { count: number; value: number };
-  negotiation: { count: number; value: number };
-  closed_won: { count: number; value: number };
-  closed_lost: { count: number; value: number };
+  leads: { count: number; value: number; margin: number };
+  qualified: { count: number; value: number; margin: number };
+  proposal_sent: { count: number; value: number; margin: number };
+  negotiation: { count: number; value: number; margin: number };
+  closed_won: { count: number; value: number; margin: number };
+  closed_lost: { count: number; value: number; margin: number };
+}
+
+interface RobotPricing {
+  robot_model: string;
+  evidence_price_pln_net: number | null;
+}
+
+interface LeasePricing {
+  robot_pricing_id: string;
+  months: number;
+  evidence_price_pln_net: number | null;
 }
 
 const Funnel = () => {
   const [metrics, setMetrics] = useState<FunnelMetrics>({
-    leads: { count: 0, value: 0 },
-    qualified: { count: 0, value: 0 },
-    proposal_sent: { count: 0, value: 0 },
-    negotiation: { count: 0, value: 0 },
-    closed_won: { count: 0, value: 0 },
-    closed_lost: { count: 0, value: 0 },
+    leads: { count: 0, value: 0, margin: 0 },
+    qualified: { count: 0, value: 0, margin: 0 },
+    proposal_sent: { count: 0, value: 0, margin: 0 },
+    negotiation: { count: 0, value: 0, margin: 0 },
+    closed_won: { count: 0, value: 0, margin: 0 },
+    closed_lost: { count: 0, value: 0, margin: 0 },
   });
   const [isLoading, setIsLoading] = useState(true);
   const [dateFilter, setDateFilter] = useState<"month" | "quarter" | "year" | "all">("month");
@@ -67,28 +79,88 @@ const Funnel = () => {
       // Fetch offers grouped by stage
       const stages = ['leads', 'qualified', 'proposal_sent', 'negotiation', 'closed_won', 'closed_lost'];
       const results: FunnelMetrics = {
-        leads: { count: 0, value: 0 },
-        qualified: { count: 0, value: 0 },
-        proposal_sent: { count: 0, value: 0 },
-        negotiation: { count: 0, value: 0 },
-        closed_won: { count: 0, value: 0 },
-        closed_lost: { count: 0, value: 0 },
+        leads: { count: 0, value: 0, margin: 0 },
+        qualified: { count: 0, value: 0, margin: 0 },
+        proposal_sent: { count: 0, value: 0, margin: 0 },
+        negotiation: { count: 0, value: 0, margin: 0 },
+        closed_won: { count: 0, value: 0, margin: 0 },
+        closed_lost: { count: 0, value: 0, margin: 0 },
       };
 
-      for (const stage of stages) {
-        const { data, error } = await supabase
-          .from("offers")
-          .select("total_price")
-          .eq("stage", stage)
-          .gte("created_at", startDate);
+      // Fetch all offers with their IDs
+      const { data: allOffers, error: offersError } = await supabase
+        .from("offers")
+        .select("id, stage, total_price")
+        .gte("created_at", startDate);
 
-        if (error) throw error;
+      if (offersError) throw offersError;
 
-        results[stage as keyof FunnelMetrics] = {
-          count: data?.length || 0,
-          value: data?.reduce((sum, offer) => sum + (offer.total_price || 0), 0) || 0,
-        };
-      }
+      const offerIds = allOffers?.map(o => o.id) || [];
+
+      // Fetch offer items for margin calculation
+      const { data: offerItems, error: itemsError } = await supabase
+        .from("offer_items")
+        .select("offer_id, robot_model, unit_price, quantity, contract_type, lease_months")
+        .in("offer_id", offerIds.length > 0 ? offerIds : ['']);
+
+      if (itemsError) throw itemsError;
+
+      // Fetch robot pricing for evidence prices
+      const { data: robotPricingData, error: pricingError } = await supabase
+        .from("robot_pricing")
+        .select("id, robot_model, evidence_price_pln_net");
+
+      if (pricingError) throw pricingError;
+
+      // Fetch lease pricing for evidence prices
+      const { data: leasePricingData, error: leaseError } = await supabase
+        .from("lease_pricing")
+        .select("robot_pricing_id, months, evidence_price_pln_net");
+
+      if (leaseError) throw leaseError;
+
+      // Create lookup maps
+      const robotPricingMap = new Map<string, { id: string; evidence_price_pln_net: number | null }>();
+      robotPricingData?.forEach(rp => {
+        robotPricingMap.set(rp.robot_model, { id: rp.id, evidence_price_pln_net: rp.evidence_price_pln_net });
+      });
+
+      const leasePricingMap = new Map<string, number | null>();
+      leasePricingData?.forEach(lp => {
+        const key = `${lp.robot_pricing_id}-${lp.months}`;
+        leasePricingMap.set(key, lp.evidence_price_pln_net);
+      });
+
+      // Calculate margins per offer
+      const marginsByOffer = new Map<string, number>();
+      offerItems?.forEach(item => {
+        if (!item.offer_id) return;
+        
+        const robotPricing = robotPricingMap.get(item.robot_model);
+        let itemMargin = 0;
+
+        if (item.contract_type === 'lease' && item.lease_months && robotPricing) {
+          const leaseKey = `${robotPricing.id}-${item.lease_months}`;
+          const leaseEvidencePrice = leasePricingMap.get(leaseKey) || 0;
+          itemMargin = (item.unit_price - (leaseEvidencePrice || 0)) * item.quantity;
+        } else if (robotPricing) {
+          const evidencePrice = robotPricing.evidence_price_pln_net || 0;
+          itemMargin = (item.unit_price - evidencePrice) * item.quantity;
+        }
+
+        const currentMargin = marginsByOffer.get(item.offer_id) || 0;
+        marginsByOffer.set(item.offer_id, currentMargin + itemMargin);
+      });
+
+      // Aggregate by stage
+      allOffers?.forEach(offer => {
+        const stage = offer.stage as keyof FunnelMetrics;
+        if (results[stage]) {
+          results[stage].count++;
+          results[stage].value += offer.total_price || 0;
+          results[stage].margin += marginsByOffer.get(offer.id) || 0;
+        }
+      });
 
       setMetrics(results);
     } catch (error: any) {
@@ -123,6 +195,9 @@ const Funnel = () => {
   const totalPipeline = Object.values(metrics)
     .filter((_, i) => i < 4) // Exclude closed_won and closed_lost
     .reduce((sum, stage) => sum + stage.value, 0);
+
+  const totalMargin = Object.values(metrics)
+    .reduce((sum, stage) => sum + stage.margin, 0);
 
   const winRate = metrics.closed_won.count + metrics.closed_lost.count > 0
     ? ((metrics.closed_won.count / (metrics.closed_won.count + metrics.closed_lost.count)) * 100).toFixed(1)
@@ -170,7 +245,7 @@ const Funnel = () => {
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <Card className="hover-scale border-primary/20 shadow-lg animate-fade-in bg-gradient-to-br from-primary/5 to-transparent">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
@@ -190,7 +265,26 @@ const Funnel = () => {
             </CardContent>
           </Card>
 
-          <Card className="hover-scale border-success/20 shadow-lg animate-fade-in bg-gradient-to-br from-success/5 to-transparent" style={{ animationDelay: "100ms" }}>
+          <Card className="hover-scale border-emerald-500/20 shadow-lg animate-fade-in bg-gradient-to-br from-emerald-500/5 to-transparent" style={{ animationDelay: "100ms" }}>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+                Total Margin
+              </CardTitle>
+              <div className="p-2 rounded-full bg-emerald-500/10">
+                <TrendingUp className="w-5 h-5 text-emerald-500" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-4xl font-black tracking-tight text-emerald-500">
+                {formatMoney(totalMargin)}
+              </div>
+              <p className="text-xs text-muted-foreground mt-2 font-medium">
+                PLN profit margin
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="hover-scale border-success/20 shadow-lg animate-fade-in bg-gradient-to-br from-success/5 to-transparent" style={{ animationDelay: "200ms" }}>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
                 Win Rate
@@ -209,13 +303,13 @@ const Funnel = () => {
             </CardContent>
           </Card>
 
-          <Card className="hover-scale border-success/20 shadow-lg animate-fade-in bg-gradient-to-br from-success/5 to-transparent" style={{ animationDelay: "200ms" }}>
+          <Card className="hover-scale border-success/20 shadow-lg animate-fade-in bg-gradient-to-br from-success/5 to-transparent" style={{ animationDelay: "300ms" }}>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
                 Revenue Generated
               </CardTitle>
               <div className="p-2 rounded-full bg-success/10">
-                <TrendingUp className="w-5 h-5 text-success" />
+                <DollarSign className="w-5 h-5 text-success" />
               </div>
             </CardHeader>
             <CardContent>
