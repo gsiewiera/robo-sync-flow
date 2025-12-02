@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -51,15 +51,31 @@ export const ContactFormDialog = ({
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
-    full_name: contact?.full_name || "",
-    email: contact?.email || "",
-    phone: contact?.phone || "",
-    role: contact?.role || "contact",
-    notes: contact?.notes || "",
-    is_primary: contact?.is_primary || false,
+    full_name: "",
+    email: "",
+    phone: "",
+    role: "contact",
+    notes: "",
+    is_primary: false,
   });
   const [customRole, setCustomRole] = useState("");
   const [showCustomRole, setShowCustomRole] = useState(false);
+
+  // Reset form when dialog opens or contact changes
+  useEffect(() => {
+    if (open) {
+      setFormData({
+        full_name: contact?.full_name || "",
+        email: contact?.email || "",
+        phone: contact?.phone || "",
+        role: contact?.role || "contact",
+        notes: contact?.notes || "",
+        is_primary: contact?.is_primary || false,
+      });
+      setCustomRole("");
+      setShowCustomRole(false);
+    }
+  }, [open, contact]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
