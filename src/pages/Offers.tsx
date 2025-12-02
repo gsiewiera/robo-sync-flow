@@ -14,6 +14,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { SearchableFilterDropdown } from "@/components/ui/searchable-filter-dropdown";
 import {
   ColumnVisibilityToggle,
   ColumnConfig,
@@ -265,33 +266,13 @@ const Offers = () => {
         <Card className="p-4">
           <div className="flex flex-wrap gap-4 items-center justify-between">
             <div className="flex flex-wrap gap-4">
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="h-10 w-[200px] justify-between">
-                    Client {clientFilters.length > 0 && `(${clientFilters.length})`}
-                    <ChevronDown className="ml-2 h-4 w-4" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[200px] p-3 bg-background z-50" align="start">
-                  <div className="space-y-2 max-h-[300px] overflow-y-auto">
-                    {clients.map((client) => (
-                      <div key={client.id} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`client-${client.id}`}
-                          checked={clientFilters.includes(client.id)}
-                          onCheckedChange={() => toggleClientFilter(client.id)}
-                        />
-                        <label
-                          htmlFor={`client-${client.id}`}
-                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                        >
-                          {client.name}
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                </PopoverContent>
-              </Popover>
+              <SearchableFilterDropdown
+                options={clients.map((c) => ({ id: c.id, label: c.name }))}
+                selectedValues={clientFilters}
+                onToggle={toggleClientFilter}
+                placeholder="Client"
+                searchPlaceholder="Search client..."
+              />
 
               <Popover>
                 <PopoverTrigger asChild>
