@@ -13,7 +13,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { UserPlus, Phone, Mail, Building2, Calendar as CalendarIcon, Edit, AlertCircle, Clock, Plus, Eye, TrendingUp } from "lucide-react";
+import { UserPlus, Phone, Mail, Building2, Calendar as CalendarIcon, Edit, AlertCircle, Clock, Plus, Eye, TrendingUp, ChevronDown } from "lucide-react";
+import { SearchableFilterDropdown } from "@/components/ui/searchable-filter-dropdown";
 import { format, isAfter, isBefore, startOfDay, addDays } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -31,12 +32,18 @@ interface Lead {
   next_action_date: string | null;
   follow_up_notes: string | null;
   last_contact_date: string | null;
+  assigned_salesperson_id: string | null;
   clients: {
     id: string;
     name: string;
     primary_contact_email: string | null;
     primary_contact_phone: string | null;
   };
+}
+
+interface Salesperson {
+  id: string;
+  full_name: string;
 }
 
 const Leads = () => {
@@ -48,6 +55,8 @@ const Leads = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isNewLeadOpen, setIsNewLeadOpen] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [salespeople, setSalespeople] = useState<Salesperson[]>([]);
+  const [salespersonFilters, setSalespersonFilters] = useState<string[]>([]);
   const [editForm, setEditForm] = useState({
     lead_status: "",
     next_action_date: undefined as Date | undefined,
@@ -65,8 +74,31 @@ const Leads = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    fetchSalespeople();
+  }, []);
+
+  useEffect(() => {
     fetchLeads();
-  }, [filterStatus]);
+  }, [filterStatus, salespersonFilters]);
+
+  const fetchSalespeople = async () => {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("id, full_name")
+      .order("full_name");
+
+    if (data && !error) {
+      setSalespeople(data);
+    }
+  };
+
+  const toggleSalespersonFilter = (salespersonId: string) => {
+    setSalespersonFilters((prev) =>
+      prev.includes(salespersonId)
+        ? prev.filter((id) => id !== salespersonId)
+        : [...prev, salespersonId]
+    );
+  };
 
   const fetchLeads = async () => {
     setIsLoading(true);
@@ -87,6 +119,10 @@ const Leads = () => {
 
       if (filterStatus !== "all") {
         query = query.eq("lead_status", filterStatus);
+      }
+
+      if (salespersonFilters.length > 0) {
+        query = query.in("assigned_salesperson_id", salespersonFilters);
       }
 
       const { data, error } = await query;
@@ -384,6 +420,13 @@ const Leads = () => {
             <div className="flex items-center justify-between">
               <CardTitle>Leads List</CardTitle>
               <div className="flex items-center gap-2">
+                <SearchableFilterDropdown
+                  options={salespeople.map((s) => ({ id: s.id, label: s.full_name }))}
+                  selectedValues={salespersonFilters}
+                  onToggle={toggleSalespersonFilter}
+                  placeholder="Salesperson"
+                  searchPlaceholder="Search salesperson..."
+                />
                 <Select value={filterStatus} onValueChange={setFilterStatus}>
                   <SelectTrigger className="w-[180px] bg-background">
                     <SelectValue placeholder="Filter by status" />
