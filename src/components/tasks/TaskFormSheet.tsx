@@ -980,7 +980,11 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
                   </Button>
                   <Button
                     type="button"
-                    onClick={() => setIsEditing(true)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setIsEditing(true);
+                    }}
                     className="flex-1"
                   >
                     Edit Task
