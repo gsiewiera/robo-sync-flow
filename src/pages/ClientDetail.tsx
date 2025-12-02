@@ -11,6 +11,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useParams, useNavigate } from "react-router-dom";
 import { ClientFormDialog } from "@/components/clients/ClientFormDialog";
+import { formatMoney } from "@/lib/utils";
 
 interface Client {
   id: string;
@@ -245,7 +246,7 @@ const ClientDetail = () => {
               <div className="text-right">
                 <p className="text-sm text-muted-foreground">Balance</p>
                 <p className={`text-2xl font-bold ${client.balance < 0 ? 'text-destructive' : 'text-success'}`}>
-                  {client.balance.toFixed(2)} PLN
+                  {formatMoney(client.balance)} PLN
                 </p>
               </div>
             )}
@@ -455,7 +456,7 @@ const ClientDetail = () => {
                   </div>
                   {contract.monthly_payment && (
                     <p className="text-lg font-bold text-primary">
-                      {contract.monthly_payment.toFixed(2)} PLN/mo
+                      {formatMoney(contract.monthly_payment)} PLN/mo
                     </p>
                   )}
                 </div>
@@ -489,7 +490,7 @@ const ClientDetail = () => {
                   </div>
                   {offer.total_price && (
                     <p className="text-lg font-bold text-accent">
-                      {offer.total_price.toFixed(2)} PLN
+                      {formatMoney(offer.total_price)} PLN
                     </p>
                   )}
                 </div>
@@ -526,7 +527,7 @@ const ClientDetail = () => {
                       </div>
                       <div className="text-right">
                         <p className="text-lg font-bold text-primary">
-                          {invoice.amount_gross.toFixed(2)} {invoice.currency}
+                          {formatMoney(invoice.amount_gross)} {invoice.currency}
                         </p>
                         {invoice.paid_date && (
                           <p className="text-xs text-muted-foreground">
@@ -565,7 +566,7 @@ const ClientDetail = () => {
                         )}
                       </div>
                       <p className="text-lg font-bold text-success">
-                        +{payment.amount.toFixed(2)} {payment.currency}
+                        +{formatMoney(payment.amount)} {payment.currency}
                       </p>
                     </div>
                   </Card>

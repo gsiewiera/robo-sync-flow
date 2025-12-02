@@ -6,6 +6,7 @@ import { ArrowLeft, Mail, Phone, Globe, MapPin } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useParams, useNavigate } from "react-router-dom";
+import { formatMoney } from "@/lib/utils";
 
 interface Reseller {
   id: string;
@@ -93,7 +94,7 @@ const ResellerDetail = () => {
               <div className="text-right">
                 <p className="text-sm text-muted-foreground">Balance</p>
                 <p className="text-2xl font-bold text-primary">
-                  {reseller.balance.toFixed(2)} PLN
+                  {formatMoney(reseller.balance)} PLN
                 </p>
               </div>
             )}

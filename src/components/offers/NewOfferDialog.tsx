@@ -33,7 +33,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon, Trash2 } from "lucide-react";
 import { format } from "date-fns";
-import { cn } from "@/lib/utils";
+import { cn, formatMoney } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ClientCombobox } from "@/components/ui/client-combobox";
 
@@ -1253,7 +1253,7 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer, mode = "o
                   <div className="flex justify-between text-lg font-semibold">
                     <span>Total Price:</span>
                     <span>
-                      {calculateTotalPrice().toFixed(2)} {form.watch("currency")}
+                      {formatMoney(calculateTotalPrice())} {form.watch("currency")}
                     </span>
                   </div>
                 </div>

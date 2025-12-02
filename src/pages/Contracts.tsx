@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { formatMoney } from "@/lib/utils";
 import { ArrowUpDown, ArrowUp, ArrowDown, Eye, X, Mail } from "lucide-react";
 import {
   Select,
@@ -352,7 +353,7 @@ const Contracts = () => {
                     </TableCell>
                     <TableCell>
                       {contract.monthly_payment
-                        ? `${contract.monthly_payment.toFixed(2)} PLN`
+                        ? `${formatMoney(contract.monthly_payment)} PLN`
                         : "-"}
                     </TableCell>
                     <TableCell>

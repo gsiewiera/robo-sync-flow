@@ -7,6 +7,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useParams, useNavigate } from "react-router-dom";
 import { ContractPdfGenerator } from "@/components/contracts/ContractPdfGenerator";
+import { formatMoney } from "@/lib/utils";
 
 interface Contract {
   id: string;
@@ -141,7 +142,7 @@ const ContractDetail = () => {
             {contract.monthly_payment && (
               <div className="text-right">
                 <p className="text-3xl font-bold text-primary">
-                  {contract.monthly_payment.toFixed(2)} PLN
+                  {formatMoney(contract.monthly_payment)} PLN
                 </p>
                 <p className="text-sm text-muted-foreground">per month</p>
               </div>
@@ -219,13 +220,13 @@ const ContractDetail = () => {
                 <div>
                   <p className="text-sm text-muted-foreground">Total Purchase Value</p>
                   <p className="text-2xl font-bold text-primary">
-                    {(contract.total_purchase_value || 0).toFixed(2)} PLN
+                    {formatMoney(contract.total_purchase_value || 0)} PLN
                   </p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Total Monthly Contracted</p>
                   <p className="text-2xl font-bold text-primary">
-                    {(contract.total_monthly_contracted || 0).toFixed(2)} PLN
+                    {formatMoney(contract.total_monthly_contracted || 0)} PLN
                   </p>
                 </div>
               </div>
@@ -234,16 +235,16 @@ const ContractDetail = () => {
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="text-sm">Warranty:</span>
-                    <span className="font-medium">{(contract.warranty_cost || 0).toFixed(2)} PLN</span>
+                    <span className="font-medium">{formatMoney(contract.warranty_cost || 0)} PLN</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm">Implementation:</span>
-                    <span className="font-medium">{(contract.implementation_cost || 0).toFixed(2)} PLN</span>
+                    <span className="font-medium">{formatMoney(contract.implementation_cost || 0)} PLN</span>
                   </div>
                   {(contract.other_services_cost && contract.other_services_cost > 0) && (
                     <div className="flex justify-between">
                       <span className="text-sm">{contract.other_services_description || 'Other Services'}:</span>
-                      <span className="font-medium">{contract.other_services_cost.toFixed(2)} PLN</span>
+                      <span className="font-medium">{formatMoney(contract.other_services_cost)} PLN</span>
                     </div>
                   )}
                 </div>
