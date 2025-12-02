@@ -285,7 +285,11 @@ const Clients = () => {
                 </TableRow>
               ) : (
                 currentRecords.map((client) => (
-                  <TableRow key={client.id} className="h-12">
+                  <TableRow 
+                    key={client.id} 
+                    className="h-12 cursor-pointer hover:bg-muted/50"
+                    onClick={() => navigate(`/clients/${client.id}`)}
+                  >
                     <TableCell className="font-medium">{client.name}</TableCell>
                     <TableCell>{client.nip || "-"}</TableCell>
                     <TableCell>{client.city || "-"}</TableCell>
@@ -320,7 +324,7 @@ const Clients = () => {
                         ? new Date(client.created_at).toLocaleDateString()
                         : "-"}
                     </TableCell>
-                    <TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
                       <div className="flex gap-2">
                         <Button
                           variant="ghost"

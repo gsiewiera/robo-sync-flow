@@ -190,7 +190,11 @@ const Robots = () => {
                 </TableRow>
               ) : (
                 currentRecords.map((robot) => (
-                  <TableRow key={robot.id} className="h-12">
+                  <TableRow 
+                    key={robot.id} 
+                    className="h-12 cursor-pointer hover:bg-muted/50"
+                    onClick={() => navigate(`/robots/${robot.id}`)}
+                  >
                     <TableCell className="font-medium">{robot.serial_number}</TableCell>
                     <TableCell>{robot.model}</TableCell>
                     <TableCell>{robot.type}</TableCell>
@@ -210,7 +214,7 @@ const Robots = () => {
                         ? new Date(robot.created_at).toLocaleDateString()
                         : "-"}
                     </TableCell>
-                    <TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
                       <Button
                         variant="ghost"
                         size="sm"

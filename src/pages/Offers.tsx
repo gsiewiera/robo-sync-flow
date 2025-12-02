@@ -395,7 +395,11 @@ const Offers = () => {
                 </TableRow>
               ) : (
                 currentRecords.map((offer) => (
-                  <TableRow key={offer.id} className="h-12">
+                  <TableRow 
+                    key={offer.id} 
+                    className="h-12 cursor-pointer hover:bg-muted/50"
+                    onClick={() => navigate(`/offers/${offer.id}`)}
+                  >
                     {visibleColumns.includes("offer_number") && (
                       <TableCell className="font-medium">{offer.offer_number}</TableCell>
                     )}
@@ -421,7 +425,7 @@ const Offers = () => {
                         {new Date(offer.created_at).toLocaleDateString()}
                       </TableCell>
                     )}
-                    <TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
                       <div className="flex gap-2">
                         <Button
                           variant="ghost"
