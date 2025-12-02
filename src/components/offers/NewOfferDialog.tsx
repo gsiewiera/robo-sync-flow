@@ -1189,25 +1189,7 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer, mode = "o
                     )}
                   </div>
 
-                  <div className="grid grid-cols-3 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="warranty_period"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Warranty (months)</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              {...field}
-                              onChange={(e) => field.onChange(parseInt(e.target.value) || 12)}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
+                  <div className="grid grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="delivery_date"
