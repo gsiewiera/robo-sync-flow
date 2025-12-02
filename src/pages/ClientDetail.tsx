@@ -46,6 +46,7 @@ interface Client {
   balance: number | null;
   status: string | null;
   reseller_id: string | null;
+  assigned_salesperson_id: string | null;
 }
 
 interface Contract {
@@ -162,6 +163,7 @@ const ClientDetail = () => {
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
   const [contactToDelete, setContactToDelete] = useState<Contact | null>(null);
   const [roleOptions, setRoleOptions] = useState<string[]>(DEFAULT_ROLES);
+  const [salesperson, setSalesperson] = useState<{ id: string; full_name: string } | null>(null);
 
   useEffect(() => {
     if (id) {
@@ -190,6 +192,21 @@ const ClientDetail = () => {
         if (resellerData) {
           setReseller(resellerData);
         }
+      }
+
+      // Fetch salesperson if present
+      if (clientData.assigned_salesperson_id) {
+        const { data: salespersonData } = await supabase
+          .from("profiles")
+          .select("id, full_name")
+          .eq("id", clientData.assigned_salesperson_id)
+          .single();
+
+        if (salespersonData) {
+          setSalesperson(salespersonData);
+        }
+      } else {
+        setSalesperson(null);
       }
     }
 
@@ -383,6 +400,12 @@ const ClientDetail = () => {
           </div>
           <div className="grid md:grid-cols-2 gap-6">
             <div className="space-y-4">
+              {salesperson && (
+                <div>
+                  <p className="text-sm text-muted-foreground">Assigned Salesperson</p>
+                  <p className="font-medium">{salesperson.full_name}</p>
+                </div>
+              )}
               {reseller && (
                 <div>
                   <p className="text-sm text-muted-foreground">Reseller Partner</p>

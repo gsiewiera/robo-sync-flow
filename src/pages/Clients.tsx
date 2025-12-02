@@ -15,6 +15,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { SearchableFilterDropdown } from "@/components/ui/searchable-filter-dropdown";
 import {
   Table,
   TableBody,
@@ -41,6 +42,12 @@ interface Client {
   primary_contact_email: string | null;
   primary_contact_phone: string | null;
   created_at: string | null;
+  assigned_salesperson_id: string | null;
+}
+
+interface Salesperson {
+  id: string;
+  full_name: string;
 }
 
 const Clients = () => {
@@ -55,6 +62,9 @@ const Clients = () => {
   const [availableTags, setAvailableTags] = useState<any[]>([]);
   const [selectedTagFilters, setSelectedTagFilters] = useState<string[]>([]);
   const [clientTags, setClientTags] = useState<Record<string, any[]>>({});
+  const [salespeople, setSalespeople] = useState<Salesperson[]>([]);
+  const [salespersonFilters, setSalespersonFilters] = useState<string[]>([]);
+  const [salespersonMap, setSalespersonMap] = useState<Record<string, string>>({});
   const navigate = useNavigate();
   const recordsPerPage = 20;
 
@@ -62,7 +72,28 @@ const Clients = () => {
     fetchClients();
     fetchTags();
     fetchClientTags();
+    fetchSalespeople();
   }, []);
+
+  const fetchSalespeople = async () => {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("id, full_name")
+      .order("full_name");
+
+    if (data && !error) {
+      setSalespeople(data);
+      setSalespersonMap(Object.fromEntries(data.map(s => [s.id, s.full_name])));
+    }
+  };
+
+  const toggleSalespersonFilter = (salespersonId: string) => {
+    setSalespersonFilters((prev) =>
+      prev.includes(salespersonId)
+        ? prev.filter((id) => id !== salespersonId)
+        : [...prev, salespersonId]
+    );
+  };
 
   const fetchTags = async () => {
     const { data } = await supabase
@@ -108,7 +139,7 @@ const Clients = () => {
   useEffect(() => {
     fetchClients();
     setCurrentPage(1);
-  }, [sortField, sortDirection, selectedTagFilters]);
+  }, [sortField, sortDirection, selectedTagFilters, salespersonFilters]);
 
   const filteredClients = clients.filter((client) => {
     // Search filter
@@ -122,7 +153,11 @@ const Clients = () => {
         clientTags[client.id]?.some(tag => tag.id === tagId)
       );
     
-    return matchesSearch && matchesTags;
+    // Salesperson filter
+    const matchesSalesperson = salespersonFilters.length === 0 ||
+      (client.assigned_salesperson_id && salespersonFilters.includes(client.assigned_salesperson_id));
+    
+    return matchesSearch && matchesTags && matchesSalesperson;
   });
 
   const toggleTagFilter = (tagId: string) => {
@@ -135,7 +170,10 @@ const Clients = () => {
 
   const clearFilters = () => {
     setSelectedTagFilters([]);
+    setSalespersonFilters([]);
   };
+
+  const hasActiveFilters = selectedTagFilters.length > 0 || salespersonFilters.length > 0;
 
   const indexOfLastRecord = currentPage * recordsPerPage;
   const indexOfFirstRecord = indexOfLastRecord - recordsPerPage;
@@ -200,7 +238,7 @@ const Clients = () => {
                   <ChevronDown className="ml-2 h-4 w-4" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-[250px] p-3">
+              <PopoverContent className="w-[250px] p-3 bg-background z-50">
                 <div className="space-y-2 max-h-[300px] overflow-y-auto">
                   {availableTags.map((tag) => (
                     <div key={tag.id} className="flex items-center space-x-2">
@@ -225,7 +263,15 @@ const Clients = () => {
               </PopoverContent>
             </Popover>
 
-            {selectedTagFilters.length > 0 && (
+            <SearchableFilterDropdown
+              options={salespeople.map((s) => ({ id: s.id, label: s.full_name }))}
+              selectedValues={salespersonFilters}
+              onToggle={toggleSalespersonFilter}
+              placeholder="Salesperson"
+              searchPlaceholder="Search salesperson..."
+            />
+
+            {hasActiveFilters && (
               <Button variant="ghost" onClick={clearFilters}>
                 Clear Filters
               </Button>
@@ -261,6 +307,7 @@ const Clients = () => {
                   </Button>
                 </TableHead>
                 <TableHead>Tags</TableHead>
+                <TableHead>Salesperson</TableHead>
                 <TableHead>Contact</TableHead>
                 <TableHead>
                   <Button
@@ -279,7 +326,7 @@ const Clients = () => {
             <TableBody>
               {currentRecords.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                     No clients found
                   </TableCell>
                 </TableRow>
@@ -305,6 +352,11 @@ const Clients = () => {
                           </Badge>
                         ))}
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      {client.assigned_salesperson_id && salespersonMap[client.assigned_salesperson_id]
+                        ? salespersonMap[client.assigned_salesperson_id]
+                        : "-"}
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">

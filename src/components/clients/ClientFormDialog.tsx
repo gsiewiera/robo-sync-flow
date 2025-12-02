@@ -66,6 +66,7 @@ const formSchema = z.object({
   balance: z.number().optional(),
   status: z.enum(["active", "inactive", "blocked"]).default("active"),
   reseller_id: z.string().optional(),
+  assigned_salesperson_id: z.string().optional(),
 });
 
 interface ClientFormDialogProps {
@@ -82,6 +83,7 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
   const [availableTags, setAvailableTags] = useState<any[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [resellers, setResellers] = useState<any[]>([]);
+  const [salespeople, setSalespeople] = useState<{ id: string; full_name: string }[]>([]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -110,6 +112,7 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
     if (open) {
       fetchTags();
       fetchResellers();
+      fetchSalespeople();
       if (client) {
         fetchClientTags();
         form.reset({
@@ -131,6 +134,7 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
         balance: client.balance || 0,
         status: client.status || "active",
         reseller_id: client.reseller_id || "",
+        assigned_salesperson_id: client.assigned_salesperson_id || "",
       });
     } else {
       setSelectedTags([]);
@@ -153,10 +157,22 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
         balance: 0,
         status: "active",
         reseller_id: "",
+        assigned_salesperson_id: "",
       });
     }
     }
   }, [open, client]);
+
+  const fetchSalespeople = async () => {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("id, full_name")
+      .order("full_name");
+
+    if (data && !error) {
+      setSalespeople(data);
+    }
+  };
 
   const fetchTags = async () => {
     const { data } = await supabase
@@ -225,6 +241,7 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
         balance: values.balance || 0,
         status: values.status,
         reseller_id: values.reseller_id || null,
+        assigned_salesperson_id: values.assigned_salesperson_id || null,
       };
 
       if (isEditMode) {
@@ -638,6 +655,35 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
                           {resellers.map((reseller) => (
                             <SelectItem key={reseller.id} value={reseller.id}>
                               {reseller.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="assigned_salesperson_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Assigned Salesperson</FormLabel>
+                      <Select 
+                        onValueChange={(value) => field.onChange(value === "none" ? undefined : value)} 
+                        value={field.value || "none"}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a salesperson" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="none">No Salesperson</SelectItem>
+                          {salespeople.map((sp) => (
+                            <SelectItem key={sp.id} value={sp.id}>
+                              {sp.full_name}
                             </SelectItem>
                           ))}
                         </SelectContent>
