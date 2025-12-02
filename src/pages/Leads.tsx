@@ -42,6 +42,7 @@ interface Lead {
 const Leads = () => {
   const { t } = useTranslation();
   const [leads, setLeads] = useState<Lead[]>([]);
+  const [leadMargins, setLeadMargins] = useState<Record<string, number>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -109,9 +110,10 @@ const Leads = () => {
         return isBefore(new Date(lead.next_action_date), today);
       }).length || 0;
 
-      // Calculate total margin
+      // Calculate total margin and per-lead margins
       const leadIds = data?.map(l => l.id) || [];
       let totalMargin = 0;
+      const marginsByLead: Record<string, number> = {};
       
       if (leadIds.length > 0) {
         // Fetch offer items for all leads
@@ -132,16 +134,15 @@ const Leads = () => {
         
         // Create lookup maps
         const robotPricingMap = new Map(robotPricing?.map(rp => [rp.robot_model, rp]) || []);
-        const leasePricingMap = new Map<string, any>();
-        leasePricing?.forEach(lp => {
-          const robotModel = robotPricing?.find(rp => rp.robot_model && robotPricingMap.has(rp.robot_model))?.robot_model;
-          leasePricingMap.set(`${lp.robot_pricing_id}_${lp.months}`, lp);
-        });
         
-        // Calculate margins for each item
+        // Initialize margins for each lead
+        leadIds.forEach(id => { marginsByLead[id] = 0; });
+        
+        // Calculate margins for each item and accumulate per lead
         offerItems?.forEach(item => {
           const robotCost = robotPricingMap.get(item.robot_model);
           const quantity = item.quantity || 1;
+          let itemMargin = 0;
           
           if (item.contract_type === 'lease' && item.lease_months) {
             // For lease, find the lease pricing entry
@@ -150,19 +151,23 @@ const Leads = () => {
               lp.months === item.lease_months
             );
             if (leaseEntry?.evidence_price_pln_net) {
-              const itemMargin = ((item.unit_price || 0) - (leaseEntry.evidence_price_pln_net || 0)) * quantity * item.lease_months;
-              totalMargin += itemMargin;
+              itemMargin = ((item.unit_price || 0) - (leaseEntry.evidence_price_pln_net || 0)) * quantity * item.lease_months;
             }
           } else {
             // For purchase
             if (robotCost?.evidence_price_pln_net) {
-              const itemMargin = ((item.unit_price || 0) - (robotCost.evidence_price_pln_net || 0)) * quantity;
-              totalMargin += itemMargin;
+              itemMargin = ((item.unit_price || 0) - (robotCost.evidence_price_pln_net || 0)) * quantity;
             }
+          }
+          
+          totalMargin += itemMargin;
+          if (item.offer_id) {
+            marginsByLead[item.offer_id] = (marginsByLead[item.offer_id] || 0) + itemMargin;
           }
         });
       }
 
+      setLeadMargins(marginsByLead);
       setStats({
         totalLeads: data?.length || 0,
         totalValue,
@@ -428,6 +433,7 @@ const Leads = () => {
                       <TableHead>Next Action</TableHead>
                       <TableHead>Last Contact</TableHead>
                       <TableHead>Value</TableHead>
+                      <TableHead className="text-emerald-600">Margin</TableHead>
                       <TableHead>Created</TableHead>
                       <TableHead className="w-32">Actions</TableHead>
                     </TableRow>
@@ -475,6 +481,12 @@ const Leads = () => {
                         <TableCell>
                           {lead.total_price 
                             ? `${lead.total_price.toLocaleString()} ${lead.currency}`
+                            : "-"
+                          }
+                        </TableCell>
+                        <TableCell className="text-emerald-500 font-medium">
+                          {leadMargins[lead.id] 
+                            ? `${leadMargins[lead.id].toLocaleString()} PLN`
                             : "-"
                           }
                         </TableCell>
