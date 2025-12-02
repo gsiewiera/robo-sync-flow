@@ -44,6 +44,13 @@ interface Offer {
   total_price: number | null;
   created_at: string;
   clients: { name: string; id: string } | null;
+  assigned_salesperson_id: string | null;
+  profiles: { full_name: string; id: string } | null;
+}
+
+interface Salesperson {
+  id: string;
+  full_name: string;
 }
 
 interface Client {
@@ -71,10 +78,12 @@ const Offers = () => {
   const { t } = useTranslation();
   const [offers, setOffers] = useState<Offer[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
+  const [salespeople, setSalespeople] = useState<Salesperson[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState<"offer_number" | "total_price" | "created_at">("created_at");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [clientFilters, setClientFilters] = useState<string[]>([]);
+  const [salespersonFilters, setSalespersonFilters] = useState<string[]>([]);
   const [stageFilters, setStageFilters] = useState<Array<"leads" | "qualified" | "proposal_sent" | "negotiation" | "closed_won" | "closed_lost">>([]);
   const [createdDateFilter, setCreatedDateFilter] = useState<string>("");
   const [isNewOfferOpen, setIsNewOfferOpen] = useState(false);
@@ -91,7 +100,19 @@ const Offers = () => {
   useEffect(() => {
     fetchOffers();
     fetchClients();
+    fetchSalespeople();
   }, []);
+
+  const fetchSalespeople = async () => {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("id, full_name")
+      .order("full_name");
+
+    if (data && !error) {
+      setSalespeople(data);
+    }
+  };
 
   useEffect(() => {
     localStorage.setItem("offers-visible-columns", JSON.stringify(visibleColumns));
@@ -109,39 +130,45 @@ const Offers = () => {
   };
 
   const fetchOffers = async () => {
-    let query = supabase
+    const { data, error } = await supabase
       .from("offers")
       .select("*, clients(name, id)")
       .order(sortField, { ascending: sortDirection === "asc", nullsFirst: false });
 
-    // Apply client filters
-    if (clientFilters.length > 0) {
-      query = query.in("client_id", clientFilters);
-    }
-
-    // Apply stage filters
-    if (stageFilters.length > 0) {
-      query = query.in("stage", stageFilters);
-    }
-
-    // Apply created date filter
-    if (createdDateFilter) {
-      const startOfDay = new Date(createdDateFilter);
-      startOfDay.setHours(0, 0, 0, 0);
-      const endOfDay = new Date(createdDateFilter);
-      endOfDay.setHours(23, 59, 59, 999);
-      query = query.gte("created_at", startOfDay.toISOString()).lte("created_at", endOfDay.toISOString());
-    }
-
-    const { data, error } = await supabase.from("offers").select("*, clients(name, id)").order(sortField, { ascending: sortDirection === "asc", nullsFirst: false });
-
     if (data && !error) {
-      let filteredData = data;
+      // Fetch salesperson names separately
+      const salespersonIds = [...new Set(data.filter(o => o.assigned_salesperson_id).map(o => o.assigned_salesperson_id))];
+      let salespersonMap: Record<string, string> = {};
+      
+      if (salespersonIds.length > 0) {
+        const { data: salespersonData } = await supabase
+          .from("profiles")
+          .select("id, full_name")
+          .in("id", salespersonIds as string[]);
+        
+        if (salespersonData) {
+          salespersonMap = Object.fromEntries(salespersonData.map(s => [s.id, s.full_name]));
+        }
+      }
+
+      let filteredData = data.map(offer => ({
+        ...offer,
+        profiles: offer.assigned_salesperson_id && salespersonMap[offer.assigned_salesperson_id] 
+          ? { id: offer.assigned_salesperson_id, full_name: salespersonMap[offer.assigned_salesperson_id] }
+          : null
+      }));
 
       // Apply client filters
       if (clientFilters.length > 0) {
         filteredData = filteredData.filter((offer) =>
           offer.clients && clientFilters.includes(offer.clients.id)
+        );
+      }
+
+      // Apply salesperson filters
+      if (salespersonFilters.length > 0) {
+        filteredData = filteredData.filter((offer) =>
+          offer.assigned_salesperson_id && salespersonFilters.includes(offer.assigned_salesperson_id)
         );
       }
 
@@ -167,7 +194,7 @@ const Offers = () => {
   useEffect(() => {
     fetchOffers();
     setCurrentPage(1);
-  }, [sortField, sortDirection, clientFilters, stageFilters, createdDateFilter]);
+  }, [sortField, sortDirection, clientFilters, salespersonFilters, stageFilters, createdDateFilter]);
 
   const indexOfLastRecord = currentPage * recordsPerPage;
   const indexOfFirstRecord = indexOfLastRecord - recordsPerPage;
@@ -212,8 +239,17 @@ const Offers = () => {
     );
   };
 
+  const toggleSalespersonFilter = (salespersonId: string) => {
+    setSalespersonFilters((prev) =>
+      prev.includes(salespersonId)
+        ? prev.filter((id) => id !== salespersonId)
+        : [...prev, salespersonId]
+    );
+  };
+
   const clearFilters = () => {
     setClientFilters([]);
+    setSalespersonFilters([]);
     setStageFilters([]);
     setCreatedDateFilter("");
   };
@@ -226,7 +262,7 @@ const Offers = () => {
     );
   };
 
-  const hasActiveFilters = clientFilters.length > 0 || stageFilters.length > 0 || createdDateFilter !== "";
+  const hasActiveFilters = clientFilters.length > 0 || salespersonFilters.length > 0 || stageFilters.length > 0 || createdDateFilter !== "";
 
   const handleEditOffer = async (offerId: string) => {
     const { data: offerData, error } = await supabase
@@ -273,6 +309,14 @@ const Offers = () => {
                 onToggle={toggleClientFilter}
                 placeholder="Client"
                 searchPlaceholder="Search client..."
+              />
+
+              <SearchableFilterDropdown
+                options={salespeople.map((s) => ({ id: s.id, label: s.full_name }))}
+                selectedValues={salespersonFilters}
+                onToggle={toggleSalespersonFilter}
+                placeholder="Salesperson"
+                searchPlaceholder="Search salesperson..."
               />
 
               <Popover>
