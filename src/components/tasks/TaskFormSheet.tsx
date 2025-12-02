@@ -522,24 +522,29 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Task</FormLabel>
-                  <Select 
-                    onValueChange={field.onChange} 
-                    value={field.value}
-                    disabled={isViewMode}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a task" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {taskTitles.map((task) => (
-                        <SelectItem key={task.id} value={task.title}>
-                          {task.title}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  {isViewMode ? (
+                    <div className="text-sm py-2 px-3 border rounded-md bg-muted">
+                      {field.value || "-"}
+                    </div>
+                  ) : (
+                    <Select 
+                      onValueChange={field.onChange} 
+                      value={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a task" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {taskTitles.map((task) => (
+                          <SelectItem key={task.id} value={task.title}>
+                            {task.title}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
                   <FormMessage />
                 </FormItem>
               )}
@@ -899,9 +904,15 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Notes</FormLabel>
-                    <FormControl>
-                      <Textarea {...field} disabled={isViewMode} placeholder="Add notes..." rows={3} />
-                    </FormControl>
+                    {isViewMode ? (
+                      <div className="text-sm py-2 px-3 border rounded-md bg-muted min-h-[80px] whitespace-pre-wrap">
+                        {field.value || "-"}
+                      </div>
+                    ) : (
+                      <FormControl>
+                        <Textarea {...field} placeholder="Add notes..." rows={3} />
+                      </FormControl>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}
