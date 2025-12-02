@@ -276,6 +276,7 @@ const Pricing = () => {
         open={sheetOpen}
         onOpenChange={setSheetOpen}
         pricing={null}
+        isAdmin={isAdmin}
         onSuccess={() => {
           fetchPricings();
           setSheetOpen(false);

@@ -74,6 +74,7 @@ interface PricingFormSheetProps {
   onOpenChange: (open: boolean) => void;
   pricing: any;
   onSuccess: () => void;
+  isAdmin?: boolean;
 }
 
 export const PricingFormSheet = ({
@@ -81,6 +82,7 @@ export const PricingFormSheet = ({
   onOpenChange,
   pricing,
   onSuccess,
+  isAdmin = false,
 }: PricingFormSheetProps) => {
   const [robotModels, setRobotModels] = useState<string[]>([]);
   const [leaseMonths, setLeaseMonths] = useState<LeaseMonth[]>([]);
@@ -323,11 +325,11 @@ export const PricingFormSheet = ({
             />
 
             <Tabs defaultValue="sale" className="w-full">
-              <TabsList className="grid w-full grid-cols-5">
+              <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-5' : 'grid-cols-3'}`}>
                 <TabsTrigger value="sale">Sale</TabsTrigger>
-                <TabsTrigger value="evidence">Evidence</TabsTrigger>
+                {isAdmin && <TabsTrigger value="evidence">Evidence</TabsTrigger>}
                 <TabsTrigger value="promo">Promo</TabsTrigger>
-                <TabsTrigger value="lowest">Lowest</TabsTrigger>
+                {isAdmin && <TabsTrigger value="lowest">Lowest</TabsTrigger>}
                 <TabsTrigger value="lease">Lease</TabsTrigger>
               </TabsList>
 
@@ -375,52 +377,54 @@ export const PricingFormSheet = ({
                 </div>
               </TabsContent>
 
-              <TabsContent value="evidence" className="space-y-3 mt-4">
-                <p className="text-sm text-muted-foreground">
-                  Cost/purchase price (admin-only internal pricing)
-                </p>
-                <div className="grid grid-cols-3 gap-3">
-                  <FormField
-                    control={form.control}
-                    name="evidence_price_pln_net"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-xs">PLN (Net)</FormLabel>
-                        <FormControl>
-                          <Input type="number" step="0.01" placeholder="0.00" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="evidence_price_usd_net"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-xs">USD (Net)</FormLabel>
-                        <FormControl>
-                          <Input type="number" step="0.01" placeholder="0.00" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="evidence_price_eur_net"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-xs">EUR (Net)</FormLabel>
-                        <FormControl>
-                          <Input type="number" step="0.01" placeholder="0.00" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </TabsContent>
+              {isAdmin && (
+                <TabsContent value="evidence" className="space-y-3 mt-4">
+                  <p className="text-sm text-muted-foreground">
+                    Cost/purchase price (admin-only internal pricing)
+                  </p>
+                  <div className="grid grid-cols-3 gap-3">
+                    <FormField
+                      control={form.control}
+                      name="evidence_price_pln_net"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-xs">PLN (Net)</FormLabel>
+                          <FormControl>
+                            <Input type="number" step="0.01" placeholder="0.00" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="evidence_price_usd_net"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-xs">USD (Net)</FormLabel>
+                          <FormControl>
+                            <Input type="number" step="0.01" placeholder="0.00" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="evidence_price_eur_net"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-xs">EUR (Net)</FormLabel>
+                          <FormControl>
+                            <Input type="number" step="0.01" placeholder="0.00" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </TabsContent>
+              )}
 
               <TabsContent value="promo" className="space-y-3 mt-4">
                 <p className="text-sm text-muted-foreground">Optional promotional pricing</p>
@@ -467,10 +471,11 @@ export const PricingFormSheet = ({
                 </div>
               </TabsContent>
 
-              <TabsContent value="lowest" className="space-y-3 mt-4">
-                <p className="text-sm text-muted-foreground">
-                  Admin-only pricing (not visible to other users)
-                </p>
+              {isAdmin && (
+                <TabsContent value="lowest" className="space-y-3 mt-4">
+                  <p className="text-sm text-muted-foreground">
+                    Admin-only pricing (not visible to other users)
+                  </p>
                 <div className="grid grid-cols-3 gap-3">
                   <FormField
                     control={form.control}
@@ -513,6 +518,7 @@ export const PricingFormSheet = ({
                   />
                 </div>
               </TabsContent>
+              )}
 
               <TabsContent value="lease" className="space-y-3 mt-4">
                 <p className="text-sm text-muted-foreground mb-3">
@@ -569,47 +575,49 @@ export const PricingFormSheet = ({
                         </div>
                       </div>
 
-                      <div>
-                        <p className="text-xs text-muted-foreground mb-2">Evidence (Cost)</p>
-                        <div className="grid grid-cols-3 gap-2">
-                          <FormField
-                            control={form.control}
-                            name={`lease_pricing.${leaseMonth.months}.evidence_pln` as any}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel className="text-xs">PLN</FormLabel>
-                                <FormControl>
-                                  <Input type="number" step="0.01" placeholder="0.00" className="h-9" {...field} />
-                                </FormControl>
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name={`lease_pricing.${leaseMonth.months}.evidence_usd` as any}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel className="text-xs">USD</FormLabel>
-                                <FormControl>
-                                  <Input type="number" step="0.01" placeholder="0.00" className="h-9" {...field} />
-                                </FormControl>
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name={`lease_pricing.${leaseMonth.months}.evidence_eur` as any}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel className="text-xs">EUR</FormLabel>
-                                <FormControl>
-                                  <Input type="number" step="0.01" placeholder="0.00" className="h-9" {...field} />
-                                </FormControl>
-                              </FormItem>
-                            )}
-                          />
+                      {isAdmin && (
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-2">Evidence (Cost)</p>
+                          <div className="grid grid-cols-3 gap-2">
+                            <FormField
+                              control={form.control}
+                              name={`lease_pricing.${leaseMonth.months}.evidence_pln` as any}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel className="text-xs">PLN</FormLabel>
+                                  <FormControl>
+                                    <Input type="number" step="0.01" placeholder="0.00" className="h-9" {...field} />
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name={`lease_pricing.${leaseMonth.months}.evidence_usd` as any}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel className="text-xs">USD</FormLabel>
+                                  <FormControl>
+                                    <Input type="number" step="0.01" placeholder="0.00" className="h-9" {...field} />
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name={`lease_pricing.${leaseMonth.months}.evidence_eur` as any}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel className="text-xs">EUR</FormLabel>
+                                  <FormControl>
+                                    <Input type="number" step="0.01" placeholder="0.00" className="h-9" {...field} />
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
+                          </div>
                         </div>
-                      </div>
+                      )}
                     </div>
                   ))}
                 </div>
