@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from "react";
+import { formatMoney } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Package, Plus, Pencil, Trash2 } from "lucide-react";
@@ -365,10 +366,10 @@ const Items = () => {
                         <TableCell>
                           <Badge variant="outline">{item.item_type}</Badge>
                         </TableCell>
-                        <TableCell>{item.price_net.toFixed(2)} PLN</TableCell>
+                        <TableCell>{formatMoney(item.price_net)} PLN</TableCell>
                         <TableCell>{item.vat_rate}%</TableCell>
                         <TableCell className="font-medium">
-                          {priceGross.toFixed(2)} PLN
+                          {formatMoney(priceGross)} PLN
                         </TableCell>
                         <TableCell>
                           <Badge

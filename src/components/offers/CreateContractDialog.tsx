@@ -14,6 +14,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { formatMoney } from "@/lib/utils";
 
 interface CreateContractDialogProps {
   open: boolean;
@@ -65,7 +66,7 @@ export function CreateContractDialog({
         const leaseMonths = leaseItems[0].lease_months || 12;
         const monthlyAmount = totalPrice / leaseMonths;
         
-        setMonthlyPayment(monthlyAmount.toFixed(2));
+        setMonthlyPayment(formatMoney(monthlyAmount));
         setPaymentModel("lease");
         
         // Set end date based on lease months

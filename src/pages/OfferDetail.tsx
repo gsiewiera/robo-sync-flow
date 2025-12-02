@@ -6,6 +6,7 @@ import { ArrowLeft, ShoppingCart, Edit, FileText } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useParams, useNavigate } from "react-router-dom";
+import { formatMoney } from "@/lib/utils";
 import { NewOfferDialog } from "@/components/offers/NewOfferDialog";
 import { OfferPdfGenerator } from "@/components/offers/OfferPdfGenerator";
 import { CreateContractDialog } from "@/components/offers/CreateContractDialog";
@@ -174,7 +175,7 @@ const OfferDetail = () => {
             {offer.total_price && (
               <div className="text-right">
                 <p className="text-3xl font-bold text-accent">
-                  {offer.total_price.toFixed(2)} PLN
+                  {formatMoney(offer.total_price)} PLN
                 </p>
                 <p className="text-sm text-muted-foreground">total value</p>
               </div>
@@ -251,10 +252,10 @@ const OfferDetail = () => {
                       <TableCell className="font-medium">{item.robot_model}</TableCell>
                       <TableCell className="text-right">{item.quantity}</TableCell>
                       <TableCell className="text-right">
-                        {item.unit_price.toFixed(2)} PLN
+                        {formatMoney(item.unit_price)} PLN
                       </TableCell>
                       <TableCell className="text-right">
-                        {(item.quantity * item.unit_price).toFixed(2)} PLN
+                        {formatMoney(item.quantity * item.unit_price)} PLN
                       </TableCell>
                     </TableRow>
                   ))}
@@ -263,7 +264,7 @@ const OfferDetail = () => {
               <div className="mt-6 pt-6 border-t flex justify-end">
                 <div className="text-right">
                   <p className="text-sm text-muted-foreground">Subtotal</p>
-                  <p className="text-2xl font-bold text-accent">{subtotal.toFixed(2)} PLN</p>
+                  <p className="text-2xl font-bold text-accent">{formatMoney(subtotal)} PLN</p>
                 </div>
               </div>
             </div>

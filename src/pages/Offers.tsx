@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { formatMoney } from "@/lib/utils";
 import { ArrowUpDown, ArrowUp, ArrowDown, Eye, ChevronDown, Plus, Edit } from "lucide-react";
 import { NewOfferDialog } from "@/components/offers/NewOfferDialog";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -411,7 +412,7 @@ const Offers = () => {
                     {visibleColumns.includes("total_price") && (
                       <TableCell>
                         {offer.total_price
-                          ? `${offer.total_price.toFixed(2)} PLN`
+                          ? `${formatMoney(offer.total_price)} PLN`
                           : "-"}
                       </TableCell>
                     )}

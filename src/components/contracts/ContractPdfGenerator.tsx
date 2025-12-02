@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { FileText, Download, Loader2, Eye, Mail, History } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { formatMoney } from "@/lib/utils";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import {
@@ -195,9 +196,9 @@ export const ContractPdfGenerator = ({
       doc.setTextColor(0, 0, 0);
       yPos += 8;
       doc.setFontSize(10);
-      doc.text(`Total Purchase Value: ${(contractData.total_purchase_value || 0).toFixed(2)} PLN`, 14, yPos);
+      doc.text(`Total Purchase Value: ${formatMoney(contractData.total_purchase_value || 0)} PLN`, 14, yPos);
       yPos += 7;
-      doc.text(`Total Monthly Contracted: ${(contractData.total_monthly_contracted || 0).toFixed(2)} PLN`, 14, yPos);
+      doc.text(`Total Monthly Contracted: ${formatMoney(contractData.total_monthly_contracted || 0)} PLN`, 14, yPos);
       yPos += 10;
 
       // Additional Services
@@ -207,12 +208,12 @@ export const ContractPdfGenerator = ({
       doc.setTextColor(0, 0, 0);
       yPos += 8;
       doc.setFontSize(10);
-      doc.text(`Warranty: ${(contractData.warranty_cost || 0).toFixed(2)} PLN`, 14, yPos);
+      doc.text(`Warranty: ${formatMoney(contractData.warranty_cost || 0)} PLN`, 14, yPos);
       yPos += 7;
-      doc.text(`Implementation: ${(contractData.implementation_cost || 0).toFixed(2)} PLN`, 14, yPos);
+      doc.text(`Implementation: ${formatMoney(contractData.implementation_cost || 0)} PLN`, 14, yPos);
       yPos += 7;
       if (contractData.other_services_cost && contractData.other_services_cost > 0) {
-        doc.text(`${contractData.other_services_description || 'Other Services'}: ${contractData.other_services_cost.toFixed(2)} PLN`, 14, yPos);
+        doc.text(`${contractData.other_services_description || 'Other Services'}: ${formatMoney(contractData.other_services_cost)} PLN`, 14, yPos);
         yPos += 7;
       }
       yPos += 10;

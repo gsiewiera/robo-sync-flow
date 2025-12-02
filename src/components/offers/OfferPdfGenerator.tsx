@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { FileText, Download, Loader2, Eye, Mail } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { formatMoney } from "@/lib/utils";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import {
@@ -200,8 +201,8 @@ export const OfferPdfGenerator = ({
       const tableData = itemsData.map((item) => [
         item.robot_model,
         item.quantity.toString(),
-        `${item.unit_price.toFixed(2)} ${offerData.currency || "PLN"}`,
-        `${(item.quantity * item.unit_price).toFixed(2)} ${offerData.currency || "PLN"}`,
+        `${formatMoney(item.unit_price)} ${offerData.currency || "PLN"}`,
+        `${formatMoney(item.quantity * item.unit_price)} ${offerData.currency || "PLN"}`,
       ]);
 
       autoTable(doc, {
@@ -217,11 +218,11 @@ export const OfferPdfGenerator = ({
       const subtotal = itemsData.reduce((sum, item) => sum + item.quantity * item.unit_price, 0);
       
       doc.setFontSize(presetConfig.font_size_header);
-      doc.text(`Subtotal: ${subtotal.toFixed(2)} ${offerData.currency || "PLN"}`, pageWidth - 14, finalY + 15, { align: "right" });
+      doc.text(`Subtotal: ${formatMoney(subtotal)} ${offerData.currency || "PLN"}`, pageWidth - 14, finalY + 15, { align: "right" });
       
       if (offerData.total_price) {
         doc.setFontSize(presetConfig.font_size_header + 2);
-        doc.text(`Total: ${offerData.total_price.toFixed(2)} ${offerData.currency || "PLN"}`, pageWidth - 14, finalY + 25, { align: "right" });
+        doc.text(`Total: ${formatMoney(offerData.total_price)} ${offerData.currency || "PLN"}`, pageWidth - 14, finalY + 25, { align: "right" });
       }
 
       // Notes
