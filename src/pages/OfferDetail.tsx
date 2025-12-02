@@ -145,10 +145,12 @@ const OfferDetail = () => {
           </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setIsContractDialogOpen(true)}>
-            <FileText className="h-4 w-4 mr-2" />
-            Create Contract
-          </Button>
+          {(offer.stage === 'negotiation' || offer.stage === 'closed_won') && (
+            <Button variant="outline" onClick={() => setIsContractDialogOpen(true)}>
+              <FileText className="h-4 w-4 mr-2" />
+              Create Contract
+            </Button>
+          )}
           <Button onClick={() => setIsEditSheetOpen(true)}>
             <Edit className="h-4 w-4 mr-2" />
             Edit Offer
