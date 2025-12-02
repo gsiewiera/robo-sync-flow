@@ -155,12 +155,16 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
   }, []);
 
   useEffect(() => {
-    if (taskId && open) {
-      fetchTaskData();
-    } else if (!taskId) {
-      form.reset();
-      setTaskCreatedAt(null);
+    if (open) {
+      // Always reset isEditing based on mode when dialog opens
       setIsEditing(mode === "edit");
+      
+      if (taskId) {
+        fetchTaskData();
+      } else {
+        form.reset();
+        setTaskCreatedAt(null);
+      }
     }
   }, [taskId, open, mode]);
 
