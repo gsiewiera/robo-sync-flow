@@ -240,17 +240,15 @@ const OfferDetail = () => {
                   </p>
                   <p className="text-sm text-muted-foreground">total value</p>
                 </div>
-                {totalMargin > 0 && (
-                  <div className="pt-2 border-t border-border">
-                    <p className="text-2xl font-bold text-emerald-500">
-                      {formatMoney(totalMargin)} PLN
-                    </p>
-                    <p className="text-sm text-emerald-600 flex items-center justify-end gap-1">
-                      <TrendingUp className="w-3 h-3" />
-                      profit margin
-                    </p>
-                  </div>
-                )}
+                <div className="pt-2 border-t border-border">
+                  <p className="text-2xl font-bold text-emerald-500">
+                    {formatMoney(totalMargin)} PLN
+                  </p>
+                  <p className="text-sm text-emerald-600 flex items-center justify-end gap-1">
+                    <TrendingUp className="w-3 h-3" />
+                    profit margin
+                  </p>
+                </div>
               </div>
             )}
           </div>
