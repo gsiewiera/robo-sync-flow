@@ -171,7 +171,10 @@
     "leaseSection": "Leasing",
     "robotsPurchase": "Roboty (Zakup)",
     "robotsLease": "Roboty (Leasing)",
-    "noItemsForSummary": "Dodaj roboty lub pozycje, aby zobaczyć podsumowanie"
+    "noItemsForSummary": "Dodaj roboty lub pozycje, aby zobaczyć podsumowanie",
+    "type": "Typ",
+    "qty": "Ilość",
+    "price": "Cena"
   },
   "invoices": {
     "title": "Faktury",
