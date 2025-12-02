@@ -165,7 +165,13 @@
     "additionalItems": "Dodatkowe pozycje",
     "addItem": "Dodaj pozycję",
     "noItemsAdded": "Nie dodano jeszcze pozycji",
-    "oneTimeCosts": "Koszty jednorazowe"
+    "oneTimeCosts": "Koszty jednorazowe",
+    "contractType": "Typ",
+    "purchaseSection": "Zakup",
+    "leaseSection": "Leasing",
+    "robotsPurchase": "Roboty (Zakup)",
+    "robotsLease": "Roboty (Leasing)",
+    "noItemsForSummary": "Dodaj roboty lub pozycje, aby zobaczyć podsumowanie"
   },
   "invoices": {
     "title": "Faktury",
