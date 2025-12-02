@@ -185,11 +185,11 @@ const Funnel = () => {
   };
 
   const funnelStages = [
-    { name: "Leads", count: metrics.leads.count, value: metrics.leads.value, color: stageColors.leads },
-    { name: "Qualified", count: metrics.qualified.count, value: metrics.qualified.value, color: stageColors.qualified },
-    { name: "Proposal Sent", count: metrics.proposal_sent.count, value: metrics.proposal_sent.value, color: stageColors.proposal_sent },
-    { name: "In Negotiation", count: metrics.negotiation.count, value: metrics.negotiation.value, color: stageColors.negotiation },
-    { name: "Closed Won", count: metrics.closed_won.count, value: metrics.closed_won.value, color: stageColors.closed_won },
+    { name: "Leads", count: metrics.leads.count, value: metrics.leads.value, margin: metrics.leads.margin, color: stageColors.leads },
+    { name: "Qualified", count: metrics.qualified.count, value: metrics.qualified.value, margin: metrics.qualified.margin, color: stageColors.qualified },
+    { name: "Proposal Sent", count: metrics.proposal_sent.count, value: metrics.proposal_sent.value, margin: metrics.proposal_sent.margin, color: stageColors.proposal_sent },
+    { name: "In Negotiation", count: metrics.negotiation.count, value: metrics.negotiation.value, margin: metrics.negotiation.margin, color: stageColors.negotiation },
+    { name: "Closed Won", count: metrics.closed_won.count, value: metrics.closed_won.value, margin: metrics.closed_won.margin, color: stageColors.closed_won },
   ];
 
   const totalPipeline = Object.values(metrics)

@@ -1,11 +1,13 @@
 import { useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, TrendingUp } from "lucide-react";
+import { formatMoney } from "@/lib/utils";
 
 interface FunnelStage {
   name: string;
   count: number;
   value: number;
+  margin: number;
   color: string;
 }
 
@@ -84,6 +86,14 @@ export const FunnelVisualization = ({ stages }: FunnelVisualizationProps) => {
                             })}
                           </span>
                           <span className="text-muted-foreground">PLN</span>
+                        </div>
+                        <span className="text-muted-foreground/50">•</span>
+                        <div className="flex items-center gap-2">
+                          <TrendingUp className="w-4 h-4 text-emerald-500" />
+                          <span className="font-semibold text-lg text-emerald-500">
+                            {formatMoney(stage.margin)}
+                          </span>
+                          <span className="text-muted-foreground">margin</span>
                         </div>
                       </div>
                     </div>
