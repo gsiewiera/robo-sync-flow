@@ -1061,21 +1061,25 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer, mode = "o
                         </FormItem>
                       )}
                     />
-
-                    <FormField
-                      control={form.control}
-                      name="deployment_location"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Deployment Location</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Location" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
                   </div>
+
+                  <FormField
+                    control={form.control}
+                    name="deployment_location"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Deployment Location / Address</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="Enter full deployment address..."
+                            className="min-h-[60px]"
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
               )}
 
