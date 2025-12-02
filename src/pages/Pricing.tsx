@@ -30,6 +30,9 @@ interface RobotPricing {
   lowest_price_pln_net?: number;
   lowest_price_usd_net?: number;
   lowest_price_eur_net?: number;
+  evidence_price_pln_net?: number;
+  evidence_price_usd_net?: number;
+  evidence_price_eur_net?: number;
   created_at: string;
 }
 
@@ -40,6 +43,9 @@ interface LeasePricing {
   price_pln_net: number;
   price_usd_net: number;
   price_eur_net: number;
+  evidence_price_pln_net?: number;
+  evidence_price_usd_net?: number;
+  evidence_price_eur_net?: number;
 }
 
 const Pricing = () => {
