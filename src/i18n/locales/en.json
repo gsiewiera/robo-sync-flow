@@ -171,7 +171,10 @@
     "leaseSection": "Lease",
     "robotsPurchase": "Robots (Purchase)",
     "robotsLease": "Robots (Lease)",
-    "noItemsForSummary": "Add robots or items to see summary"
+    "noItemsForSummary": "Add robots or items to see summary",
+    "type": "Type",
+    "qty": "Qty",
+    "price": "Price"
   },
   "invoices": {
     "title": "Invoices",

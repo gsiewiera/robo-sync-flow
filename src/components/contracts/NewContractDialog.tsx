@@ -355,7 +355,7 @@ export function NewContractDialog({ open, onOpenChange, onSuccess }: NewContract
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{t("contracts.newContract")}</DialogTitle>
           </DialogHeader>
@@ -443,90 +443,90 @@ export function NewContractDialog({ open, onOpenChange, onSuccess }: NewContract
               {contractRobots.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-4">{t("contracts.noRobotsAdded")}</p>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-2">
+                  {/* Header row */}
+                  <div className="grid grid-cols-[1fr_100px_60px_80px_120px_100px_32px] gap-2 px-2 text-xs font-medium text-muted-foreground">
+                    <span>{t("robots.model")}</span>
+                    <span>{t("contracts.type")}</span>
+                    <span>{t("contracts.qty")}</span>
+                    <span>{t("contracts.lease")}</span>
+                    <span>{t("contracts.price")}</span>
+                    <span className="text-right">{t("common.total")}</span>
+                    <span></span>
+                  </div>
                   {contractRobots.map((robot) => (
-                    <Card key={robot.id} className="p-4">
-                      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 items-end">
-                        <div className="col-span-2">
-                          <Label>{t("robots.model")}</Label>
-                          <Select value={robot.robotPricingId} onValueChange={(v) => updateRobot(robot.id, { robotPricingId: v })}>
-                            <SelectTrigger><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              {robotPricing.map(rp => (
-                                <SelectItem key={rp.id} value={rp.id}>{rp.robot_model}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <Label>{t("contracts.contractType")}</Label>
-                          <Select value={robot.contractType} onValueChange={(v) => updateRobot(robot.id, { contractType: v as 'purchase' | 'lease' })}>
-                            <SelectTrigger><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="purchase">{t("contracts.purchase")}</SelectItem>
-                              <SelectItem value="lease">{t("contracts.lease")}</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <Label>{t("common.quantity")}</Label>
-                          <Input 
-                            type="number" 
-                            min="1" 
-                            value={robot.quantity} 
-                            onChange={(e) => updateRobot(robot.id, { quantity: parseInt(e.target.value) || 1 })} 
-                          />
-                        </div>
-                        {robot.contractType === "purchase" ? (
-                          <div>
-                            <Label>{t("contracts.unitPrice")}</Label>
-                            <Input 
-                              type="number" 
-                              step="0.01" 
-                              value={robot.unitPrice} 
-                              onChange={(e) => updateRobot(robot.id, { unitPrice: parseFloat(e.target.value) || 0 })} 
-                            />
-                          </div>
-                        ) : (
-                          <>
-                            <div>
-                              <Label>{t("contracts.leaseMonths")}</Label>
-                              <Select 
-                                value={String(robot.leaseMonths || "")} 
-                                onValueChange={(v) => updateRobot(robot.id, { leaseMonths: parseInt(v) })}
-                              >
-                                <SelectTrigger><SelectValue /></SelectTrigger>
-                                <SelectContent>
-                                  {leaseMonthOptions.map(m => (
-                                    <SelectItem key={m} value={String(m)}>{m} {t("contracts.months")}</SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <div>
-                              <Label>{t("contracts.monthlyPrice")}</Label>
-                              <Input 
-                                type="number" 
-                                step="0.01" 
-                                value={robot.monthlyPrice || 0} 
-                                onChange={(e) => updateRobot(robot.id, { monthlyPrice: parseFloat(e.target.value) || 0 })} 
-                              />
-                            </div>
-                          </>
-                        )}
-                        <div className="flex justify-end">
-                          <Button type="button" variant="ghost" size="icon" onClick={() => removeRobot(robot.id)}>
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
+                    <div key={robot.id} className="grid grid-cols-[1fr_100px_60px_80px_120px_100px_32px] gap-2 items-center bg-muted/30 rounded-md p-2">
+                      {/* Model */}
+                      <Select value={robot.robotPricingId} onValueChange={(v) => updateRobot(robot.id, { robotPricingId: v })}>
+                        <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {robotPricing.map(rp => (
+                            <SelectItem key={rp.id} value={rp.id}>{rp.robot_model}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {/* Contract Type */}
+                      <Select value={robot.contractType} onValueChange={(v) => updateRobot(robot.id, { contractType: v as 'purchase' | 'lease' })}>
+                        <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="purchase">{t("contracts.purchase")}</SelectItem>
+                          <SelectItem value="lease">{t("contracts.lease")}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {/* Quantity */}
+                      <Input 
+                        type="number" 
+                        min="1" 
+                        value={robot.quantity} 
+                        onChange={(e) => updateRobot(robot.id, { quantity: parseInt(e.target.value) || 1 })}
+                        className="h-9 text-center px-1"
+                      />
+                      {/* Lease months */}
+                      {robot.contractType === "lease" ? (
+                        <Select 
+                          value={String(robot.leaseMonths || "")} 
+                          onValueChange={(v) => updateRobot(robot.id, { leaseMonths: parseInt(v) })}
+                        >
+                          <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {leaseMonthOptions.map(m => (
+                              <SelectItem key={m} value={String(m)}>{m}m</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <span className="text-center text-muted-foreground">—</span>
+                      )}
+                      {/* Price with currency */}
+                      <div className="flex gap-1">
+                        <Input 
+                          type="number" 
+                          step="0.01" 
+                          value={robot.contractType === "purchase" ? robot.unitPrice : (robot.monthlyPrice || 0)} 
+                          onChange={(e) => {
+                            const val = parseFloat(e.target.value) || 0;
+                            if (robot.contractType === "purchase") {
+                              updateRobot(robot.id, { unitPrice: val });
+                            } else {
+                              updateRobot(robot.id, { monthlyPrice: val });
+                            }
+                          }}
+                          className="h-9 px-2 w-[70px]"
+                        />
+                        <span className="text-xs text-muted-foreground self-center w-[45px]">{currency}{robot.contractType === "lease" ? "/m" : ""}</span>
                       </div>
-                      <div className="mt-2 text-right text-sm text-muted-foreground">
+                      {/* Total */}
+                      <span className="text-right text-sm font-medium">
                         {robot.contractType === "purchase" 
-                          ? `${t("common.total")}: ${formatMoney(robot.quantity * robot.unitPrice)} ${currency}`
-                          : `${t("contracts.monthly")}: ${formatMoney(robot.quantity * (robot.monthlyPrice || 0))} ${currency}`
+                          ? formatMoney(robot.quantity * robot.unitPrice)
+                          : formatMoney(robot.quantity * (robot.monthlyPrice || 0))
                         }
-                      </div>
-                    </Card>
+                      </span>
+                      {/* Delete */}
+                      <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => removeRobot(robot.id)}>
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
                   ))}
                 </div>
               )}
