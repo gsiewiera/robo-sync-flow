@@ -206,10 +206,16 @@ export default function Goals() {
     setAssignedUserId("");
   };
 
-  const getProgressPercentage = (current: number, target: number) => {
+const getProgressPercentage = (current: number, target: number) => {
     if (target === 0) return 0;
     const percentage = (current / target) * 100;
-    return Math.min(Math.round(percentage), 100);
+    return Math.round(percentage);
+  };
+
+  const getProgressColor = (percentage: number) => {
+    if (percentage >= 100) return "bg-green-500";
+    if (percentage >= 50) return "bg-yellow-500";
+    return "bg-red-500";
   };
 
   const getStatusColor = (status: string) => {
@@ -525,7 +531,12 @@ export default function Goals() {
                               / {goal.target_value.toLocaleString()}
                             </span>
                           </div>
-                          <Progress value={progress} />
+                          <div className="relative h-4 w-full overflow-hidden rounded-full bg-secondary">
+                            <div 
+                              className={`h-full transition-all ${getProgressColor(progress)}`}
+                              style={{ width: `${Math.min(progress, 100)}%` }}
+                            />
+                          </div>
                           <div className="text-xs text-muted-foreground">{progress}%</div>
                         </div>
                       </TableCell>
