@@ -13,7 +13,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { UserPlus, Phone, Mail, Building2, Calendar as CalendarIcon, Edit, AlertCircle, Clock, Plus, Eye } from "lucide-react";
+import { UserPlus, Phone, Mail, Building2, Calendar as CalendarIcon, Edit, AlertCircle, Clock, Plus, Eye, TrendingUp } from "lucide-react";
 import { format, isAfter, isBefore, startOfDay, addDays } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -56,6 +56,7 @@ const Leads = () => {
   const [stats, setStats] = useState({
     totalLeads: 0,
     totalValue: 0,
+    totalMargin: 0,
     thisMonth: 0,
     overdueFollowUps: 0,
   });
@@ -108,9 +109,64 @@ const Leads = () => {
         return isBefore(new Date(lead.next_action_date), today);
       }).length || 0;
 
+      // Calculate total margin
+      const leadIds = data?.map(l => l.id) || [];
+      let totalMargin = 0;
+      
+      if (leadIds.length > 0) {
+        // Fetch offer items for all leads
+        const { data: offerItems } = await supabase
+          .from("offer_items")
+          .select("*")
+          .in("offer_id", leadIds);
+        
+        // Fetch robot pricing for margin calculation
+        const { data: robotPricing } = await supabase
+          .from("robot_pricing")
+          .select("robot_model, evidence_price_pln_net, evidence_price_usd_net, evidence_price_eur_net");
+        
+        // Fetch lease pricing
+        const { data: leasePricing } = await supabase
+          .from("lease_pricing")
+          .select("robot_pricing_id, months, evidence_price_pln_net, evidence_price_usd_net, evidence_price_eur_net");
+        
+        // Create lookup maps
+        const robotPricingMap = new Map(robotPricing?.map(rp => [rp.robot_model, rp]) || []);
+        const leasePricingMap = new Map<string, any>();
+        leasePricing?.forEach(lp => {
+          const robotModel = robotPricing?.find(rp => rp.robot_model && robotPricingMap.has(rp.robot_model))?.robot_model;
+          leasePricingMap.set(`${lp.robot_pricing_id}_${lp.months}`, lp);
+        });
+        
+        // Calculate margins for each item
+        offerItems?.forEach(item => {
+          const robotCost = robotPricingMap.get(item.robot_model);
+          const quantity = item.quantity || 1;
+          
+          if (item.contract_type === 'lease' && item.lease_months) {
+            // For lease, find the lease pricing entry
+            const leaseEntry = leasePricing?.find(
+              lp => robotPricing?.find(rp => rp.robot_model === item.robot_model) && 
+              lp.months === item.lease_months
+            );
+            if (leaseEntry?.evidence_price_pln_net) {
+              const itemMargin = ((item.unit_price || 0) - (leaseEntry.evidence_price_pln_net || 0)) * quantity * item.lease_months;
+              totalMargin += itemMargin;
+            }
+          } else {
+            // For purchase
+            if (robotCost?.evidence_price_pln_net) {
+              const itemMargin = ((item.unit_price || 0) - (robotCost.evidence_price_pln_net || 0)) * quantity;
+              totalMargin += itemMargin;
+            }
+          }
+        });
+      }
+
       setStats({
         totalLeads: data?.length || 0,
         totalValue,
+        totalMargin,
         thisMonth: thisMonthCount,
         overdueFollowUps: overdueCount,
       });
@@ -233,7 +289,7 @@ const Leads = () => {
           mode="lead"
         />
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
           <Card className="hover-scale animate-fade-in bg-gradient-to-br from-primary/5 to-transparent">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
@@ -262,6 +318,23 @@ const Leads = () => {
               </div>
               <p className="text-xs text-muted-foreground mt-1">
                 Potential revenue
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="hover-scale animate-fade-in bg-gradient-to-br from-emerald-500/5 to-transparent" style={{ animationDelay: "150ms" }}>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+                Total Margin
+              </CardTitle>
+              <TrendingUp className="w-5 h-5 text-emerald-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-emerald-500">
+                {stats.totalMargin.toLocaleString()} PLN
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Potential profit
               </p>
             </CardContent>
           </Card>

@@ -2,7 +2,7 @@ import { Layout } from "@/components/Layout";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ShoppingCart, Edit, FileText } from "lucide-react";
+import { ArrowLeft, ShoppingCart, Edit, FileText, TrendingUp } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useParams, useNavigate } from "react-router-dom";
@@ -49,6 +49,19 @@ interface OfferItem {
   robot_model: string;
   quantity: number;
   unit_price: number;
+  contract_type?: string;
+  lease_months?: number;
+}
+
+interface RobotPricing {
+  robot_model: string;
+  evidence_price_pln_net: number | null;
+}
+
+interface LeasePricing {
+  robot_pricing_id: string;
+  months: number;
+  evidence_price_pln_net: number | null;
 }
 
 const stageColors: Record<string, string> = {
@@ -67,6 +80,8 @@ const OfferDetail = () => {
   const [client, setClient] = useState<Client | null>(null);
   const [reseller, setReseller] = useState<{ id: string; name: string } | null>(null);
   const [items, setItems] = useState<OfferItem[]>([]);
+  const [robotPricing, setRobotPricing] = useState<RobotPricing[]>([]);
+  const [leasePricing, setLeasePricing] = useState<LeasePricing[]>([]);
   const [isEditSheetOpen, setIsEditSheetOpen] = useState(false);
   const [isContractDialogOpen, setIsContractDialogOpen] = useState(false);
 
@@ -118,6 +133,24 @@ const OfferDetail = () => {
     if (itemsData) {
       setItems(itemsData);
     }
+
+    // Fetch robot pricing for margin calculation
+    const { data: robotPricingData } = await supabase
+      .from("robot_pricing")
+      .select("robot_model, evidence_price_pln_net");
+    
+    if (robotPricingData) {
+      setRobotPricing(robotPricingData);
+    }
+
+    // Fetch lease pricing
+    const { data: leasePricingData } = await supabase
+      .from("lease_pricing")
+      .select("robot_pricing_id, months, evidence_price_pln_net");
+    
+    if (leasePricingData) {
+      setLeasePricing(leasePricingData);
+    }
   };
 
   if (!offer) {
@@ -131,6 +164,33 @@ const OfferDetail = () => {
   }
 
   const subtotal = items.reduce((sum, item) => sum + item.quantity * item.unit_price, 0);
+
+  // Calculate item margin
+  const getItemMargin = (item: OfferItem): number => {
+    const robotCost = robotPricing.find(rp => rp.robot_model === item.robot_model);
+    const quantity = item.quantity || 1;
+    
+    if (item.contract_type === 'lease' && item.lease_months) {
+      // For lease, find lease pricing entry via robot_pricing_id
+      const robotPricingEntry = robotPricing.find(rp => rp.robot_model === item.robot_model);
+      if (robotPricingEntry) {
+        // Find lease entry by matching robot model and months
+        const { data: robotPricingIds } = { data: null }; // We need to get robot_pricing_id
+        const leaseEntry = leasePricing.find(lp => lp.months === item.lease_months);
+        if (leaseEntry?.evidence_price_pln_net) {
+          return ((item.unit_price || 0) - (leaseEntry.evidence_price_pln_net || 0)) * quantity * item.lease_months;
+        }
+      }
+    } else {
+      // For purchase
+      if (robotCost?.evidence_price_pln_net) {
+        return ((item.unit_price || 0) - (robotCost.evidence_price_pln_net || 0)) * quantity;
+      }
+    }
+    return 0;
+  };
+
+  const totalMargin = items.reduce((sum, item) => sum + getItemMargin(item), 0);
 
   return (
     <Layout>
@@ -173,11 +233,24 @@ const OfferDetail = () => {
               </div>
             </div>
             {offer.total_price && (
-              <div className="text-right">
-                <p className="text-3xl font-bold text-accent">
-                  {formatMoney(offer.total_price)} PLN
-                </p>
-                <p className="text-sm text-muted-foreground">total value</p>
+              <div className="text-right space-y-2">
+                <div>
+                  <p className="text-3xl font-bold text-accent">
+                    {formatMoney(offer.total_price)} PLN
+                  </p>
+                  <p className="text-sm text-muted-foreground">total value</p>
+                </div>
+                {totalMargin > 0 && (
+                  <div className="pt-2 border-t border-border">
+                    <p className="text-2xl font-bold text-emerald-500">
+                      {formatMoney(totalMargin)} PLN
+                    </p>
+                    <p className="text-sm text-emerald-600 flex items-center justify-end gap-1">
+                      <TrendingUp className="w-3 h-3" />
+                      profit margin
+                    </p>
+                  </div>
+                )}
               </div>
             )}
           </div>
