@@ -254,8 +254,17 @@ function AppSidebar() {
 }
 
 export const Layout = ({ children }: LayoutProps) => {
+  // Read initial state from cookie/localStorage to persist across page navigations
+  const getInitialOpen = () => {
+    if (typeof document !== 'undefined') {
+      const match = document.cookie.match(/sidebar:state=(\w+)/);
+      return match ? match[1] === 'true' : true;
+    }
+    return true;
+  };
+
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={getInitialOpen()}>
       <div className="flex min-h-screen w-full bg-background">
         <AppSidebar />
         <main className="flex-1 overflow-auto bg-background">

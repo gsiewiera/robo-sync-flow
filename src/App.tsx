@@ -80,231 +80,34 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/clients"
-            element={
-              <ProtectedRoute>
-                <Clients />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/clients/:id"
-            element={
-              <ProtectedRoute>
-                <ClientDetail />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/resellers"
-            element={
-              <ProtectedRoute>
-                <Resellers />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/resellers/:id"
-            element={
-              <ProtectedRoute>
-                <ResellerDetail />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/robots"
-            element={
-              <ProtectedRoute>
-                <Robots />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/robots/:id"
-            element={
-              <ProtectedRoute>
-                <RobotDetail />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/tasks"
-            element={
-              <ProtectedRoute>
-                <Tasks />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/contracts"
-            element={
-              <ProtectedRoute>
-                <Contracts />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/contracts/:id"
-            element={
-              <ProtectedRoute>
-                <ContractDetail />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/offers"
-            element={
-              <ProtectedRoute>
-                <Offers />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/offers/:id"
-            element={
-              <ProtectedRoute>
-                <OfferDetail />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/funnel"
-            element={
-              <ProtectedRoute>
-                <Funnel />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/service"
-            element={
-              <ProtectedRoute>
-                <Service />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/service/:id"
-            element={
-              <ProtectedRoute>
-                <ServiceDetail />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/items"
-            element={
-              <ProtectedRoute>
-                <Items />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/pricing"
-            element={
-              <ProtectedRoute>
-                <Pricing />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/invoices"
-            element={
-              <ProtectedRoute>
-                <Invoices />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/leads"
-            element={
-              <ProtectedRoute>
-                <Leads />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/users"
-            element={
-              <ProtectedRoute>
-                <AdminUsers />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/users/:id"
-            element={
-              <ProtectedRoute>
-                <UserProfile />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/leaderboard"
-            element={
-              <ProtectedRoute>
-                <Leaderboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/goals"
-            element={
-              <ProtectedRoute>
-                <Goals />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/settings"
-            element={
-              <ProtectedRoute>
-                <Settings />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/reports/activity"
-            element={
-              <ProtectedRoute>
-                <ActivityReport />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/reports/sales"
-            element={
-              <ProtectedRoute>
-                <SalesReport />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/reports/reseller"
-            element={
-              <ProtectedRoute>
-                <ResellerReport />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/reports/ending"
-            element={
-              <ProtectedRoute>
-                <EndingReport />
-              </ProtectedRoute>
-            }
-          />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/clients" element={<ProtectedRoute><Clients /></ProtectedRoute>} />
+          <Route path="/clients/:id" element={<ProtectedRoute><ClientDetail /></ProtectedRoute>} />
+          <Route path="/resellers" element={<ProtectedRoute><Resellers /></ProtectedRoute>} />
+          <Route path="/resellers/:id" element={<ProtectedRoute><ResellerDetail /></ProtectedRoute>} />
+          <Route path="/robots" element={<ProtectedRoute><Robots /></ProtectedRoute>} />
+          <Route path="/robots/:id" element={<ProtectedRoute><RobotDetail /></ProtectedRoute>} />
+          <Route path="/tasks" element={<ProtectedRoute><Tasks /></ProtectedRoute>} />
+          <Route path="/contracts" element={<ProtectedRoute><Contracts /></ProtectedRoute>} />
+          <Route path="/contracts/:id" element={<ProtectedRoute><ContractDetail /></ProtectedRoute>} />
+          <Route path="/offers" element={<ProtectedRoute><Offers /></ProtectedRoute>} />
+          <Route path="/offers/:id" element={<ProtectedRoute><OfferDetail /></ProtectedRoute>} />
+          <Route path="/funnel" element={<ProtectedRoute><Funnel /></ProtectedRoute>} />
+          <Route path="/service" element={<ProtectedRoute><Service /></ProtectedRoute>} />
+          <Route path="/service/:id" element={<ProtectedRoute><ServiceDetail /></ProtectedRoute>} />
+          <Route path="/items" element={<ProtectedRoute><Items /></ProtectedRoute>} />
+          <Route path="/pricing" element={<ProtectedRoute><Pricing /></ProtectedRoute>} />
+          <Route path="/invoices" element={<ProtectedRoute><Invoices /></ProtectedRoute>} />
+          <Route path="/leads" element={<ProtectedRoute><Leads /></ProtectedRoute>} />
+          <Route path="/admin/users" element={<ProtectedRoute><AdminUsers /></ProtectedRoute>} />
+          <Route path="/admin/users/:id" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
+          <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
+          <Route path="/goals" element={<ProtectedRoute><Goals /></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+          <Route path="/reports/activity" element={<ProtectedRoute><ActivityReport /></ProtectedRoute>} />
+          <Route path="/reports/sales" element={<ProtectedRoute><SalesReport /></ProtectedRoute>} />
+          <Route path="/reports/reseller" element={<ProtectedRoute><ResellerReport /></ProtectedRoute>} />
+          <Route path="/reports/ending" element={<ProtectedRoute><EndingReport /></ProtectedRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
