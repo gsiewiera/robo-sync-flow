@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   ArrowLeft, Mail, Phone, MapPin, FileText, ShoppingCart, Bot, 
   Globe, Edit, DollarSign, Receipt, CreditCard, CheckSquare, Calendar,
-  Users, Plus, Trash2, Pencil
+  Users, Plus, Trash2, Pencil, Upload, File, Download, FolderOpen
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -115,6 +115,18 @@ interface Contact {
   is_primary: boolean;
 }
 
+interface Document {
+  id: string;
+  file_name: string;
+  file_path: string;
+  file_size: number | null;
+  file_type: string | null;
+  uploaded_by: string | null;
+  created_at: string;
+  notes: string | null;
+  uploader_name?: string;
+}
+
 const DEFAULT_ROLES = ["contact", "billing", "technical", "decision maker", "manager"];
 
 const statusColors: Record<string, string> = {
@@ -164,6 +176,9 @@ const ClientDetail = () => {
   const [contactToDelete, setContactToDelete] = useState<Contact | null>(null);
   const [roleOptions, setRoleOptions] = useState<string[]>(DEFAULT_ROLES);
   const [salesperson, setSalesperson] = useState<{ id: string; full_name: string } | null>(null);
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const [documentToDelete, setDocumentToDelete] = useState<Document | null>(null);
 
   useEffect(() => {
     if (id) {
@@ -299,6 +314,35 @@ const ClientDetail = () => {
       const uniqueRoles = [...new Set([...DEFAULT_ROLES, ...customRoles])];
       setRoleOptions(uniqueRoles);
     }
+
+    // Fetch documents
+    const { data: docsData } = await supabase
+      .from("client_documents")
+      .select("*")
+      .eq("client_id", id)
+      .order("created_at", { ascending: false });
+
+    if (docsData) {
+      // Fetch uploader names
+      const uploaderIds = [...new Set(docsData.filter(d => d.uploaded_by).map(d => d.uploaded_by))];
+      let uploaderMap: Record<string, string> = {};
+      
+      if (uploaderIds.length > 0) {
+        const { data: uploaderData } = await supabase
+          .from("profiles")
+          .select("id, full_name")
+          .in("id", uploaderIds as string[]);
+        
+        if (uploaderData) {
+          uploaderMap = Object.fromEntries(uploaderData.map(u => [u.id, u.full_name]));
+        }
+      }
+
+      setDocuments(docsData.map(doc => ({
+        ...doc,
+        uploader_name: doc.uploaded_by ? uploaderMap[doc.uploaded_by] : undefined
+      })));
+    }
   };
 
   const handleDeleteContact = async () => {
@@ -333,6 +377,118 @@ const ClientDetail = () => {
   const handleAddContact = () => {
     setEditingContact(null);
     setIsContactDialogOpen(true);
+  };
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0 || !id) return;
+
+    setIsUploading(true);
+    const { data: { user } } = await supabase.auth.getUser();
+
+    try {
+      for (const file of Array.from(files)) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${id}/${Date.now()}-${file.name}`;
+
+        // Upload to storage
+        const { error: uploadError } = await supabase.storage
+          .from('client-documents')
+          .upload(fileName, file);
+
+        if (uploadError) throw uploadError;
+
+        // Save metadata to database
+        const { error: dbError } = await supabase
+          .from('client_documents')
+          .insert({
+            client_id: id,
+            file_name: file.name,
+            file_path: fileName,
+            file_size: file.size,
+            file_type: file.type || fileExt,
+            uploaded_by: user?.id,
+          });
+
+        if (dbError) throw dbError;
+      }
+
+      toast({ title: "Files uploaded successfully" });
+      fetchClientData();
+    } catch (error: any) {
+      toast({
+        title: "Upload failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+      event.target.value = '';
+    }
+  };
+
+  const handleDownloadDocument = async (doc: Document) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('client-documents')
+        .download(doc.file_path);
+
+      if (error) throw error;
+
+      const url = URL.createObjectURL(data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = doc.file_name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (error: any) {
+      toast({
+        title: "Download failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteDocument = async () => {
+    if (!documentToDelete) return;
+
+    try {
+      // Delete from storage
+      const { error: storageError } = await supabase.storage
+        .from('client-documents')
+        .remove([documentToDelete.file_path]);
+
+      if (storageError) throw storageError;
+
+      // Delete from database
+      const { error: dbError } = await supabase
+        .from('client_documents')
+        .delete()
+        .eq('id', documentToDelete.id);
+
+      if (dbError) throw dbError;
+
+      toast({ title: "Document deleted successfully" });
+      fetchClientData();
+    } catch (error: any) {
+      toast({
+        title: "Delete failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setDocumentToDelete(null);
+    }
+  };
+
+  const formatFileSize = (bytes: number | null) => {
+    if (!bytes) return '-';
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
   if (!client) {
@@ -506,6 +662,10 @@ const ClientDetail = () => {
             <TabsTrigger value="robots">
               <Bot className="w-4 h-4 mr-2" />
               Robots ({robots.length})
+            </TabsTrigger>
+            <TabsTrigger value="documents">
+              <FolderOpen className="w-4 h-4 mr-2" />
+              Documents ({documents.length})
             </TabsTrigger>
           </TabsList>
 
@@ -803,6 +963,70 @@ const ClientDetail = () => {
               </Card>
             )}
           </TabsContent>
+
+          <TabsContent value="documents" className="space-y-4">
+            <div className="flex justify-end mb-4">
+              <label htmlFor="file-upload">
+                <Button asChild disabled={isUploading}>
+                  <span>
+                    <Upload className="w-4 h-4 mr-2" />
+                    {isUploading ? "Uploading..." : "Upload Documents"}
+                  </span>
+                </Button>
+              </label>
+              <input
+                id="file-upload"
+                type="file"
+                multiple
+                className="hidden"
+                onChange={handleFileUpload}
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.jpg,.jpeg,.png,.gif,.zip,.rar"
+              />
+            </div>
+            {documents.map((doc) => (
+              <Card key={doc.id} className="p-4 hover:shadow-lg transition-shadow">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3 flex-1">
+                    <File className="w-8 h-8 text-muted-foreground" />
+                    <div>
+                      <h3 className="font-semibold">{doc.file_name}</h3>
+                      <div className="flex gap-4 text-sm text-muted-foreground">
+                        <span>{formatFileSize(doc.file_size)}</span>
+                        <span>{doc.file_type}</span>
+                        <span>Uploaded: {new Date(doc.created_at).toLocaleDateString()}</span>
+                        {doc.uploader_name && <span>by {doc.uploader_name}</span>}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDownloadDocument(doc)}
+                    >
+                      <Download className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setDocumentToDelete(doc)}
+                    >
+                      <Trash2 className="w-4 h-4 text-destructive" />
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            ))}
+            {documents.length === 0 && (
+              <Card className="p-8 text-center">
+                <FolderOpen className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
+                <p className="text-muted-foreground">No documents uploaded yet</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Upload PDF, Word, Excel, images and other files
+                </p>
+              </Card>
+            )}
+          </TabsContent>
         </Tabs>
       </div>
 
@@ -833,6 +1057,23 @@ const ClientDetail = () => {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteContact} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!documentToDelete} onOpenChange={() => setDocumentToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Document</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{documentToDelete?.file_name}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteDocument} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
