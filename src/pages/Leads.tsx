@@ -33,6 +33,7 @@ interface Lead {
   follow_up_notes: string | null;
   last_contact_date: string | null;
   assigned_salesperson_id: string | null;
+  salesperson_name?: string | null;
   clients: {
     id: string;
     name: string;
@@ -129,7 +130,27 @@ const Leads = () => {
 
       if (error) throw error;
 
-      setLeads(data || []);
+      // Fetch salesperson names
+      const salespersonIds = [...new Set(data?.filter(l => l.assigned_salesperson_id).map(l => l.assigned_salesperson_id) || [])];
+      let salespersonMap: Record<string, string> = {};
+      
+      if (salespersonIds.length > 0) {
+        const { data: salespersonData } = await supabase
+          .from("profiles")
+          .select("id, full_name")
+          .in("id", salespersonIds as string[]);
+        
+        if (salespersonData) {
+          salespersonMap = Object.fromEntries(salespersonData.map(s => [s.id, s.full_name]));
+        }
+      }
+
+      const leadsWithSalesperson = data?.map(lead => ({
+        ...lead,
+        salesperson_name: lead.assigned_salesperson_id ? salespersonMap[lead.assigned_salesperson_id] : null
+      })) || [];
+
+      setLeads(leadsWithSalesperson);
 
       // Calculate stats
       const now = new Date();
@@ -472,6 +493,7 @@ const Leads = () => {
                     <TableRow>
                       <TableHead>Offer #</TableHead>
                       <TableHead>Client</TableHead>
+                      <TableHead>Salesperson</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Next Action</TableHead>
                       <TableHead>Last Contact</TableHead>
@@ -501,6 +523,9 @@ const Leads = () => {
                               <span className="text-xs text-muted-foreground">{lead.person_contact}</span>
                             )}
                           </div>
+                        </TableCell>
+                        <TableCell>
+                          {lead.salesperson_name || "-"}
                         </TableCell>
                         <TableCell>
                           {getLeadStatusBadge(lead.lead_status)}

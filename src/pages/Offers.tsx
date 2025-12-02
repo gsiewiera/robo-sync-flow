@@ -61,6 +61,7 @@ interface Client {
 const COLUMN_CONFIG: ColumnConfig[] = [
   { key: "offer_number", label: "Offer Number", defaultVisible: true },
   { key: "client", label: "Client", defaultVisible: true },
+  { key: "salesperson", label: "Salesperson", defaultVisible: true },
   { key: "status", label: "Status", defaultVisible: true },
   { key: "total_price", label: "Total Price", defaultVisible: true },
   { key: "created_at", label: "Created", defaultVisible: true },
@@ -400,6 +401,7 @@ const Offers = () => {
                   </TableHead>
                 )}
                 {visibleColumns.includes("client") && <TableHead>Client</TableHead>}
+                {visibleColumns.includes("salesperson") && <TableHead>Salesperson</TableHead>}
                 {visibleColumns.includes("status") && <TableHead>Status</TableHead>}
                 {visibleColumns.includes("total_price") && (
                   <TableHead>
@@ -449,6 +451,9 @@ const Offers = () => {
                     )}
                     {visibleColumns.includes("client") && (
                       <TableCell>{offer.clients?.name || "-"}</TableCell>
+                    )}
+                    {visibleColumns.includes("salesperson") && (
+                      <TableCell>{offer.profiles?.full_name || "-"}</TableCell>
                     )}
                     {visibleColumns.includes("status") && (
                       <TableCell>
