@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Plus, DollarSign, Edit, Trash2 } from "lucide-react";
+import { Plus, DollarSign, Edit, Trash2, Eye, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { PricingFormSheet } from "@/components/pricing/PricingFormSheet";
@@ -60,6 +60,7 @@ const Pricing = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [vatRate, setVatRate] = useState(23);
+  const [selectedPricing, setSelectedPricing] = useState<RobotPricing | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -109,7 +110,6 @@ const Pricing = () => {
     } else {
       setPricings(data || []);
       
-      // Fetch lease pricing for each robot pricing
       if (data) {
         const leaseData: Record<string, LeasePricing[]> = {};
         for (const pricing of data) {
@@ -166,6 +166,9 @@ const Pricing = () => {
         description: "Pricing deleted successfully",
       });
       fetchPricings();
+      if (selectedPricing?.id === deletingId) {
+        setSelectedPricing(null);
+      }
     }
 
     setDeleteDialogOpen(false);
@@ -199,6 +202,280 @@ const Pricing = () => {
     );
   }
 
+  // Detail View
+  if (selectedPricing) {
+    return (
+      <Layout>
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Button variant="ghost" size="sm" onClick={() => setSelectedPricing(null)}>
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to List
+              </Button>
+              <div>
+                <h1 className="text-3xl font-bold text-foreground">{selectedPricing.robot_model}</h1>
+                <p className="text-muted-foreground">Pricing Details</p>
+              </div>
+            </div>
+            {isAdmin && (
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => handleEdit(selectedPricing)}>
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => confirmDelete(selectedPricing.id)}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete
+                </Button>
+              </div>
+            )}
+          </div>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="grid md:grid-cols-2 gap-6">
+                {/* Sale Section */}
+                <div>
+                  <h4 className="font-semibold mb-3 flex items-center gap-2">
+                    Sale Prices
+                    <Badge variant="secondary">VAT: {vatRate}%</Badge>
+                  </h4>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Currency</TableHead>
+                        <TableHead className="text-right">Net</TableHead>
+                        <TableHead className="text-right">Gross</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      <TableRow>
+                        <TableCell className="font-medium">PLN</TableCell>
+                        <TableCell className="text-right">
+                          {formatCurrency(selectedPricing.sale_price_pln_net, "PLN")}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {formatCurrency(calculateGross(selectedPricing.sale_price_pln_net), "PLN")}
+                        </TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell className="font-medium">USD</TableCell>
+                        <TableCell className="text-right">
+                          {formatCurrency(selectedPricing.sale_price_usd_net, "USD")}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {formatCurrency(calculateGross(selectedPricing.sale_price_usd_net), "USD")}
+                        </TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell className="font-medium">EUR</TableCell>
+                        <TableCell className="text-right">
+                          {formatCurrency(selectedPricing.sale_price_eur_net, "EUR")}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {formatCurrency(calculateGross(selectedPricing.sale_price_eur_net), "EUR")}
+                        </TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+
+                  {(selectedPricing.promo_price_pln_net || selectedPricing.promo_price_usd_net || selectedPricing.promo_price_eur_net) && (
+                    <>
+                      <h5 className="font-semibold mt-4 mb-2 flex items-center gap-2">
+                        Promo Prices
+                        <Badge variant="default">Active</Badge>
+                      </h5>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Currency</TableHead>
+                            <TableHead className="text-right">Net</TableHead>
+                            <TableHead className="text-right">Gross</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {selectedPricing.promo_price_pln_net && (
+                            <TableRow>
+                              <TableCell className="font-medium">PLN</TableCell>
+                              <TableCell className="text-right">
+                                {formatCurrency(selectedPricing.promo_price_pln_net, "PLN")}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                {formatCurrency(calculateGross(selectedPricing.promo_price_pln_net), "PLN")}
+                              </TableCell>
+                            </TableRow>
+                          )}
+                          {selectedPricing.promo_price_usd_net && (
+                            <TableRow>
+                              <TableCell className="font-medium">USD</TableCell>
+                              <TableCell className="text-right">
+                                {formatCurrency(selectedPricing.promo_price_usd_net, "USD")}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                {formatCurrency(calculateGross(selectedPricing.promo_price_usd_net), "USD")}
+                              </TableCell>
+                            </TableRow>
+                          )}
+                          {selectedPricing.promo_price_eur_net && (
+                            <TableRow>
+                              <TableCell className="font-medium">EUR</TableCell>
+                              <TableCell className="text-right">
+                                {formatCurrency(selectedPricing.promo_price_eur_net, "EUR")}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                {formatCurrency(calculateGross(selectedPricing.promo_price_eur_net), "EUR")}
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </TableBody>
+                      </Table>
+                    </>
+                  )}
+
+                  {isAdmin && (selectedPricing.lowest_price_pln_net || selectedPricing.lowest_price_usd_net || selectedPricing.lowest_price_eur_net) && (
+                    <>
+                      <h5 className="font-semibold mt-4 mb-2 flex items-center gap-2">
+                        Lowest Prices
+                        <Badge variant="destructive">Admin Only</Badge>
+                      </h5>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Currency</TableHead>
+                            <TableHead className="text-right">Net</TableHead>
+                            <TableHead className="text-right">Gross</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {selectedPricing.lowest_price_pln_net && (
+                            <TableRow>
+                              <TableCell className="font-medium">PLN</TableCell>
+                              <TableCell className="text-right">
+                                {formatCurrency(selectedPricing.lowest_price_pln_net, "PLN")}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                {formatCurrency(calculateGross(selectedPricing.lowest_price_pln_net), "PLN")}
+                              </TableCell>
+                            </TableRow>
+                          )}
+                          {selectedPricing.lowest_price_usd_net && (
+                            <TableRow>
+                              <TableCell className="font-medium">USD</TableCell>
+                              <TableCell className="text-right">
+                                {formatCurrency(selectedPricing.lowest_price_usd_net, "USD")}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                {formatCurrency(calculateGross(selectedPricing.lowest_price_usd_net), "USD")}
+                              </TableCell>
+                            </TableRow>
+                          )}
+                          {selectedPricing.lowest_price_eur_net && (
+                            <TableRow>
+                              <TableCell className="font-medium">EUR</TableCell>
+                              <TableCell className="text-right">
+                                {formatCurrency(selectedPricing.lowest_price_eur_net, "EUR")}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                {formatCurrency(calculateGross(selectedPricing.lowest_price_eur_net), "EUR")}
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </TableBody>
+                      </Table>
+                    </>
+                  )}
+                </div>
+
+                {/* Lease Section */}
+                <div>
+                  <h4 className="font-semibold mb-3">Lease Options</h4>
+                  {leasePricingData[selectedPricing.id] && leasePricingData[selectedPricing.id].length > 0 ? (
+                    <div className="space-y-4">
+                      {leasePricingData[selectedPricing.id].map((lease) => (
+                        <div key={lease.id} className="border-b pb-3 last:border-b-0">
+                          <h5 className="font-medium mb-2">{lease.months} Months</h5>
+                          <div className="space-y-1 text-sm">
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">PLN:</span>
+                              <div className="text-right">
+                                <div>{formatCurrency(lease.price_pln_net, "PLN")} / month (net)</div>
+                                <div className="text-xs text-muted-foreground">
+                                  {formatCurrency(calculateGross(lease.price_pln_net), "PLN")} / month (gross)
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">USD:</span>
+                              <div className="text-right">
+                                <div>{formatCurrency(lease.price_usd_net, "USD")} / month (net)</div>
+                                <div className="text-xs text-muted-foreground">
+                                  {formatCurrency(calculateGross(lease.price_usd_net), "USD")} / month (gross)
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">EUR:</span>
+                              <div className="text-right">
+                                <div>{formatCurrency(lease.price_eur_net, "EUR")} / month (net)</div>
+                                <div className="text-xs text-muted-foreground">
+                                  {formatCurrency(calculateGross(lease.price_eur_net), "EUR")} / month (gross)
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      No lease options configured
+                    </p>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <PricingFormSheet
+          open={sheetOpen}
+          onOpenChange={setSheetOpen}
+          pricing={editingPricing}
+          onSuccess={() => {
+            fetchPricings();
+            setSheetOpen(false);
+            setEditingPricing(null);
+            // Update selectedPricing if it was being edited
+            if (editingPricing && selectedPricing?.id === editingPricing.id) {
+              const updatedPricing = pricings.find(p => p.id === editingPricing.id);
+              if (updatedPricing) setSelectedPricing(updatedPricing);
+            }
+          }}
+        />
+
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Pricing</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete this pricing? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </Layout>
+    );
+  }
+
+  // List View
   return (
     <Layout>
       <div className="space-y-6">
@@ -218,235 +495,81 @@ const Pricing = () => {
           )}
         </div>
 
-        <div className="space-y-6">
-          {pricings.map((pricing) => (
-            <Card key={pricing.id}>
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h3 className="text-xl font-semibold">{pricing.robot_model}</h3>
-                    <p className="text-sm text-muted-foreground">Robot Model</p>
-                  </div>
-                  {isAdmin && (
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" onClick={() => handleEdit(pricing)}>
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => confirmDelete(pricing.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )}
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-6">
-                  {/* Sale Section */}
-                  <div>
-                    <h4 className="font-semibold mb-3 flex items-center gap-2">
-                      Sale Prices
-                      <Badge variant="secondary">VAT: {vatRate}%</Badge>
-                    </h4>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Currency</TableHead>
-                          <TableHead className="text-right">Net</TableHead>
-                          <TableHead className="text-right">Gross</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        <TableRow>
-                          <TableCell className="font-medium">PLN</TableCell>
-                          <TableCell className="text-right">
-                            {formatCurrency(pricing.sale_price_pln_net, "PLN")}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {formatCurrency(calculateGross(pricing.sale_price_pln_net), "PLN")}
-                          </TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell className="font-medium">USD</TableCell>
-                          <TableCell className="text-right">
-                            {formatCurrency(pricing.sale_price_usd_net, "USD")}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {formatCurrency(calculateGross(pricing.sale_price_usd_net), "USD")}
-                          </TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell className="font-medium">EUR</TableCell>
-                          <TableCell className="text-right">
-                            {formatCurrency(pricing.sale_price_eur_net, "EUR")}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {formatCurrency(calculateGross(pricing.sale_price_eur_net), "EUR")}
-                          </TableCell>
-                        </TableRow>
-                      </TableBody>
-                    </Table>
-
-                    {(pricing.promo_price_pln_net || pricing.promo_price_usd_net || pricing.promo_price_eur_net) && (
-                      <>
-                        <h5 className="font-semibold mt-4 mb-2 flex items-center gap-2">
-                          Promo Prices
-                          <Badge variant="default">Active</Badge>
-                        </h5>
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Currency</TableHead>
-                              <TableHead className="text-right">Net</TableHead>
-                              <TableHead className="text-right">Gross</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {pricing.promo_price_pln_net && (
-                              <TableRow>
-                                <TableCell className="font-medium">PLN</TableCell>
-                                <TableCell className="text-right">
-                                  {formatCurrency(pricing.promo_price_pln_net, "PLN")}
-                                </TableCell>
-                                <TableCell className="text-right">
-                                  {formatCurrency(calculateGross(pricing.promo_price_pln_net), "PLN")}
-                                </TableCell>
-                              </TableRow>
-                            )}
-                            {pricing.promo_price_usd_net && (
-                              <TableRow>
-                                <TableCell className="font-medium">USD</TableCell>
-                                <TableCell className="text-right">
-                                  {formatCurrency(pricing.promo_price_usd_net, "USD")}
-                                </TableCell>
-                                <TableCell className="text-right">
-                                  {formatCurrency(calculateGross(pricing.promo_price_usd_net), "USD")}
-                                </TableCell>
-                              </TableRow>
-                            )}
-                            {pricing.promo_price_eur_net && (
-                              <TableRow>
-                                <TableCell className="font-medium">EUR</TableCell>
-                                <TableCell className="text-right">
-                                  {formatCurrency(pricing.promo_price_eur_net, "EUR")}
-                                </TableCell>
-                                <TableCell className="text-right">
-                                  {formatCurrency(calculateGross(pricing.promo_price_eur_net), "EUR")}
-                                </TableCell>
-                              </TableRow>
-                            )}
-                          </TableBody>
-                        </Table>
-                      </>
-                    )}
-
-                    {isAdmin && (pricing.lowest_price_pln_net || pricing.lowest_price_usd_net || pricing.lowest_price_eur_net) && (
-                      <>
-                        <h5 className="font-semibold mt-4 mb-2 flex items-center gap-2">
-                          Lowest Prices
-                          <Badge variant="destructive">Admin Only</Badge>
-                        </h5>
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Currency</TableHead>
-                              <TableHead className="text-right">Net</TableHead>
-                              <TableHead className="text-right">Gross</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {pricing.lowest_price_pln_net && (
-                              <TableRow>
-                                <TableCell className="font-medium">PLN</TableCell>
-                                <TableCell className="text-right">
-                                  {formatCurrency(pricing.lowest_price_pln_net, "PLN")}
-                                </TableCell>
-                                <TableCell className="text-right">
-                                  {formatCurrency(calculateGross(pricing.lowest_price_pln_net), "PLN")}
-                                </TableCell>
-                              </TableRow>
-                            )}
-                            {pricing.lowest_price_usd_net && (
-                              <TableRow>
-                                <TableCell className="font-medium">USD</TableCell>
-                                <TableCell className="text-right">
-                                  {formatCurrency(pricing.lowest_price_usd_net, "USD")}
-                                </TableCell>
-                                <TableCell className="text-right">
-                                  {formatCurrency(calculateGross(pricing.lowest_price_usd_net), "USD")}
-                                </TableCell>
-                              </TableRow>
-                            )}
-                            {pricing.lowest_price_eur_net && (
-                              <TableRow>
-                                <TableCell className="font-medium">EUR</TableCell>
-                                <TableCell className="text-right">
-                                  {formatCurrency(pricing.lowest_price_eur_net, "EUR")}
-                                </TableCell>
-                                <TableCell className="text-right">
-                                  {formatCurrency(calculateGross(pricing.lowest_price_eur_net), "EUR")}
-                                </TableCell>
-                              </TableRow>
-                            )}
-                          </TableBody>
-                        </Table>
-                      </>
-                    )}
-                  </div>
-
-                  {/* Lease Section */}
-                  <div>
-                    <h4 className="font-semibold mb-3">Lease Options</h4>
-                    {leasePricingData[pricing.id] && leasePricingData[pricing.id].length > 0 ? (
-                      <div className="space-y-4">
-                        {leasePricingData[pricing.id].map((lease) => (
-                          <div key={lease.id} className="border-b pb-3 last:border-b-0">
-                            <h5 className="font-medium mb-2">{lease.months} Months</h5>
-                            <div className="space-y-1 text-sm">
-                              <div className="flex justify-between">
-                                <span className="text-muted-foreground">PLN:</span>
-                                <div className="text-right">
-                                  <div>{formatCurrency(lease.price_pln_net, "PLN")} / month (net)</div>
-                                  <div className="text-xs text-muted-foreground">
-                                    {formatCurrency(calculateGross(lease.price_pln_net), "PLN")} / month (gross)
-                                  </div>
-                                </div>
-                              </div>
-                              <div className="flex justify-between">
-                                <span className="text-muted-foreground">USD:</span>
-                                <div className="text-right">
-                                  <div>{formatCurrency(lease.price_usd_net, "USD")} / month (net)</div>
-                                  <div className="text-xs text-muted-foreground">
-                                    {formatCurrency(calculateGross(lease.price_usd_net), "USD")} / month (gross)
-                                  </div>
-                                </div>
-                              </div>
-                              <div className="flex justify-between">
-                                <span className="text-muted-foreground">EUR:</span>
-                                <div className="text-right">
-                                  <div>{formatCurrency(lease.price_eur_net, "EUR")} / month (net)</div>
-                                  <div className="text-xs text-muted-foreground">
-                                    {formatCurrency(calculateGross(lease.price_eur_net), "EUR")} / month (gross)
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
+        <Card>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Robot Model</TableHead>
+                <TableHead className="text-right">Sale Price (PLN)</TableHead>
+                <TableHead className="text-right">Sale Price (EUR)</TableHead>
+                <TableHead className="text-right">Sale Price (USD)</TableHead>
+                <TableHead>Promo</TableHead>
+                <TableHead>Lease Options</TableHead>
+                <TableHead className="w-28">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {pricings.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                    No pricing data available
+                  </TableCell>
+                </TableRow>
+              ) : (
+                pricings.map((pricing) => (
+                  <TableRow 
+                    key={pricing.id} 
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => setSelectedPricing(pricing)}
+                  >
+                    <TableCell className="font-medium">{pricing.robot_model}</TableCell>
+                    <TableCell className="text-right">
+                      {formatCurrency(pricing.sale_price_pln_net, "PLN")}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {formatCurrency(pricing.sale_price_eur_net, "EUR")}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {formatCurrency(pricing.sale_price_usd_net, "USD")}
+                    </TableCell>
+                    <TableCell>
+                      {(pricing.promo_price_pln_net || pricing.promo_price_usd_net || pricing.promo_price_eur_net) ? (
+                        <Badge variant="default">Active</Badge>
+                      ) : (
+                        <span className="text-muted-foreground">-</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {leasePricingData[pricing.id]?.length || 0} options
+                    </TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          onClick={() => setSelectedPricing(pricing)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        {isAdmin && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                            onClick={() => handleEdit(pricing)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
-                    ) : (
-                      <p className="text-sm text-muted-foreground">
-                        No lease options configured
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </Card>
       </div>
 
       <PricingFormSheet
