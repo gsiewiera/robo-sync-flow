@@ -64,7 +64,10 @@
     "notes": "Notes",
     "type": "Type",
     "priority": "Priority",
-    "assignedTo": "Assigned To"
+    "assignedTo": "Assigned To",
+    "success": "Success",
+    "error": "Error",
+    "creating": "Creating..."
   },
   "dashboard": {
     "title": "Dashboard",
@@ -103,7 +106,8 @@
     "editClient": "Edit Client",
     "noClients": "No clients found",
     "primaryContact": "Primary Contact",
-    "nip": "Tax ID"
+    "nip": "Tax ID",
+    "newClient": "New Client"
   },
   "resellers": {
     "title": "Resellers",
@@ -127,7 +131,27 @@
     "emailDescription": "Send the latest contract PDF version to the client via email.",
     "recipientEmail": "Recipient Email",
     "allClients": "All Clients",
-    "allStatuses": "All Statuses"
+    "allStatuses": "All Statuses",
+    "newContract": "New Contract",
+    "selectClient": "Select a client",
+    "paymentModel": "Payment Model",
+    "purchase": "Purchase",
+    "lease": "Lease",
+    "billingSchedule": "Billing Schedule",
+    "terms": "Contract Terms",
+    "termsPlaceholder": "Enter contract terms and conditions",
+    "financialSummary": "Financial Summary",
+    "totalPurchaseValue": "Total Purchase Value",
+    "totalMonthlyContracted": "Total Monthly Contracted",
+    "warrantyCost": "Warranty Cost",
+    "implementationCost": "Implementation Cost",
+    "otherServicesCost": "Other Services Cost",
+    "otherServicesDescription": "Other Services Description",
+    "otherServicesPlaceholder": "Describe other services",
+    "createContract": "Create Contract",
+    "created": "Contract created successfully",
+    "createError": "Failed to create contract",
+    "duplicateNumber": "Contract number already exists. Please try again."
   },
   "invoices": {
     "title": "Invoices",

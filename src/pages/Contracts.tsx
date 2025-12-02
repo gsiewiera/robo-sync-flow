@@ -7,7 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { formatMoney } from "@/lib/utils";
-import { ArrowUpDown, ArrowUp, ArrowDown, Eye, X, Mail } from "lucide-react";
+import { ArrowUpDown, ArrowUp, ArrowDown, Eye, X, Mail, Plus } from "lucide-react";
+import { NewContractDialog } from "@/components/contracts/NewContractDialog";
 import {
   Select,
   SelectContent,
@@ -78,6 +79,7 @@ const Contracts = () => {
   const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
   const [recipientEmail, setRecipientEmail] = useState("");
   const [isSendingEmail, setIsSendingEmail] = useState(false);
+  const [showNewContractDialog, setShowNewContractDialog] = useState(false);
   const navigate = useNavigate();
   const recordsPerPage = 20;
 
@@ -217,9 +219,15 @@ const Contracts = () => {
   return (
     <Layout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">{t("contracts.title")}</h1>
-          <p className="text-muted-foreground">{t("contracts.description")}</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">{t("contracts.title")}</h1>
+            <p className="text-muted-foreground">{t("contracts.description")}</p>
+          </div>
+          <Button onClick={() => setShowNewContractDialog(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            {t("contracts.newContract")}
+          </Button>
         </div>
 
         {/* Filters */}
@@ -452,6 +460,12 @@ const Contracts = () => {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        <NewContractDialog
+          open={showNewContractDialog}
+          onOpenChange={setShowNewContractDialog}
+          onSuccess={fetchContracts}
+        />
       </div>
     </Layout>
   );
