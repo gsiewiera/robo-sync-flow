@@ -151,7 +151,21 @@
     "createContract": "Create Contract",
     "created": "Contract created successfully",
     "createError": "Failed to create contract",
-    "duplicateNumber": "Contract number already exists. Please try again."
+    "duplicateNumber": "Contract number already exists. Please try again.",
+    "currency": "Currency",
+    "robots": "Robots",
+    "addRobot": "Add Robot",
+    "noRobotsAdded": "No robots added yet",
+    "unitPrice": "Unit Price",
+    "leaseMonths": "Lease Period",
+    "months": "months",
+    "monthlyPrice": "Monthly Price",
+    "monthly": "Monthly",
+    "month": "month",
+    "additionalItems": "Additional Items",
+    "addItem": "Add Item",
+    "noItemsAdded": "No items added yet",
+    "oneTimeCosts": "One-time Costs"
   },
   "invoices": {
     "title": "Invoices",

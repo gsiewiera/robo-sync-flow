@@ -151,7 +151,21 @@
     "createContract": "Utwórz kontrakt",
     "created": "Kontrakt został utworzony",
     "createError": "Nie udało się utworzyć kontraktu",
-    "duplicateNumber": "Numer kontraktu już istnieje. Spróbuj ponownie."
+    "duplicateNumber": "Numer kontraktu już istnieje. Spróbuj ponownie.",
+    "currency": "Waluta",
+    "robots": "Roboty",
+    "addRobot": "Dodaj robota",
+    "noRobotsAdded": "Nie dodano jeszcze robotów",
+    "unitPrice": "Cena jednostkowa",
+    "leaseMonths": "Okres leasingu",
+    "months": "miesięcy",
+    "monthlyPrice": "Cena miesięczna",
+    "monthly": "Miesięcznie",
+    "month": "mies.",
+    "additionalItems": "Dodatkowe pozycje",
+    "addItem": "Dodaj pozycję",
+    "noItemsAdded": "Nie dodano jeszcze pozycji",
+    "oneTimeCosts": "Koszty jednorazowe"
   },
   "invoices": {
     "title": "Faktury",
