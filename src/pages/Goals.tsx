@@ -61,11 +61,7 @@ interface UserOption {
 
 const GOAL_TYPES = [
   { value: "revenue", label: "Total Revenue" },
-  { value: "deals_won", label: "Deals Won" },
-  { value: "conversion_rate", label: "Conversion Rate" },
-  { value: "tasks_completed", label: "Tasks Completed" },
-  { value: "clients_acquired", label: "Clients Acquired" },
-  { value: "average_deal_size", label: "Average Deal Size" },
+  { value: "robots_delivered", label: "Robots Delivered" },
 ];
 
 const PERIOD_TYPES = [
