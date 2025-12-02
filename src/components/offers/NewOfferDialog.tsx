@@ -63,6 +63,24 @@ interface RobotSelection {
   warranty_price?: number;
 }
 
+interface ItemSelection {
+  id: string;
+  item_id: string;
+  item_name: string;
+  quantity: number;
+  unit_price: number;
+}
+
+interface Item {
+  id: string;
+  name: string;
+  description: string | null;
+  item_type: string;
+  price_net: number;
+  vat_rate: number;
+  is_active: boolean;
+}
+
 interface Client {
   id: string;
   name: string;
@@ -117,6 +135,8 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer, mode = "o
   const [leasePricing, setLeasePricing] = useState<LeasePricing[]>([]);
   const [availableLeaseMonths, setAvailableLeaseMonths] = useState<number[]>([]);
   const [robotSelections, setRobotSelections] = useState<RobotSelection[]>([]);
+  const [itemSelections, setItemSelections] = useState<ItemSelection[]>([]);
+  const [availableItems, setAvailableItems] = useState<Item[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [resellers, setResellers] = useState<any[]>([]);
 
@@ -136,6 +156,7 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer, mode = "o
       fetchClients();
       fetchPricing();
       fetchResellers();
+      fetchItems();
       if (offer) {
         loadOfferData();
       } else {
@@ -147,6 +168,7 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer, mode = "o
           stage: "leads",
         });
         setRobotSelections([]);
+        setItemSelections([]);
       }
     }
   }, [open, offer]);
@@ -186,6 +208,25 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer, mode = "o
     }
 
     setResellers(data || []);
+  };
+
+  const fetchItems = async () => {
+    const { data, error } = await supabase
+      .from("items")
+      .select("*")
+      .eq("is_active", true)
+      .order("name");
+
+    if (error) {
+      toast({
+        title: "Error loading items",
+        description: error.message,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setAvailableItems(data || []);
   };
 
   const loadOfferData = async () => {
@@ -241,6 +282,7 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer, mode = "o
     }));
 
     setRobotSelections(robotSels);
+    setItemSelections([]);
   };
 
   const fetchPricing = async () => {
@@ -349,6 +391,43 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer, mode = "o
     return 0;
   };
 
+  const addItemSelection = () => {
+    const newSelection: ItemSelection = {
+      id: Math.random().toString(),
+      item_id: "",
+      item_name: "",
+      quantity: 1,
+      unit_price: 0,
+    };
+    setItemSelections([...itemSelections, newSelection]);
+  };
+
+  const removeItemSelection = (id: string) => {
+    setItemSelections(itemSelections.filter((i) => i.id !== id));
+  };
+
+  const updateItemSelection = (id: string, updates: Partial<ItemSelection>) => {
+    setItemSelections(
+      itemSelections.map((i) => {
+        if (i.id === id) {
+          const updated = { ...i, ...updates };
+          
+          // Auto-fill price when item is selected
+          if (updates.item_id) {
+            const item = availableItems.find((ai) => ai.id === updates.item_id);
+            if (item) {
+              updated.item_name = item.name;
+              updated.unit_price = item.price_net;
+            }
+          }
+          
+          return updated;
+        }
+        return i;
+      })
+    );
+  };
+
   const calculateTotalPrice = () => {
     const robotTotal = robotSelections.reduce((sum, robot) => {
       let robotPrice = robot.price;
@@ -358,19 +437,24 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer, mode = "o
       return sum + robotPrice;
     }, 0);
 
+    const itemTotal = itemSelections.reduce((sum, item) => {
+      return sum + (item.quantity * item.unit_price);
+    }, 0);
+
     const prepaymentType = form.getValues("prepayment_type");
     const prepaymentValue = form.getValues("prepayment_value") || 0;
     
+    const total = robotTotal + itemTotal;
     let prepaymentAmount = 0;
     if (prepaymentType === "percent") {
-      prepaymentAmount = (robotTotal * prepaymentValue) / 100;
+      prepaymentAmount = (total * prepaymentValue) / 100;
     } else if (prepaymentType === "amount") {
       prepaymentAmount = prepaymentValue;
     }
 
     const initialPayment = form.getValues("initial_payment") || 0;
     
-    return robotTotal - prepaymentAmount - initialPayment;
+    return total - prepaymentAmount - initialPayment;
   };
 
   const createContractFromOffer = async (
@@ -554,7 +638,7 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer, mode = "o
 
         if (deleteError) throw deleteError;
 
-        // Create new offer items
+        // Create new offer items (robots)
         const offerItems = robotSelections.map((robot) => ({
           offer_id: offer.id,
           robot_model: robot.robot_model,
@@ -566,11 +650,24 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer, mode = "o
           warranty_price: robot.warranty_price || 0,
         }));
 
-        const { error: itemsError } = await supabase
-          .from("offer_items")
-          .insert(offerItems);
+        // Add other items
+        const otherItems = itemSelections.map((item) => ({
+          offer_id: offer.id,
+          robot_model: item.item_name,
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+          contract_type: "purchase" as const,
+        }));
 
-        if (itemsError) throw itemsError;
+        const allItems = [...offerItems, ...otherItems];
+
+        if (allItems.length > 0) {
+          const { error: itemsError } = await supabase
+            .from("offer_items")
+            .insert(allItems);
+
+          if (itemsError) throw itemsError;
+        }
 
         // Auto-create contract if stage changed to closed_won
         if (stageChangedToWon) {
@@ -598,7 +695,7 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer, mode = "o
 
         if (offerError) throw offerError;
 
-        // Create offer items
+        // Create offer items (robots)
         const offerItems = robotSelections.map((robot) => ({
           offer_id: newOffer.id,
           robot_model: robot.robot_model,
@@ -610,11 +707,24 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer, mode = "o
           warranty_price: robot.warranty_price || 0,
         }));
 
-        const { error: itemsError } = await supabase
-          .from("offer_items")
-          .insert(offerItems);
+        // Add other items
+        const otherItems = itemSelections.map((item) => ({
+          offer_id: newOffer.id,
+          robot_model: item.item_name,
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+          contract_type: "purchase" as const,
+        }));
 
-        if (itemsError) throw itemsError;
+        const allItems = [...offerItems, ...otherItems];
+
+        if (allItems.length > 0) {
+          const { error: itemsError } = await supabase
+            .from("offer_items")
+            .insert(allItems);
+
+          if (itemsError) throw itemsError;
+        }
 
         toast({
           title: "Offer created",
@@ -624,6 +734,7 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer, mode = "o
 
       form.reset();
       setRobotSelections([]);
+      setItemSelections([]);
       onSuccess?.();
       onOpenChange(false);
     } catch (error: any) {
@@ -717,6 +828,34 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer, mode = "o
                     </FormItem>
                   )}
                 />
+
+                {isEditMode && !isLeadMode && (
+                  <FormField
+                    control={form.control}
+                    name="stage"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Funnel Stage *</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="leads">Leads</SelectItem>
+                            <SelectItem value="qualified">Qualified</SelectItem>
+                            <SelectItem value="proposal_sent">Proposal Sent</SelectItem>
+                            <SelectItem value="negotiation">Negotiation</SelectItem>
+                            <SelectItem value="closed_won">Closed Won</SelectItem>
+                            <SelectItem value="closed_lost">Closed Lost</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
               </div>
 
               {/* Lead Source and Notes - Shown for lead mode */}
@@ -763,37 +902,6 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer, mode = "o
                             {...field}
                           />
                         </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              )}
-
-              {/* Stage - Shown only in edit mode */}
-              {isEditMode && !isLeadMode && (
-                <div className="grid grid-cols-3 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="stage"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Funnel Stage *</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="leads">Leads</SelectItem>
-                            <SelectItem value="qualified">Qualified</SelectItem>
-                            <SelectItem value="proposal_sent">Proposal Sent</SelectItem>
-                            <SelectItem value="negotiation">Negotiation</SelectItem>
-                            <SelectItem value="closed_won">Closed Won</SelectItem>
-                            <SelectItem value="closed_lost">Closed Lost</SelectItem>
-                          </SelectContent>
-                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -929,6 +1037,80 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer, mode = "o
                             updateRobotSelection(robot.id, { price: parseFloat(e.target.value) })
                           }
                         />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Other Items Section - Hidden for lead mode */}
+              {!isLeadMode && (
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-lg font-semibold">Other Items</h3>
+                    <Button type="button" onClick={addItemSelection} variant="outline" size="sm">
+                      Add Item
+                    </Button>
+                  </div>
+
+                  {itemSelections.map((item) => (
+                    <div key={item.id} className="border rounded-lg p-4 space-y-4">
+                      <div className="flex justify-between items-start">
+                        <h4 className="font-medium">Item Configuration</h4>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeItemSelection(item.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-4">
+                        <div>
+                          <FormLabel>Item *</FormLabel>
+                          <Select
+                            value={item.item_id}
+                            onValueChange={(value) =>
+                              updateItemSelection(item.id, { item_id: value })
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select item" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {availableItems.map((availItem) => (
+                                <SelectItem key={availItem.id} value={availItem.id}>
+                                  {availItem.name} ({availItem.item_type})
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div>
+                          <FormLabel>Quantity</FormLabel>
+                          <Input
+                            type="number"
+                            min="1"
+                            value={item.quantity}
+                            onChange={(e) =>
+                              updateItemSelection(item.id, { quantity: parseInt(e.target.value) || 1 })
+                            }
+                          />
+                        </div>
+
+                        <div>
+                          <FormLabel>Unit Price</FormLabel>
+                          <Input
+                            type="number"
+                            value={item.unit_price}
+                            onChange={(e) =>
+                              updateItemSelection(item.id, { unit_price: parseFloat(e.target.value) || 0 })
+                            }
+                          />
+                        </div>
                       </div>
                     </div>
                   ))}
