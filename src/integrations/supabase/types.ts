@@ -970,6 +970,7 @@ export type Database = {
       }
       offers: {
         Row: {
+          assigned_salesperson_id: string | null
           client_id: string
           created_at: string | null
           created_by: string | null
@@ -995,6 +996,7 @@ export type Database = {
           warranty_period: number | null
         }
         Insert: {
+          assigned_salesperson_id?: string | null
           client_id: string
           created_at?: string | null
           created_by?: string | null
@@ -1020,6 +1022,7 @@ export type Database = {
           warranty_period?: number | null
         }
         Update: {
+          assigned_salesperson_id?: string | null
           client_id?: string
           created_at?: string | null
           created_by?: string | null
@@ -1045,6 +1048,13 @@ export type Database = {
           warranty_period?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "offers_assigned_salesperson_id_fkey"
+            columns: ["assigned_salesperson_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "offers_client_id_fkey"
             columns: ["client_id"]

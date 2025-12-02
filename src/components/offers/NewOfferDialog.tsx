@@ -60,6 +60,7 @@ const formSchema = z.object({
   reseller_id: z.string().optional(),
   notes: z.string().optional(),
   lead_source: z.string().optional(),
+  assigned_salesperson_id: z.string().optional(),
 });
 
 interface RobotSelection {
@@ -150,6 +151,7 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer, mode = "o
   const [resellers, setResellers] = useState<any[]>([]);
   const [clientContacts, setClientContacts] = useState<ClientContact[]>([]);
   const [isNewClientDialogOpen, setIsNewClientDialogOpen] = useState(false);
+  const [salespeople, setSalespeople] = useState<{ id: string; full_name: string }[]>([]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -195,6 +197,7 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer, mode = "o
       fetchPricing();
       fetchResellers();
       fetchItems();
+      fetchSalespeople();
       if (offer) {
         loadOfferData();
       } else {
@@ -210,6 +213,20 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer, mode = "o
       }
     }
   }, [open, offer]);
+
+  const fetchSalespeople = async () => {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("id, full_name")
+      .order("full_name");
+
+    if (error) {
+      console.error("Error loading salespeople:", error);
+      return;
+    }
+
+    setSalespeople(data || []);
+  };
 
   const fetchClients = async () => {
     const { data, error } = await supabase
@@ -306,6 +323,7 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer, mode = "o
       reseller_id: (offer as any).reseller_id || "",
       notes: (offer as any).notes || "",
       lead_source: (offer as any).lead_source || "",
+      assigned_salesperson_id: (offer as any).assigned_salesperson_id || "",
     });
 
     // Populate robot selections
@@ -651,6 +669,7 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer, mode = "o
         reseller_id: values.reseller_id || null,
         notes: values.notes || null,
         lead_source: values.lead_source || null,
+        assigned_salesperson_id: values.assigned_salesperson_id || null,
       };
 
       if (isEditMode && offer) {
@@ -885,6 +904,35 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer, mode = "o
                           {resellers.map((reseller) => (
                             <SelectItem key={reseller.id} value={reseller.id}>
                               {reseller.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="assigned_salesperson_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Assigned Salesperson</FormLabel>
+                      <Select 
+                        onValueChange={(value) => field.onChange(value === "none" ? undefined : value)} 
+                        value={field.value || "none"}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select salesperson" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="none">Not Assigned</SelectItem>
+                          {salespeople.map((person) => (
+                            <SelectItem key={person.id} value={person.id}>
+                              {person.full_name}
                             </SelectItem>
                           ))}
                         </SelectContent>
