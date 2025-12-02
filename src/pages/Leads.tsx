@@ -63,6 +63,7 @@ const Leads = () => {
     next_action_date: undefined as Date | undefined,
     follow_up_notes: "",
     last_contact_date: undefined as Date | undefined,
+    assigned_salesperson_id: "" as string | null,
   });
   const [stats, setStats] = useState({
     totalLeads: 0,
@@ -290,6 +291,7 @@ const Leads = () => {
       next_action_date: lead.next_action_date ? new Date(lead.next_action_date) : undefined,
       follow_up_notes: lead.follow_up_notes || "",
       last_contact_date: lead.last_contact_date ? new Date(lead.last_contact_date) : undefined,
+      assigned_salesperson_id: lead.assigned_salesperson_id || null,
     });
     setIsDialogOpen(true);
   };
@@ -305,6 +307,7 @@ const Leads = () => {
           next_action_date: editForm.next_action_date ? format(editForm.next_action_date, "yyyy-MM-dd") : null,
           follow_up_notes: editForm.follow_up_notes,
           last_contact_date: editForm.last_contact_date ? format(editForm.last_contact_date, "yyyy-MM-dd") : null,
+          assigned_salesperson_id: editForm.assigned_salesperson_id || null,
         })
         .eq("id", selectedLead.id);
 
@@ -615,6 +618,26 @@ const Leads = () => {
                     <SelectItem value="nurturing">Nurturing</SelectItem>
                     <SelectItem value="follow_up_scheduled">Follow-up Scheduled</SelectItem>
                     <SelectItem value="on_hold">On Hold</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Assigned Salesperson</Label>
+                <Select
+                  value={editForm.assigned_salesperson_id || "none"}
+                  onValueChange={(value) => setEditForm({ ...editForm, assigned_salesperson_id: value === "none" ? null : value })}
+                >
+                  <SelectTrigger className="bg-background">
+                    <SelectValue placeholder="Select salesperson" />
+                  </SelectTrigger>
+                  <SelectContent className="z-50 bg-background">
+                    <SelectItem value="none">No salesperson assigned</SelectItem>
+                    {salespeople.map((sp) => (
+                      <SelectItem key={sp.id} value={sp.id}>
+                        {sp.full_name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
