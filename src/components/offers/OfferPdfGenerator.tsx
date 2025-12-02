@@ -80,13 +80,26 @@ export const OfferPdfGenerator = ({
   }, [offerId]);
 
   const fetchVersions = async () => {
+    console.log("Fetching versions for offer:", offerId);
     const { data, error } = await supabase
       .from("offer_versions")
       .select("*, profiles:generated_by(full_name, email)")
       .eq("offer_id", offerId)
       .order("version_number", { ascending: false });
 
-    if (!error && data) {
+    console.log("Fetch versions result:", { data, error });
+    
+    if (error) {
+      console.error("Error fetching versions:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load PDF versions",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (data) {
       setVersions(data as any);
     }
   };
