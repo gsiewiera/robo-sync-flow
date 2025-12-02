@@ -26,9 +26,10 @@ export const FunnelVisualization = ({ stages }: FunnelVisualizationProps) => {
   };
 
   return (
-    <div className="space-y-2 py-4">
+    <div className="space-y-4 py-6">
       {stages.map((stage, index) => {
-        const widthPercentage = (stage.count / maxCount) * 100;
+        // Calculate width with better distribution - narrower funnel effect
+        const widthPercentage = 100 - (index * 8);
         const conversionRate = calculateConversionRate(index);
         
         return (
@@ -37,7 +38,7 @@ export const FunnelVisualization = ({ stages }: FunnelVisualizationProps) => {
             <div 
               className="transition-all duration-500 hover:scale-[1.02] cursor-pointer group"
               style={{
-                width: `${Math.max(widthPercentage, 25)}%`,
+                width: `${Math.max(widthPercentage, 60)}%`,
                 margin: '0 auto',
               }}
             >
@@ -118,7 +119,7 @@ export const FunnelVisualization = ({ stages }: FunnelVisualizationProps) => {
 
             {/* Animated connecting arrow */}
             {index < stages.length - 1 && (
-              <div className="h-8 flex items-center justify-center relative animate-fade-in" style={{ animationDelay: `${index * 100 + 50}ms` }}>
+              <div className="h-10 flex items-center justify-center relative animate-fade-in" style={{ animationDelay: `${index * 100 + 50}ms` }}>
                 <div className="absolute inset-0 flex items-center justify-center">
                   <ChevronDown 
                     className="w-6 h-6 animate-bounce"
