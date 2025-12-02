@@ -24,7 +24,8 @@ import {
   UserPlus,
   Shield,
   Trophy,
-  Target
+  Target,
+  UserCog
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -74,6 +75,7 @@ const allNavItems: NavItem[] = [
   { icon: DollarSign, label: "Pricing", translationKey: "nav.pricing", path: "/pricing", roles: ["admin", "manager"] },
   { icon: Trophy, label: "Leaderboard", translationKey: "nav.leaderboard", path: "/leaderboard", roles: ["admin", "manager"] },
   { icon: Target, label: "Goals", translationKey: "nav.goals", path: "/goals", roles: ["admin", "manager"] },
+  { icon: UserCog, label: "Salesperson Panel", translationKey: "nav.salespersonPanel", path: "/admin/salesperson-panel", roles: ["admin"] },
   { icon: Shield, label: "Admin", translationKey: "nav.admin", path: "/admin/users", roles: ["admin"] },
 ];
 

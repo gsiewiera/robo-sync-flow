@@ -32,6 +32,7 @@ import AdminUsers from "./pages/AdminUsers";
 import UserProfile from "./pages/UserProfile";
 import Leaderboard from "./pages/Leaderboard";
 import Goals from "./pages/Goals";
+import SalespersonPanel from "./pages/SalespersonPanel";
 import Settings from "./pages/Settings";
 import ActivityReport from "./pages/reports/ActivityReport";
 import SalesReport from "./pages/reports/SalesReport";
@@ -103,6 +104,7 @@ const App = () => (
           <Route path="/admin/users/:id" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
           <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
           <Route path="/goals" element={<ProtectedRoute><Goals /></ProtectedRoute>} />
+          <Route path="/admin/salesperson-panel" element={<ProtectedRoute><SalespersonPanel /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
           <Route path="/reports/activity" element={<ProtectedRoute><ActivityReport /></ProtectedRoute>} />
           <Route path="/reports/sales" element={<ProtectedRoute><SalesReport /></ProtectedRoute>} />
