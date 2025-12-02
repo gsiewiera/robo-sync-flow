@@ -74,7 +74,8 @@ export function SearchableFilterDropdown({
                 <Checkbox
                   id={`filter-${option.id}`}
                   checked={selectedValues.includes(option.id)}
-                  onCheckedChange={() => onToggle(option.id)}
+                  onCheckedChange={() => {}}
+                  onClick={(e) => e.stopPropagation()}
                 />
                 <label
                   htmlFor={`filter-${option.id}`}
