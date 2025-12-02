@@ -259,8 +259,17 @@ export const OfferPdfGenerator = ({
       // Convert PDF to blob
       const pdfBlob = doc.output("blob");
       
-      // Get next version number
-      const nextVersion = versions.length > 0 ? versions[0].version_number + 1 : 1;
+      // Get next version number directly from database to avoid race conditions
+      const { data: existingVersions } = await supabase
+        .from("offer_versions")
+        .select("version_number")
+        .eq("offer_id", offerId)
+        .order("version_number", { ascending: false })
+        .limit(1);
+      
+      const nextVersion = existingVersions && existingVersions.length > 0 
+        ? existingVersions[0].version_number + 1 
+        : 1;
       const fileName = `${offerNumber}_v${nextVersion}.pdf`;
       const filePath = `${offerId}/${fileName}`;
 
