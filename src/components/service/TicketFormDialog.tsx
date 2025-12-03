@@ -343,14 +343,17 @@ export function TicketFormDialog({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Assign To</FormLabel>
-                  <Select value={field.value} onValueChange={field.onChange}>
+                  <Select 
+                    value={field.value || "unassigned"} 
+                    onValueChange={(val) => field.onChange(val === "unassigned" ? "" : val)}
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select assignee..." />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="">Unassigned</SelectItem>
+                      <SelectItem value="unassigned">Unassigned</SelectItem>
                       {profiles.map((profile) => (
                         <SelectItem key={profile.id} value={profile.id}>
                           {profile.full_name}
