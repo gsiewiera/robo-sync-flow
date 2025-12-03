@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Card } from '@/components/ui/card';
-import { MapPin, AlertCircle, Loader2, Navigation, Clock, Route, Home, Building2 } from 'lucide-react';
+import { MapPin, AlertCircle, Loader2, Navigation, Clock, Route, Home, Building2, Banknote } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useTranslation } from 'react-i18next';
@@ -52,6 +52,24 @@ export const AddressMap = ({ addresses }: AddressMapProps) => {
   const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null);
   const [isCalculatingRoute, setIsCalculatingRoute] = useState(false);
   const [destinationCoords, setDestinationCoords] = useState<[number, number] | null>(null);
+  const [kmRate, setKmRate] = useState<number>(1.50); // default value
+
+  // Fetch km rate from database
+  useEffect(() => {
+    const fetchKmRate = async () => {
+      const { data, error } = await supabase
+        .from('system_numeric_settings')
+        .select('setting_value')
+        .eq('setting_key', 'km_rate')
+        .single();
+
+      if (!error && data) {
+        setKmRate(Number(data.setting_value));
+      }
+    };
+
+    fetchKmRate();
+  }, []);
 
   // Fetch origin options (user's home address + company addresses)
   useEffect(() => {
@@ -485,13 +503,15 @@ export const AddressMap = ({ addresses }: AddressMapProps) => {
                   <Route className="w-4 h-4" />
                   <span className="font-medium text-foreground">{formatDistance(routeInfo.distance)}</span>
                 </div>
+                <div className="flex items-center gap-1.5 text-muted-foreground">
+                  <Banknote className="w-4 h-4" />
+                  <span className="font-medium text-foreground">
+                    {((routeInfo.distance / 1000) * kmRate).toFixed(2)} PLN
+                  </span>
+                  <span className="text-xs">({kmRate.toFixed(2)}/km)</span>
+                </div>
               </div>
             ) : null}
-
-            {/* Space for costs - to be added later */}
-            <div className="flex items-center gap-4 text-sm ml-auto">
-              {/* Costs will be added here */}
-            </div>
           </div>
         </div>
       )}
