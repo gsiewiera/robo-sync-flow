@@ -218,7 +218,7 @@ export const NoteFormSheet = ({
 
         <ScrollArea className="max-h-[calc(90vh-120px)] px-6">
           <form onSubmit={handleSubmit} className="space-y-4 pb-6">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-4 gap-4">
               <div className="space-y-2">
                 <Label>{t("notes.client", "Client")}</Label>
                 <Select
@@ -250,9 +250,7 @@ export const NoteFormSheet = ({
                   placeholder={t("notes.contactPersonPlaceholder", "Enter contact person")}
                 />
               </div>
-            </div>
 
-            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>{t("notes.offer", "Offer")}</Label>
                 <Select
