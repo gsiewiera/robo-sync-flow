@@ -100,7 +100,7 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
   const [selectedClientTypes, setSelectedClientTypes] = useState<string[]>([]);
   const [selectedMarkets, setSelectedMarkets] = useState<string[]>([]);
   const [selectedSegments, setSelectedSegments] = useState<string[]>([]);
-  const [selectedClientSizes, setSelectedClientSizes] = useState<string[]>([]);
+  const [selectedClientSize, setSelectedClientSize] = useState<string>("");
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -160,7 +160,7 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
       setSelectedClientTypes([]);
       setSelectedMarkets([]);
       setSelectedSegments([]);
-      setSelectedClientSizes([]);
+      setSelectedClientSize("");
       form.reset({
         name: "",
         nip: "",
@@ -213,7 +213,7 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
     if (typesRes.data) setSelectedClientTypes(typesRes.data.map(t => t.client_type_id));
     if (marketsRes.data) setSelectedMarkets(marketsRes.data.map(m => m.market_id));
     if (segmentsRes.data) setSelectedSegments(segmentsRes.data.map(s => s.segment_id));
-    if (sizesRes.data) setSelectedClientSizes(sizesRes.data.map(s => s.size_id));
+    if (sizesRes.data && sizesRes.data.length > 0) setSelectedClientSize(sizesRes.data[0].size_id);
   };
 
   const fetchSalespeople = async () => {
@@ -295,12 +295,8 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
     );
   };
 
-  const toggleClientSize = (sizeId: string) => {
-    setSelectedClientSizes(prev =>
-      prev.includes(sizeId)
-        ? prev.filter(id => id !== sizeId)
-        : [...prev, sizeId]
-    );
+  const handleClientSizeChange = (sizeId: string) => {
+    setSelectedClientSize(sizeId === "__none__" ? "" : sizeId);
   };
 
   const saveClientClassifications = async (clientId: string) => {
@@ -338,10 +334,10 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
       );
     }
     
-    if (selectedClientSizes.length > 0) {
+    if (selectedClientSize) {
       insertPromises.push(
         supabase.from("client_sizes").insert(
-          selectedClientSizes.map(sizeId => ({ client_id: clientId, size_id: sizeId }))
+          { client_id: clientId, size_id: selectedClientSize }
         )
       );
     }
@@ -411,7 +407,7 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
         setSelectedClientTypes([]);
         setSelectedMarkets([]);
         setSelectedSegments([]);
-        setSelectedClientSizes([]);
+        setSelectedClientSize("");
         onSuccess?.(client.id);
         onOpenChange(false);
       } else {
@@ -453,7 +449,7 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
         setSelectedClientTypes([]);
         setSelectedMarkets([]);
         setSelectedSegments([]);
-        setSelectedClientSizes([]);
+        setSelectedClientSize("");
         onSuccess?.(newClient?.id);
         onOpenChange(false);
       }
@@ -723,13 +719,25 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
                     placeholder="Select segments"
                   />
 
-                  <MultiSelectField
-                    label="Client Size"
-                    items={clientSizes}
-                    selectedIds={selectedClientSizes}
-                    onToggle={toggleClientSize}
-                    placeholder="Select client sizes"
-                  />
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium leading-none">Client Size</label>
+                    <Select 
+                      onValueChange={handleClientSizeChange} 
+                      value={selectedClientSize || "__none__"}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select client size" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">Not set</SelectItem>
+                        {clientSizes.map((size) => (
+                          <SelectItem key={size.id} value={size.id}>
+                            {size.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </div>
 
