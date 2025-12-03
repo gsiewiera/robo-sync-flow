@@ -7,6 +7,7 @@ import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { ArrowUpDown, ArrowUp, ArrowDown, Eye, Search, X } from "lucide-react";
+import { ColumnVisibilityToggle, ColumnConfig } from "@/components/ui/column-visibility-toggle";
 import {
   Table,
   TableBody,
@@ -55,7 +56,29 @@ const Service = () => {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
-  const recordsPerPage = 20;
+  const recordsPerPage = 30;
+
+  const columns: ColumnConfig[] = [
+    { key: "ticket_number", label: "Ticket Number", defaultVisible: true },
+    { key: "title", label: "Title", defaultVisible: true },
+    { key: "client", label: "Client", defaultVisible: true },
+    { key: "robot", label: "Robot", defaultVisible: true },
+    { key: "status", label: "Status", defaultVisible: true },
+    { key: "priority", label: "Priority", defaultVisible: true },
+    { key: "created_at", label: "Created", defaultVisible: false },
+  ];
+
+  const [visibleColumns, setVisibleColumns] = useState<string[]>(
+    columns.filter((col) => col.defaultVisible).map((col) => col.key)
+  );
+
+  const toggleColumn = (columnKey: string) => {
+    setVisibleColumns((prev) =>
+      prev.includes(columnKey)
+        ? prev.filter((key) => key !== columnKey)
+        : [...prev, columnKey]
+    );
+  };
 
   useEffect(() => {
     fetchTickets();
@@ -126,65 +149,86 @@ const Service = () => {
             <h1 className="text-3xl font-bold text-foreground">Service Tickets</h1>
             <p className="text-muted-foreground">Manage service requests and interventions</p>
           </div>
-          <div className="relative w-80">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search by ticket number or client..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-10"
+          <div className="flex items-center gap-2">
+            <div className="relative w-80">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by ticket number or client..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 pr-10"
+              />
+              {searchQuery && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0"
+                  onClick={() => setSearchQuery("")}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+            <ColumnVisibilityToggle
+              columns={columns}
+              visibleColumns={visibleColumns}
+              onToggleColumn={toggleColumn}
             />
-            {searchQuery && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0"
-                onClick={() => setSearchQuery("")}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            )}
           </div>
         </div>
 
         <Card>
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleSort("ticket_number")}
-                    className="h-8 px-2 -ml-2 font-medium hover:bg-transparent"
-                  >
-                    Ticket Number
-                    {getSortIcon("ticket_number")}
-                  </Button>
-                </TableHead>
-                <TableHead>Title</TableHead>
-                <TableHead>Client</TableHead>
-                <TableHead>Robot</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Priority</TableHead>
-                <TableHead>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleSort("created_at")}
-                    className="h-8 px-2 -ml-2 font-medium hover:bg-transparent"
-                  >
-                    Created
-                    {getSortIcon("created_at")}
-                  </Button>
-                </TableHead>
-                <TableHead className="w-20">Actions</TableHead>
+              <TableRow className="h-9">
+                {visibleColumns.includes("ticket_number") && (
+                  <TableHead className="py-1.5">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleSort("ticket_number")}
+                      className="h-7 px-2 -ml-2 text-xs font-medium hover:bg-transparent"
+                    >
+                      Ticket Number
+                      {getSortIcon("ticket_number")}
+                    </Button>
+                  </TableHead>
+                )}
+                {visibleColumns.includes("title") && (
+                  <TableHead className="py-1.5 text-xs">Title</TableHead>
+                )}
+                {visibleColumns.includes("client") && (
+                  <TableHead className="py-1.5 text-xs">Client</TableHead>
+                )}
+                {visibleColumns.includes("robot") && (
+                  <TableHead className="py-1.5 text-xs">Robot</TableHead>
+                )}
+                {visibleColumns.includes("status") && (
+                  <TableHead className="py-1.5 text-xs">Status</TableHead>
+                )}
+                {visibleColumns.includes("priority") && (
+                  <TableHead className="py-1.5 text-xs">Priority</TableHead>
+                )}
+                {visibleColumns.includes("created_at") && (
+                  <TableHead className="py-1.5">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleSort("created_at")}
+                      className="h-7 px-2 -ml-2 text-xs font-medium hover:bg-transparent"
+                    >
+                      Created
+                      {getSortIcon("created_at")}
+                    </Button>
+                  </TableHead>
+                )}
+                <TableHead className="w-16 py-1.5 text-xs">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {currentRecords.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={visibleColumns.length + 1} className="text-center py-8 text-muted-foreground text-sm">
                     {searchQuery ? "No tickets matching your search" : "No service tickets found"}
                   </TableCell>
                 </TableRow>
@@ -192,34 +236,48 @@ const Service = () => {
                 currentRecords.map((ticket) => (
                   <TableRow 
                     key={ticket.id} 
-                    className="h-12 cursor-pointer hover:bg-muted/50"
+                    className="h-9 cursor-pointer hover:bg-muted/50"
                     onClick={() => navigate(`/service/${ticket.id}`)}
                   >
-                    <TableCell className="font-medium">{ticket.ticket_number}</TableCell>
-                    <TableCell>{ticket.title}</TableCell>
-                    <TableCell>{ticket.clients?.name || "-"}</TableCell>
-                    <TableCell>{ticket.robots?.serial_number || "-"}</TableCell>
-                    <TableCell>
-                      <Badge className={statusColors[ticket.status]}>
-                        {ticket.status.replace("_", " ")}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={priorityColors[ticket.priority]}>
-                        {ticket.priority}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {new Date(ticket.created_at).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell onClick={(e) => e.stopPropagation()}>
+                    {visibleColumns.includes("ticket_number") && (
+                      <TableCell className="py-1.5 text-sm font-medium">{ticket.ticket_number}</TableCell>
+                    )}
+                    {visibleColumns.includes("title") && (
+                      <TableCell className="py-1.5 text-sm">{ticket.title}</TableCell>
+                    )}
+                    {visibleColumns.includes("client") && (
+                      <TableCell className="py-1.5 text-sm">{ticket.clients?.name || "-"}</TableCell>
+                    )}
+                    {visibleColumns.includes("robot") && (
+                      <TableCell className="py-1.5 text-sm">{ticket.robots?.serial_number || "-"}</TableCell>
+                    )}
+                    {visibleColumns.includes("status") && (
+                      <TableCell className="py-1.5">
+                        <Badge className={`${statusColors[ticket.status]} text-xs px-1.5 py-0`}>
+                          {ticket.status.replace("_", " ")}
+                        </Badge>
+                      </TableCell>
+                    )}
+                    {visibleColumns.includes("priority") && (
+                      <TableCell className="py-1.5">
+                        <Badge className={`${priorityColors[ticket.priority]} text-xs px-1.5 py-0`}>
+                          {ticket.priority}
+                        </Badge>
+                      </TableCell>
+                    )}
+                    {visibleColumns.includes("created_at") && (
+                      <TableCell className="py-1.5 text-sm">
+                        {new Date(ticket.created_at).toLocaleDateString()}
+                      </TableCell>
+                    )}
+                    <TableCell className="py-1.5" onClick={(e) => e.stopPropagation()}>
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-8 w-8 p-0"
+                        className="h-6 w-6 p-0"
                         onClick={() => navigate(`/service/${ticket.id}`)}
                       >
-                        <Eye className="h-4 w-4" />
+                        <Eye className="h-3.5 w-3.5" />
                       </Button>
                     </TableCell>
                   </TableRow>
