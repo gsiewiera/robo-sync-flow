@@ -211,9 +211,21 @@ export const NoteFormSheet = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] p-0">
         <DialogHeader className="px-6 pt-6">
-          <DialogTitle>
-            {note ? t("notes.editNote", "Edit Note") : t("notes.addNote", "Add Note")}
-          </DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle>
+              {note ? t("notes.editNote", "Edit Note") : t("notes.addNote", "Add Note")}
+            </DialogTitle>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleCreateTask}
+              disabled={!formData.next_step}
+            >
+              <ListTodo className="h-4 w-4 mr-2" />
+              {t("notes.createTask", "Create Task")}
+            </Button>
+          </div>
         </DialogHeader>
 
         <ScrollArea className="max-h-[calc(90vh-120px)] px-6">
@@ -428,29 +440,17 @@ export const NoteFormSheet = ({
               />
             </div>
 
-            <div className="flex justify-between pt-4 border-t">
+            <div className="flex justify-end gap-2 pt-4 border-t">
               <Button
                 type="button"
                 variant="outline"
-                onClick={handleCreateTask}
-                disabled={!formData.next_step}
+                onClick={() => onOpenChange(false)}
               >
-                <ListTodo className="h-4 w-4 mr-2" />
-                {t("notes.createTask", "Create Task")}
+                {t("common.cancel")}
               </Button>
-
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => onOpenChange(false)}
-                >
-                  {t("common.cancel")}
-                </Button>
-                <Button type="submit" disabled={loading}>
-                  {loading ? t("common.saving", "Saving...") : t("common.save")}
-                </Button>
-              </div>
+              <Button type="submit" disabled={loading}>
+                {loading ? t("common.saving", "Saving...") : t("common.save")}
+              </Button>
             </div>
           </form>
         </ScrollArea>
