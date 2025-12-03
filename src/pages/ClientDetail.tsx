@@ -123,11 +123,18 @@ interface Task {
 
 interface Note {
   id: string;
+  client_id: string | null;
+  offer_id: string | null;
   note_date: string;
   contact_type: string;
   contact_person: string | null;
   note: string | null;
   key_points: string | null;
+  needs: string | null;
+  commitments_us: string | null;
+  commitments_client: string | null;
+  risks: string | null;
+  next_step: string | null;
   priority: string;
   salesperson_id: string | null;
   profiles?: { full_name: string } | null;
@@ -232,6 +239,7 @@ const ClientDetail = () => {
   const [addressToDelete, setAddressToDelete] = useState<Address | null>(null);
   const [isMapDialogOpen, setIsMapDialogOpen] = useState(false);
   const [isNoteFormOpen, setIsNoteFormOpen] = useState(false);
+  const [editingNote, setEditingNote] = useState<Note | null>(null);
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
   const [isOfferDialogOpen, setIsOfferDialogOpen] = useState(false);
   const [isContractDialogOpen, setIsContractDialogOpen] = useState(false);
@@ -879,7 +887,7 @@ const ClientDetail = () => {
 
           <TabsContent value="notes" className="space-y-4">
             <div className="flex justify-end">
-              <Button onClick={() => setIsNoteFormOpen(true)} size="sm">
+              <Button onClick={() => { setEditingNote(null); setIsNoteFormOpen(true); }} size="sm">
                 <Plus className="w-4 h-4 mr-2" />
                 Add Note
               </Button>
@@ -888,7 +896,7 @@ const ClientDetail = () => {
               <Card
                 key={note.id}
                 className="p-4 hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => navigate(`/notes?noteId=${note.id}`)}
+                onClick={() => { setEditingNote(note); setIsNoteFormOpen(true); }}
               >
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
@@ -1511,11 +1519,15 @@ const ClientDetail = () => {
       {client && (
         <NoteFormSheet
           open={isNoteFormOpen}
-          onOpenChange={setIsNoteFormOpen}
-          note={null}
+          onOpenChange={(open) => {
+            setIsNoteFormOpen(open);
+            if (!open) setEditingNote(null);
+          }}
+          note={editingNote}
           onSuccess={() => {
             fetchClientData();
             setIsNoteFormOpen(false);
+            setEditingNote(null);
           }}
           clients={[{ id: client.id, name: client.name }]}
           salespeople={salespeople}
