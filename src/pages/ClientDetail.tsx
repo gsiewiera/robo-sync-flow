@@ -257,6 +257,11 @@ const ClientDetail = () => {
   const [salespeople, setSalespeople] = useState<{ id: string; full_name: string }[]>([]);
   const [tickets, setTickets] = useState<ServiceTicket[]>([]);
   const [isTicketFormOpen, setIsTicketFormOpen] = useState(false);
+  
+  // Classification names
+  const [clientTypeNames, setClientTypeNames] = useState<string[]>([]);
+  const [marketNames, setMarketNames] = useState<string[]>([]);
+  const [segmentNames, setSegmentNames] = useState<string[]>([]);
 
   useEffect(() => {
     if (id) {
@@ -266,8 +271,38 @@ const ClientDetail = () => {
       fetchAddresses();
       fetchSalespeople();
       fetchTickets();
+      fetchClientClassifications();
     }
   }, [id]);
+
+  const fetchClientClassifications = async () => {
+    if (!id) return;
+    
+    const [typesRes, marketsRes, segmentsRes] = await Promise.all([
+      supabase
+        .from("client_client_types")
+        .select("client_type_id, client_type_dictionary(name)")
+        .eq("client_id", id),
+      supabase
+        .from("client_markets")
+        .select("market_id, market_dictionary(name)")
+        .eq("client_id", id),
+      supabase
+        .from("client_segments")
+        .select("segment_id, segment_dictionary(name)")
+        .eq("client_id", id),
+    ]);
+    
+    if (typesRes.data) {
+      setClientTypeNames(typesRes.data.map((t: any) => t.client_type_dictionary?.name).filter(Boolean));
+    }
+    if (marketsRes.data) {
+      setMarketNames(marketsRes.data.map((m: any) => m.market_dictionary?.name).filter(Boolean));
+    }
+    if (segmentsRes.data) {
+      setSegmentNames(segmentsRes.data.map((s: any) => s.segment_dictionary?.name).filter(Boolean));
+    }
+  };
 
   const checkAdminRole = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -734,18 +769,42 @@ const ClientDetail = () => {
           )}
 
           {/* Classification Badges Row */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-6">
             <div className="bg-primary/5 rounded-lg p-3 border border-primary/10">
               <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Client Type</p>
-              <p className="font-semibold text-sm">{client.client_type || <span className="text-muted-foreground italic font-normal">Not set</span>}</p>
+              <div className="flex flex-wrap gap-1">
+                {clientTypeNames.length > 0 ? (
+                  clientTypeNames.map((name, i) => (
+                    <Badge key={i} variant="secondary" className="text-xs">{name}</Badge>
+                  ))
+                ) : (
+                  <span className="text-muted-foreground italic font-normal text-sm">Not set</span>
+                )}
+              </div>
             </div>
             <div className="bg-blue-500/5 rounded-lg p-3 border border-blue-500/10">
               <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Market</p>
-              <p className="font-semibold text-sm">{client.market || <span className="text-muted-foreground italic font-normal">Not set</span>}</p>
+              <div className="flex flex-wrap gap-1">
+                {marketNames.length > 0 ? (
+                  marketNames.map((name, i) => (
+                    <Badge key={i} variant="secondary" className="text-xs">{name}</Badge>
+                  ))
+                ) : (
+                  <span className="text-muted-foreground italic font-normal text-sm">Not set</span>
+                )}
+              </div>
             </div>
             <div className="bg-emerald-500/5 rounded-lg p-3 border border-emerald-500/10">
               <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Segment</p>
-              <p className="font-semibold text-sm">{client.segment || <span className="text-muted-foreground italic font-normal">Not set</span>}</p>
+              <div className="flex flex-wrap gap-1">
+                {segmentNames.length > 0 ? (
+                  segmentNames.map((name, i) => (
+                    <Badge key={i} variant="secondary" className="text-xs">{name}</Badge>
+                  ))
+                ) : (
+                  <span className="text-muted-foreground italic font-normal text-sm">Not set</span>
+                )}
+              </div>
             </div>
             {client.nip && (
               <div className="bg-amber-500/5 rounded-lg p-3 border border-amber-500/10">
@@ -1505,7 +1564,10 @@ const ClientDetail = () => {
       <ClientFormDialog
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
-        onSuccess={fetchClientData}
+        onSuccess={() => {
+          fetchClientData();
+          fetchClientClassifications();
+        }}
         client={client}
       />
 

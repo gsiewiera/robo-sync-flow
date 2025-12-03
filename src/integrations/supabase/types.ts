@@ -127,6 +127,42 @@ export type Database = {
         }
         Relationships: []
       }
+      client_client_types: {
+        Row: {
+          client_id: string
+          client_type_id: string
+          created_at: string | null
+          id: string
+        }
+        Insert: {
+          client_id: string
+          client_type_id: string
+          created_at?: string | null
+          id?: string
+        }
+        Update: {
+          client_id?: string
+          client_type_id?: string
+          created_at?: string | null
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_client_types_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_client_types_client_type_id_fkey"
+            columns: ["client_type_id"]
+            isOneToOne: false
+            referencedRelation: "client_type_dictionary"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_contacts: {
         Row: {
           client_id: string
@@ -221,6 +257,78 @@ export type Database = {
           },
         ]
       }
+      client_markets: {
+        Row: {
+          client_id: string
+          created_at: string | null
+          id: string
+          market_id: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string | null
+          id?: string
+          market_id: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string | null
+          id?: string
+          market_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_markets_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_markets_market_id_fkey"
+            columns: ["market_id"]
+            isOneToOne: false
+            referencedRelation: "market_dictionary"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_segments: {
+        Row: {
+          client_id: string
+          created_at: string | null
+          id: string
+          segment_id: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string | null
+          id?: string
+          segment_id: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string | null
+          id?: string
+          segment_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_segments_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_segments_segment_id_fkey"
+            columns: ["segment_id"]
+            isOneToOne: false
+            referencedRelation: "segment_dictionary"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_tags: {
         Row: {
           category_id: string | null
@@ -255,6 +363,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      client_type_dictionary: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
       }
       clients: {
         Row: {
@@ -933,6 +1059,24 @@ export type Database = {
           created_at?: string | null
           id?: string
           manufacturer_name?: string
+        }
+        Relationships: []
+      }
+      market_dictionary: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
         }
         Relationships: []
       }
@@ -1997,6 +2141,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      segment_dictionary: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
       }
       service_ticket_documents: {
         Row: {

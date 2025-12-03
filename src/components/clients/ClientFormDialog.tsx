@@ -24,7 +24,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { X } from "lucide-react";
+import { X, ChevronDown } from "lucide-react";
 import {
   Popover,
   PopoverContent,
@@ -52,11 +52,6 @@ const formSchema = z.object({
   general_phone: z.string().trim().max(50, "Phone must be less than 50 characters").optional(),
   website_url: z.string().trim().url("Invalid URL").max(500, "URL must be less than 500 characters").optional().or(z.literal("")),
   
-  // Classification
-  client_type: z.string().trim().max(100, "Client type must be less than 100 characters").optional(),
-  market: z.string().trim().max(100, "Market must be less than 100 characters").optional(),
-  segment: z.string().trim().max(100, "Segment must be less than 100 characters").optional(),
-  
   // Contact person
   primary_contact_name: z.string().trim().max(255, "Name must be less than 255 characters").optional(),
   primary_contact_email: z.string().trim().email("Invalid email address").max(255, "Email must be less than 255 characters").optional().or(z.literal("")),
@@ -74,6 +69,11 @@ const formSchema = z.object({
   assigned_salesperson_id: z.string().optional(),
 });
 
+interface DictionaryItem {
+  id: string;
+  name: string;
+}
+
 interface ClientFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -89,6 +89,16 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [resellers, setResellers] = useState<any[]>([]);
   const [salespeople, setSalespeople] = useState<{ id: string; full_name: string }[]>([]);
+  
+  // Dictionary data
+  const [clientTypes, setClientTypes] = useState<DictionaryItem[]>([]);
+  const [markets, setMarkets] = useState<DictionaryItem[]>([]);
+  const [segments, setSegments] = useState<DictionaryItem[]>([]);
+  
+  // Selected values for multi-select
+  const [selectedClientTypes, setSelectedClientTypes] = useState<string[]>([]);
+  const [selectedMarkets, setSelectedMarkets] = useState<string[]>([]);
+  const [selectedSegments, setSelectedSegments] = useState<string[]>([]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -102,9 +112,6 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
       general_email: "",
       general_phone: "",
       website_url: "",
-      client_type: "",
-      market: "",
-      segment: "",
       primary_contact_name: "",
       primary_contact_email: "",
       primary_contact_phone: "",
@@ -121,8 +128,10 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
       fetchTags();
       fetchResellers();
       fetchSalespeople();
+      fetchDictionaries();
       if (client) {
         fetchClientTags();
+        fetchClientClassifications();
         form.reset({
           name: client.name || "",
           nip: client.nip || "",
@@ -133,9 +142,6 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
           general_email: client.general_email || "",
           general_phone: client.general_phone || "",
           website_url: client.website_url || "",
-          client_type: client.client_type || "",
-          market: client.market || "",
-          segment: client.segment || "",
           primary_contact_name: client.primary_contact_name || "",
           primary_contact_email: client.primary_contact_email || "",
           primary_contact_phone: client.primary_contact_phone || "",
@@ -149,6 +155,9 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
       });
     } else {
       setSelectedTags([]);
+      setSelectedClientTypes([]);
+      setSelectedMarkets([]);
+      setSelectedSegments([]);
       form.reset({
         name: "",
         nip: "",
@@ -159,9 +168,6 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
         general_email: "",
         general_phone: "",
         website_url: "",
-        client_type: "",
-        market: "",
-        segment: "",
         primary_contact_name: "",
         primary_contact_email: "",
         primary_contact_phone: "",
@@ -176,6 +182,32 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
     }
     }
   }, [open, client]);
+
+  const fetchDictionaries = async () => {
+    const [typesRes, marketsRes, segmentsRes] = await Promise.all([
+      supabase.from("client_type_dictionary").select("id, name").order("name"),
+      supabase.from("market_dictionary").select("id, name").order("name"),
+      supabase.from("segment_dictionary").select("id, name").order("name"),
+    ]);
+    
+    if (typesRes.data) setClientTypes(typesRes.data);
+    if (marketsRes.data) setMarkets(marketsRes.data);
+    if (segmentsRes.data) setSegments(segmentsRes.data);
+  };
+
+  const fetchClientClassifications = async () => {
+    if (!client?.id) return;
+    
+    const [typesRes, marketsRes, segmentsRes] = await Promise.all([
+      supabase.from("client_client_types").select("client_type_id").eq("client_id", client.id),
+      supabase.from("client_markets").select("market_id").eq("client_id", client.id),
+      supabase.from("client_segments").select("segment_id").eq("client_id", client.id),
+    ]);
+    
+    if (typesRes.data) setSelectedClientTypes(typesRes.data.map(t => t.client_type_id));
+    if (marketsRes.data) setSelectedMarkets(marketsRes.data.map(m => m.market_id));
+    if (segmentsRes.data) setSelectedSegments(segmentsRes.data.map(s => s.segment_id));
+  };
 
   const fetchSalespeople = async () => {
     const { data, error } = await supabase
@@ -232,6 +264,67 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
     );
   };
 
+  const toggleClientType = (typeId: string) => {
+    setSelectedClientTypes(prev =>
+      prev.includes(typeId)
+        ? prev.filter(id => id !== typeId)
+        : [...prev, typeId]
+    );
+  };
+
+  const toggleMarket = (marketId: string) => {
+    setSelectedMarkets(prev =>
+      prev.includes(marketId)
+        ? prev.filter(id => id !== marketId)
+        : [...prev, marketId]
+    );
+  };
+
+  const toggleSegment = (segmentId: string) => {
+    setSelectedSegments(prev =>
+      prev.includes(segmentId)
+        ? prev.filter(id => id !== segmentId)
+        : [...prev, segmentId]
+    );
+  };
+
+  const saveClientClassifications = async (clientId: string) => {
+    // Delete existing and insert new for all three classification types
+    await Promise.all([
+      supabase.from("client_client_types").delete().eq("client_id", clientId),
+      supabase.from("client_markets").delete().eq("client_id", clientId),
+      supabase.from("client_segments").delete().eq("client_id", clientId),
+    ]);
+
+    const insertPromises = [];
+    
+    if (selectedClientTypes.length > 0) {
+      insertPromises.push(
+        supabase.from("client_client_types").insert(
+          selectedClientTypes.map(typeId => ({ client_id: clientId, client_type_id: typeId }))
+        )
+      );
+    }
+    
+    if (selectedMarkets.length > 0) {
+      insertPromises.push(
+        supabase.from("client_markets").insert(
+          selectedMarkets.map(marketId => ({ client_id: clientId, market_id: marketId }))
+        )
+      );
+    }
+    
+    if (selectedSegments.length > 0) {
+      insertPromises.push(
+        supabase.from("client_segments").insert(
+          selectedSegments.map(segmentId => ({ client_id: clientId, segment_id: segmentId }))
+        )
+      );
+    }
+    
+    await Promise.all(insertPromises);
+  };
+
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsSubmitting(true);
 
@@ -246,9 +339,6 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
         general_email: values.general_email || null,
         general_phone: values.general_phone || null,
         website_url: values.website_url || null,
-        client_type: values.client_type || null,
-        market: values.market || null,
-        segment: values.segment || null,
         primary_contact_name: values.primary_contact_name || null,
         primary_contact_email: values.primary_contact_email || null,
         primary_contact_phone: values.primary_contact_phone || null,
@@ -270,13 +360,11 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
         if (error) throw error;
 
         // Update tags
-        // First delete existing tags
         await supabase
           .from("client_assigned_tags")
           .delete()
           .eq("client_id", client.id);
 
-        // Then insert new tags
         if (selectedTags.length > 0) {
           await supabase
             .from("client_assigned_tags")
@@ -286,6 +374,9 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
             })));
         }
 
+        // Save classifications
+        await saveClientClassifications(client.id);
+
         toast({
           title: "Client updated",
           description: `${values.name} has been updated successfully`,
@@ -293,6 +384,9 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
 
         form.reset();
         setSelectedTags([]);
+        setSelectedClientTypes([]);
+        setSelectedMarkets([]);
+        setSelectedSegments([]);
         onSuccess?.(client.id);
         onOpenChange(false);
       } else {
@@ -319,6 +413,11 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
             })));
         }
 
+        // Save classifications
+        if (newClient) {
+          await saveClientClassifications(newClient.id);
+        }
+
         toast({
           title: "Client created",
           description: `${values.name} has been created successfully`,
@@ -326,6 +425,9 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
 
         form.reset();
         setSelectedTags([]);
+        setSelectedClientTypes([]);
+        setSelectedMarkets([]);
+        setSelectedSegments([]);
         onSuccess?.(newClient?.id);
         onOpenChange(false);
       }
@@ -338,6 +440,71 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const MultiSelectField = ({ 
+    label, 
+    items, 
+    selectedIds, 
+    onToggle,
+    placeholder 
+  }: { 
+    label: string; 
+    items: DictionaryItem[]; 
+    selectedIds: string[]; 
+    onToggle: (id: string) => void;
+    placeholder: string;
+  }) => {
+    const selectedItems = items.filter(item => selectedIds.includes(item.id));
+    
+    return (
+      <div className="space-y-2">
+        <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+          {label}
+        </label>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              role="combobox"
+              className="w-full justify-between min-h-10 h-auto"
+            >
+              <div className="flex flex-wrap gap-1 flex-1 text-left">
+                {selectedItems.length > 0 ? (
+                  selectedItems.map(item => (
+                    <Badge key={item.id} variant="secondary" className="mr-1">
+                      {item.name}
+                    </Badge>
+                  ))
+                ) : (
+                  <span className="text-muted-foreground">{placeholder}</span>
+                )}
+              </div>
+              <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-full p-0" align="start">
+            <ScrollArea className="h-60">
+              <div className="p-2 space-y-1">
+                {items.map(item => (
+                  <div
+                    key={item.id}
+                    className="flex items-center space-x-2 p-2 hover:bg-accent rounded cursor-pointer"
+                    onClick={() => onToggle(item.id)}
+                  >
+                    <Checkbox
+                      checked={selectedIds.includes(item.id)}
+                      onCheckedChange={() => onToggle(item.id)}
+                    />
+                    <span className="text-sm">{item.name}</span>
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+          </PopoverContent>
+        </Popover>
+      </div>
+    );
   };
 
   return (
@@ -501,78 +668,33 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
 
               <Separator />
 
-              {/* Classification */}
+              {/* Classification - Multi-select */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Classification</h3>
                 
-                <div className="grid grid-cols-3 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="client_type"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Client Type</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value || ""}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select client type" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {["Enterprise", "SME", "Startup", "Government"].map((type) => (
-                              <SelectItem key={type} value={type}>{type}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <MultiSelectField
+                    label="Client Type"
+                    items={clientTypes}
+                    selectedIds={selectedClientTypes}
+                    onToggle={toggleClientType}
+                    placeholder="Select client types"
                   />
 
-                  <FormField
-                    control={form.control}
-                    name="market"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Market</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value || ""}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select market" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {["Manufacturing", "Logistics", "Healthcare", "Automotive"].map((market) => (
-                              <SelectItem key={market} value={market}>{market}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                  <MultiSelectField
+                    label="Market"
+                    items={markets}
+                    selectedIds={selectedMarkets}
+                    onToggle={toggleMarket}
+                    placeholder="Select markets"
                   />
 
-                  <FormField
-                    control={form.control}
-                    name="segment"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Segment</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value || ""}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select segment" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {["Welding", "Assembly", "Packaging", "Quality Control"].map((segment) => (
-                              <SelectItem key={segment} value={segment}>{segment}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                  <MultiSelectField
+                    label="Segment"
+                    items={segments}
+                    selectedIds={selectedSegments}
+                    onToggle={toggleSegment}
+                    placeholder="Select segments"
                   />
                 </div>
               </div>
@@ -715,7 +837,7 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue />
+                              <SelectValue placeholder="Select status" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -730,137 +852,141 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
                   />
                 </div>
 
-                <FormField
-                  control={form.control}
-                  name="reseller_id"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Reseller Partner (Optional)</FormLabel>
-                      <Select 
-                        onValueChange={(value) => field.onChange(value === "none" ? undefined : value)} 
-                        value={field.value || "none"}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a reseller" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="none">No Reseller</SelectItem>
-                          {resellers.map((reseller) => (
-                            <SelectItem key={reseller.id} value={reseller.id}>
-                              {reseller.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="reseller_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Reseller</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value || ""}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select reseller" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="">None</SelectItem>
+                            {resellers.map((reseller) => (
+                              <SelectItem key={reseller.id} value={reseller.id}>
+                                {reseller.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                <FormField
-                  control={form.control}
-                  name="assigned_salesperson_id"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Assigned Salesperson</FormLabel>
-                      <Select 
-                        onValueChange={(value) => field.onChange(value === "none" ? undefined : value)} 
-                        value={field.value || "none"}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a salesperson" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="none">No Salesperson</SelectItem>
-                          {salespeople.map((sp) => (
-                            <SelectItem key={sp.id} value={sp.id}>
-                              {sp.full_name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                  <FormField
+                    control={form.control}
+                    name="assigned_salesperson_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Assigned Salesperson</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value || ""}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select salesperson" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="">None</SelectItem>
+                            {salespeople.map((person) => (
+                              <SelectItem key={person.id} value={person.id}>
+                                {person.full_name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </div>
 
               <Separator />
 
               {/* Tags */}
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold">Tags</h3>
+                <h3 className="text-lg font-semibold">Tags</h3>
+                
+                <div className="space-y-2">
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button variant="outline" size="sm">
-                        Add Tags
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        className="w-full justify-between"
+                      >
+                        {selectedTags.length > 0
+                          ? `${selectedTags.length} tag(s) selected`
+                          : "Select tags"}
+                        <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-[300px] p-3">
-                      <div className="space-y-2 max-h-[300px] overflow-y-auto">
-                        {availableTags.map((tag) => (
-                          <div key={tag.id} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={`tag-${tag.id}`}
-                              checked={selectedTags.includes(tag.id)}
-                              onCheckedChange={() => toggleTag(tag.id)}
-                            />
-                            <label
-                              htmlFor={`tag-${tag.id}`}
-                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex items-center gap-2"
+                    <PopoverContent className="w-full p-0" align="start">
+                      <ScrollArea className="h-60">
+                        <div className="p-2 space-y-1">
+                          {availableTags.map((tag) => (
+                            <div
+                              key={tag.id}
+                              className="flex items-center space-x-2 p-2 hover:bg-accent rounded cursor-pointer"
+                              onClick={() => toggleTag(tag.id)}
                             >
-                              <div
-                                className="w-3 h-3 rounded-full"
-                                style={{ backgroundColor: tag.color }}
+                              <Checkbox
+                                checked={selectedTags.includes(tag.id)}
+                                onCheckedChange={() => toggleTag(tag.id)}
                               />
-                              {tag.name}
-                            </label>
-                          </div>
-                        ))}
-                      </div>
+                              <Badge
+                                variant="outline"
+                                style={{ 
+                                  borderColor: tag.color,
+                                  color: tag.color 
+                                }}
+                              >
+                                {tag.name}
+                              </Badge>
+                            </div>
+                          ))}
+                        </div>
+                      </ScrollArea>
                     </PopoverContent>
                   </Popover>
-                </div>
-                
-                <div className="flex flex-wrap gap-2">
-                  {selectedTags.map((tagId) => {
-                    const tag = availableTags.find(t => t.id === tagId);
-                    if (!tag) return null;
-                    return (
-                      <Badge
-                        key={tag.id}
-                        style={{ backgroundColor: tag.color }}
-                        className="text-white"
-                      >
-                        {tag.name}
-                        <button
-                          type="button"
-                          onClick={() => toggleTag(tag.id)}
-                          className="ml-1 hover:bg-black/20 rounded-full p-0.5"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </Badge>
-                    );
-                  })}
-                  {selectedTags.length === 0 && (
-                    <p className="text-sm text-muted-foreground">No tags selected</p>
+
+                  {selectedTags.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {selectedTags.map((tagId) => {
+                        const tag = availableTags.find((t) => t.id === tagId);
+                        if (!tag) return null;
+                        return (
+                          <Badge
+                            key={tagId}
+                            variant="outline"
+                            style={{ 
+                              borderColor: tag.color,
+                              color: tag.color 
+                            }}
+                            className="cursor-pointer"
+                            onClick={() => toggleTag(tagId)}
+                          >
+                            {tag.name}
+                            <X className="ml-1 h-3 w-3" />
+                          </Badge>
+                        );
+                      })}
+                    </div>
                   )}
                 </div>
               </div>
 
-              {/* Actions */}
-              <div className="flex justify-end gap-4 sticky bottom-0 bg-background pt-4 border-t">
+              <div className="flex justify-end gap-4 pt-4">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => onOpenChange(false)}
-                  disabled={isSubmitting}
                 >
                   Cancel
                 </Button>

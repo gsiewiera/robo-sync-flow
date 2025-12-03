@@ -25,6 +25,12 @@ type Dictionary = {
   manufacturers: string[];
 };
 
+type DictionaryIds = {
+  client_types: { id: string; name: string }[];
+  markets: { id: string; name: string }[];
+  segments: { id: string; name: string }[];
+};
+
 type NumericSettings = {
   km_rate: number;
 };
@@ -52,9 +58,9 @@ export const DictionariesSettings = () => {
   const [dictionaries, setDictionaries] = useState<Dictionary>({
     robot_types: [],
     manufacturers: [],
-    client_types: ["Enterprise", "SME", "Startup", "Government"],
-    markets: ["Manufacturing", "Logistics", "Healthcare", "Automotive"],
-    segments: ["Welding", "Assembly", "Packaging", "Quality Control"],
+    client_types: [],
+    markets: [],
+    segments: [],
     contract_types: ["Service Agreement", "Maintenance Contract", "Full Support", "On-Demand"],
     service_types: ["Preventive Maintenance", "Repair", "Upgrade", "Training", "Consultation"],
     payment_models: ["Lease", "Purchase", "Subscription", "Pay-per-use"],
@@ -62,6 +68,11 @@ export const DictionariesSettings = () => {
     priorities: ["low", "medium", "high", "critical"],
     countries: ["Poland", "Germany", "Czech Republic", "Slovakia"],
     lease_months: ["6", "12", "24", "36", "48"],
+  });
+  const [dictionaryIds, setDictionaryIds] = useState<DictionaryIds>({
+    client_types: [],
+    markets: [],
+    segments: [],
   });
   const [numericSettings, setNumericSettings] = useState<NumericSettings>({
     km_rate: 1.50,
@@ -72,6 +83,9 @@ export const DictionariesSettings = () => {
     fetchManufacturers();
     fetchRobotTypes();
     fetchNumericSettings();
+    fetchClientTypes();
+    fetchMarkets();
+    fetchSegments();
   }, []);
 
   const checkAdminRole = async () => {
@@ -112,6 +126,60 @@ export const DictionariesSettings = () => {
       setDictionaries((prev) => ({
         ...prev,
         robot_types: data.map((t) => t.type_name),
+      }));
+    }
+  };
+
+  const fetchClientTypes = async () => {
+    const { data, error } = await supabase
+      .from("client_type_dictionary")
+      .select("id, name")
+      .order("name");
+
+    if (!error && data) {
+      setDictionaries((prev) => ({
+        ...prev,
+        client_types: data.map((t) => t.name),
+      }));
+      setDictionaryIds((prev) => ({
+        ...prev,
+        client_types: data,
+      }));
+    }
+  };
+
+  const fetchMarkets = async () => {
+    const { data, error } = await supabase
+      .from("market_dictionary")
+      .select("id, name")
+      .order("name");
+
+    if (!error && data) {
+      setDictionaries((prev) => ({
+        ...prev,
+        markets: data.map((m) => m.name),
+      }));
+      setDictionaryIds((prev) => ({
+        ...prev,
+        markets: data,
+      }));
+    }
+  };
+
+  const fetchSegments = async () => {
+    const { data, error } = await supabase
+      .from("segment_dictionary")
+      .select("id, name")
+      .order("name");
+
+    if (!error && data) {
+      setDictionaries((prev) => ({
+        ...prev,
+        segments: data.map((s) => s.name),
+      }));
+      setDictionaryIds((prev) => ({
+        ...prev,
+        segments: data,
       }));
     }
   };
@@ -183,6 +251,54 @@ export const DictionariesSettings = () => {
       return;
     }
 
+    // Handle client types with database
+    if (category === "client_types") {
+      const { error } = await supabase
+        .from("client_type_dictionary")
+        .insert({ name: value.trim() });
+
+      if (error) {
+        console.error("Error adding client type:", error);
+        toast.error("Failed to add client type");
+        return;
+      }
+      await fetchClientTypes();
+      toast.success("Client type added successfully");
+      return;
+    }
+
+    // Handle markets with database
+    if (category === "markets") {
+      const { error } = await supabase
+        .from("market_dictionary")
+        .insert({ name: value.trim() });
+
+      if (error) {
+        console.error("Error adding market:", error);
+        toast.error("Failed to add market");
+        return;
+      }
+      await fetchMarkets();
+      toast.success("Market added successfully");
+      return;
+    }
+
+    // Handle segments with database
+    if (category === "segments") {
+      const { error } = await supabase
+        .from("segment_dictionary")
+        .insert({ name: value.trim() });
+
+      if (error) {
+        console.error("Error adding segment:", error);
+        toast.error("Failed to add segment");
+        return;
+      }
+      await fetchSegments();
+      toast.success("Segment added successfully");
+      return;
+    }
+
     // Handle other categories (client-side only for now)
     setDictionaries((prev) => ({
       ...prev,
@@ -224,6 +340,63 @@ export const DictionariesSettings = () => {
       }
       await fetchRobotTypes();
       toast.success("Robot type removed successfully");
+      return;
+    }
+
+    // Handle client types with database
+    if (category === "client_types") {
+      const item = dictionaryIds.client_types[index];
+      if (!item) return;
+      const { error } = await supabase
+        .from("client_type_dictionary")
+        .delete()
+        .eq("id", item.id);
+
+      if (error) {
+        console.error("Error removing client type:", error);
+        toast.error("Failed to remove client type");
+        return;
+      }
+      await fetchClientTypes();
+      toast.success("Client type removed successfully");
+      return;
+    }
+
+    // Handle markets with database
+    if (category === "markets") {
+      const item = dictionaryIds.markets[index];
+      if (!item) return;
+      const { error } = await supabase
+        .from("market_dictionary")
+        .delete()
+        .eq("id", item.id);
+
+      if (error) {
+        console.error("Error removing market:", error);
+        toast.error("Failed to remove market");
+        return;
+      }
+      await fetchMarkets();
+      toast.success("Market removed successfully");
+      return;
+    }
+
+    // Handle segments with database
+    if (category === "segments") {
+      const item = dictionaryIds.segments[index];
+      if (!item) return;
+      const { error } = await supabase
+        .from("segment_dictionary")
+        .delete()
+        .eq("id", item.id);
+
+      if (error) {
+        console.error("Error removing segment:", error);
+        toast.error("Failed to remove segment");
+        return;
+      }
+      await fetchSegments();
+      toast.success("Segment removed successfully");
       return;
     }
 
