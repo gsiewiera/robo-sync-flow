@@ -356,26 +356,28 @@ export const NoteFormSheet = ({
               />
             </div>
 
-            <div className="space-y-2">
-              <Label>{t("notes.needs", "Needs")}</Label>
-              <Textarea
-                value={formData.needs}
-                onChange={(e) => setFormData({ ...formData, needs: e.target.value })}
-                placeholder={t("notes.needsPlaceholder", "Client needs and requirements")}
-                rows={2}
-              />
-            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{t("notes.needs", "Needs")}</Label>
+                <Textarea
+                  value={formData.needs}
+                  onChange={(e) => setFormData({ ...formData, needs: e.target.value })}
+                  placeholder={t("notes.needsPlaceholder", "Client needs and requirements")}
+                  rows={2}
+                />
+              </div>
 
-            <div className="space-y-2">
-              <Label>{t("notes.keyPoints", "Key Points")}</Label>
-              <Textarea
-                value={formData.key_points}
-                onChange={(e) =>
-                  setFormData({ ...formData, key_points: e.target.value })
-                }
-                placeholder={t("notes.keyPointsPlaceholder", "Key discussion points")}
-                rows={2}
-              />
+              <div className="space-y-2">
+                <Label>{t("notes.keyPoints", "Key Points")}</Label>
+                <Textarea
+                  value={formData.key_points}
+                  onChange={(e) =>
+                    setFormData({ ...formData, key_points: e.target.value })
+                  }
+                  placeholder={t("notes.keyPointsPlaceholder", "Key discussion points")}
+                  rows={2}
+                />
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
