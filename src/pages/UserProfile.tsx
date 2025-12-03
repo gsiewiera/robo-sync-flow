@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -402,30 +403,35 @@ export default function UserProfile() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-muted-foreground">Loading user profile...</div>
-      </div>
+      <Layout>
+        <div className="flex items-center justify-center h-96">
+          <div className="text-muted-foreground">Loading user profile...</div>
+        </div>
+      </Layout>
     );
   }
 
   if (!profile) {
     return (
-      <div className="container mx-auto py-8 px-4">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold mb-4">User not found</h2>
-          <Button onClick={() => navigate("/admin/users")}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Users
-          </Button>
+      <Layout>
+        <div className="container mx-auto py-8 px-4">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold mb-4">User not found</h2>
+            <Button onClick={() => navigate("/admin/users")}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Users
+            </Button>
+          </div>
         </div>
-      </div>
+      </Layout>
     );
   }
 
   const assignedCompanyAddress = getAssignedCompanyAddress();
 
   return (
-    <div className="container mx-auto py-8 px-4">
+    <Layout>
+      <div className="container mx-auto py-8 px-4">
       <Button
         variant="ghost"
         onClick={() => navigate("/admin/users")}
@@ -1021,6 +1027,7 @@ export default function UserProfile() {
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
+      </div>
+    </Layout>
   );
 }
