@@ -768,48 +768,51 @@ const ClientDetail = () => {
             </div>
           )}
 
-          {/* Classification Badges Row */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-6">
-            <div className="bg-primary/5 rounded-lg p-3 border border-primary/10">
-              <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Client Type</p>
-              <div className="flex flex-wrap gap-1">
-                {clientTypeNames.length > 0 ? (
-                  clientTypeNames.map((name, i) => (
-                    <Badge key={i} variant="secondary" className="text-xs">{name}</Badge>
-                  ))
-                ) : (
-                  <span className="text-muted-foreground italic font-normal text-sm">Not set</span>
-                )}
+          {/* Classification Section */}
+          <div className="space-y-4 mb-6">
+            <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">Classification</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-primary/5 rounded-lg p-4 border border-primary/10">
+                <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">Client Type</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {clientTypeNames.length > 0 ? (
+                    clientTypeNames.map((name, i) => (
+                      <Badge key={i} className="bg-primary/20 text-primary hover:bg-primary/30 border-0">{name}</Badge>
+                    ))
+                  ) : (
+                    <span className="text-muted-foreground italic text-sm">Not set</span>
+                  )}
+                </div>
               </div>
-            </div>
-            <div className="bg-blue-500/5 rounded-lg p-3 border border-blue-500/10">
-              <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Market</p>
-              <div className="flex flex-wrap gap-1">
-                {marketNames.length > 0 ? (
-                  marketNames.map((name, i) => (
-                    <Badge key={i} variant="secondary" className="text-xs">{name}</Badge>
-                  ))
-                ) : (
-                  <span className="text-muted-foreground italic font-normal text-sm">Not set</span>
-                )}
+              <div className="bg-blue-500/5 rounded-lg p-4 border border-blue-500/10">
+                <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">Market</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {marketNames.length > 0 ? (
+                    marketNames.map((name, i) => (
+                      <Badge key={i} className="bg-blue-500/20 text-blue-700 dark:text-blue-300 hover:bg-blue-500/30 border-0">{name}</Badge>
+                    ))
+                  ) : (
+                    <span className="text-muted-foreground italic text-sm">Not set</span>
+                  )}
+                </div>
               </div>
-            </div>
-            <div className="bg-emerald-500/5 rounded-lg p-3 border border-emerald-500/10">
-              <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Segment</p>
-              <div className="flex flex-wrap gap-1">
-                {segmentNames.length > 0 ? (
-                  segmentNames.map((name, i) => (
-                    <Badge key={i} variant="secondary" className="text-xs">{name}</Badge>
-                  ))
-                ) : (
-                  <span className="text-muted-foreground italic font-normal text-sm">Not set</span>
-                )}
+              <div className="bg-emerald-500/5 rounded-lg p-4 border border-emerald-500/10">
+                <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">Segment</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {segmentNames.length > 0 ? (
+                    segmentNames.map((name, i) => (
+                      <Badge key={i} className="bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/30 border-0">{name}</Badge>
+                    ))
+                  ) : (
+                    <span className="text-muted-foreground italic text-sm">Not set</span>
+                  )}
+                </div>
               </div>
             </div>
             {client.nip && (
-              <div className="bg-amber-500/5 rounded-lg p-3 border border-amber-500/10">
-                <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">NIP</p>
-                <p className="font-semibold text-sm font-mono">{client.nip}</p>
+              <div className="flex items-center gap-2 text-sm">
+                <span className="text-muted-foreground">NIP:</span>
+                <span className="font-mono font-medium">{client.nip}</span>
               </div>
             )}
           </div>
