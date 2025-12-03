@@ -3,10 +3,11 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Calendar, Clock, Package, MapPin } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useParams, useNavigate } from "react-router-dom";
 import { AddressMap } from "@/components/clients/AddressMap";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface Robot {
   id: string;
@@ -70,7 +71,17 @@ const RobotDetail = () => {
   const [robot, setRobot] = useState<Robot | null>(null);
   const [client, setClient] = useState<Client | null>(null);
   const [clientAddresses, setClientAddresses] = useState<ClientAddress[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<string>("");
   const [tickets, setTickets] = useState<ServiceTicket[]>([]);
+
+  const selectedAddress = useMemo(() => {
+    if (!selectedAddressId) return clientAddresses[0] || null;
+    return clientAddresses.find(a => a.id === selectedAddressId) || clientAddresses[0] || null;
+  }, [selectedAddressId, clientAddresses]);
+
+  const mapAddresses = useMemo(() => {
+    return selectedAddress ? [selectedAddress] : [];
+  }, [selectedAddress]);
 
   useEffect(() => {
     if (id) {
@@ -109,9 +120,12 @@ const RobotDetail = () => {
 
         if (addressesData && addressesData.length > 0) {
           setClientAddresses(addressesData);
+          // Set primary address as default selection
+          const primaryAddr = addressesData.find(a => a.is_primary) || addressesData[0];
+          setSelectedAddressId(primaryAddr.id);
         } else if (clientData?.address) {
           // Fall back to client's direct address if no separate addresses
-          setClientAddresses([{
+          const fallbackAddr = {
             id: 'client-address',
             address: clientData.address,
             city: clientData.city,
@@ -119,7 +133,9 @@ const RobotDetail = () => {
             country: clientData.country,
             label: 'Primary Address',
             is_primary: true,
-          }]);
+          };
+          setClientAddresses([fallbackAddr]);
+          setSelectedAddressId(fallbackAddr.id);
         }
       }
     }
@@ -249,20 +265,38 @@ const RobotDetail = () => {
           </Card>
         </div>
 
-        {/* Location Section with Map */}
+        {/* Installation Location Section with Map */}
         {client && clientAddresses.length > 0 && (
           <Card className="p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <MapPin className="w-5 h-5 text-primary" />
-              <h2 className="text-xl font-semibold">Location</h2>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <MapPin className="w-5 h-5 text-primary" />
+                <h2 className="text-xl font-semibold">Installation Location</h2>
+              </div>
+              {clientAddresses.length > 1 && (
+                <Select value={selectedAddressId || clientAddresses[0]?.id} onValueChange={setSelectedAddressId}>
+                  <SelectTrigger className="w-[250px] bg-background">
+                    <SelectValue placeholder="Select address" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background z-50">
+                    {clientAddresses.map((addr) => (
+                      <SelectItem key={addr.id} value={addr.id}>
+                        {addr.label || addr.address.substring(0, 30)}{addr.is_primary && " (Primary)"}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
             <div className="space-y-4">
-              <div className="text-sm text-muted-foreground">
-                <p className="font-medium text-foreground">{clientAddresses[0]?.address}</p>
-                <p>{clientAddresses[0]?.postal_code} {clientAddresses[0]?.city}</p>
-                <p>{clientAddresses[0]?.country}</p>
-              </div>
-              <AddressMap addresses={clientAddresses} />
+              {selectedAddress && (
+                <div className="text-sm text-muted-foreground">
+                  <p className="font-medium text-foreground">{selectedAddress.address}</p>
+                  <p>{selectedAddress.postal_code} {selectedAddress.city}</p>
+                  <p>{selectedAddress.country}</p>
+                </div>
+              )}
+              <AddressMap addresses={mapAddresses} />
             </div>
           </Card>
         )}
