@@ -290,7 +290,7 @@ const Tasks = () => {
   return <Layout>
       <div className="space-y-6">
         <div className="flex items-center justify-end">
-          <Button size="lg" className="h-11 px-6" onClick={handleNewTask}>
+          <Button size="sm" onClick={handleNewTask}>
             {t("tasks.addTask")}
           </Button>
         </div>

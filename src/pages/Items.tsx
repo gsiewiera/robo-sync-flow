@@ -224,8 +224,8 @@ const Items = () => {
             />
             <Dialog open={isDialogOpen} onOpenChange={handleDialogChange}>
               <DialogTrigger asChild>
-                <Button size="lg">
-                  <Plus className="w-4 h-4 mr-2" />
+                <Button size="sm">
+                  <Plus className="w-3.5 h-3.5 mr-1.5" />
                   Add Item
                 </Button>
               </DialogTrigger>
