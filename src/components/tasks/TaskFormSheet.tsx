@@ -7,7 +7,6 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -132,7 +131,7 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskFormSchema),
     defaultValues: {
-      title: "",
+      title: "Follow up call",
       description: "",
       status: "pending",
       priority: "medium",
@@ -495,19 +494,9 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-start justify-between">
-            <div>
-              <DialogTitle>
-                {isViewMode ? "View Task" : taskId ? "Edit Task" : "Create New Task"}
-              </DialogTitle>
-              <DialogDescription>
-                {isViewMode 
-                  ? "Task details and information" 
-                  : taskId 
-                    ? "Update task details and assignments"
-                    : "Add a new task with details and assignments"
-                }
-              </DialogDescription>
-            </div>
+            <DialogTitle>
+              {isViewMode ? "View Task" : taskId ? "Edit Task" : "Create New Task"}
+            </DialogTitle>
             {taskCreatedAt && (
               <div className="text-right text-sm text-muted-foreground">
                 <div className="font-medium">Created</div>
@@ -562,6 +551,38 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
                 )}
               />
 
+              {showClientField && (
+                <FormField
+                  control={form.control}
+                  name="client_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Customer {clientIsOptional && "(optional)"}</FormLabel>
+                      {isViewMode ? (
+                        <div className="text-sm py-2 px-3 border rounded-md bg-muted">
+                          {clients.find(c => c.id === field.value)?.name || "-"}
+                        </div>
+                      ) : (
+                        <FormControl>
+                          <ClientCombobox
+                            clients={clients}
+                            value={field.value}
+                            onValueChange={(value) => {
+                              field.onChange(value);
+                              form.setValue("contract_id", undefined);
+                              form.setValue("offer_id", undefined);
+                              form.setValue("robot_ids", []);
+                            }}
+                            placeholder={`Select customer ${clientIsOptional ? "(optional)" : ""}`}
+                          />
+                        </FormControl>
+                      )}
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+
               <FormField
                 control={form.control}
                 name="description"
@@ -583,51 +604,19 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
               />
             </div>
 
-            {/* Customer & Related Section */}
-            {(showClientField || showOfferField || showContractField) && (
+            {/* Related Items Section */}
+            {(showOfferField || showContractField) && (
               <Collapsible open={customerSectionOpen} onOpenChange={setCustomerSectionOpen}>
                 <CollapsibleTrigger asChild>
                   <Button variant="ghost" className="w-full justify-between p-3 h-auto border rounded-lg hover:bg-muted/50">
                     <div className="flex items-center gap-2">
                       <Users className="h-4 w-4 text-primary" />
-                      <span className="font-medium">Customer & Related</span>
+                      <span className="font-medium">Related Items</span>
                     </div>
                     {customerSectionOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                   </Button>
                 </CollapsibleTrigger>
                 <CollapsibleContent className="space-y-4 pt-4">
-                  {(isViewMode ? (showClientField && form.watch("client_id")) : showClientField) && (
-                    <FormField
-                      control={form.control}
-                      name="client_id"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Customer {clientIsOptional && "(optional)"}</FormLabel>
-                          {isViewMode ? (
-                            <div className="text-sm py-2 px-3 border rounded-md bg-muted">
-                              {clients.find(c => c.id === field.value)?.name || "-"}
-                            </div>
-                          ) : (
-                            <FormControl>
-                              <ClientCombobox
-                                clients={clients}
-                                value={field.value}
-                                onValueChange={(value) => {
-                                  field.onChange(value);
-                                  form.setValue("contract_id", undefined);
-                                  form.setValue("offer_id", undefined);
-                                  form.setValue("robot_ids", []);
-                                }}
-                                placeholder={`Select customer ${clientIsOptional ? "(optional)" : ""}`}
-                              />
-                            </FormControl>
-                          )}
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  )}
-
                   {(isViewMode ? (showOfferField && form.watch("offer_id")) : (selectedClientId && showOfferField && filteredOffers.length > 0)) && (
                     <FormField
                       control={form.control}
