@@ -52,6 +52,11 @@ const formSchema = z.object({
   general_phone: z.string().trim().max(50, "Phone must be less than 50 characters").optional(),
   website_url: z.string().trim().url("Invalid URL").max(500, "URL must be less than 500 characters").optional().or(z.literal("")),
   
+  // Classification
+  client_type: z.string().trim().max(100, "Client type must be less than 100 characters").optional(),
+  market: z.string().trim().max(100, "Market must be less than 100 characters").optional(),
+  segment: z.string().trim().max(100, "Segment must be less than 100 characters").optional(),
+  
   // Contact person
   primary_contact_name: z.string().trim().max(255, "Name must be less than 255 characters").optional(),
   primary_contact_email: z.string().trim().email("Invalid email address").max(255, "Email must be less than 255 characters").optional().or(z.literal("")),
@@ -97,6 +102,9 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
       general_email: "",
       general_phone: "",
       website_url: "",
+      client_type: "",
+      market: "",
+      segment: "",
       primary_contact_name: "",
       primary_contact_email: "",
       primary_contact_phone: "",
@@ -125,16 +133,19 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
           general_email: client.general_email || "",
           general_phone: client.general_phone || "",
           website_url: client.website_url || "",
+          client_type: client.client_type || "",
+          market: client.market || "",
+          segment: client.segment || "",
           primary_contact_name: client.primary_contact_name || "",
           primary_contact_email: client.primary_contact_email || "",
           primary_contact_phone: client.primary_contact_phone || "",
-        billing_person_name: client.billing_person_name || "",
-        billing_person_email: client.billing_person_email || "",
-        billing_person_phone: client.billing_person_phone || "",
-        balance: client.balance || 0,
-        status: client.status || "active",
-        reseller_id: client.reseller_id || "",
-        assigned_salesperson_id: client.assigned_salesperson_id || "",
+          billing_person_name: client.billing_person_name || "",
+          billing_person_email: client.billing_person_email || "",
+          billing_person_phone: client.billing_person_phone || "",
+          balance: client.balance || 0,
+          status: client.status || "active",
+          reseller_id: client.reseller_id || "",
+          assigned_salesperson_id: client.assigned_salesperson_id || "",
       });
     } else {
       setSelectedTags([]);
@@ -148,6 +159,9 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
         general_email: "",
         general_phone: "",
         website_url: "",
+        client_type: "",
+        market: "",
+        segment: "",
         primary_contact_name: "",
         primary_contact_email: "",
         primary_contact_phone: "",
@@ -232,6 +246,9 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
         general_email: values.general_email || null,
         general_phone: values.general_phone || null,
         website_url: values.website_url || null,
+        client_type: values.client_type || null,
+        market: values.market || null,
+        segment: values.segment || null,
         primary_contact_name: values.primary_contact_name || null,
         primary_contact_email: values.primary_contact_email || null,
         primary_contact_phone: values.primary_contact_phone || null,
@@ -474,6 +491,57 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
                         <FormLabel>Website</FormLabel>
                         <FormControl>
                           <Input type="url" placeholder="https://company.com" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Classification */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Classification</h3>
+                
+                <div className="grid grid-cols-3 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="client_type"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Client Type</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g., Direct, Reseller" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="market"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Market</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g., Healthcare, Retail" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="segment"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Segment</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g., Enterprise, SMB" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
