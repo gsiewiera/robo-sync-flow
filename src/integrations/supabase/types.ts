@@ -1726,6 +1726,7 @@ export type Database = {
           is_active: boolean | null
           manufacturer: string | null
           model_name: string
+          stock: number | null
           type: string | null
           updated_at: string | null
         }
@@ -1737,6 +1738,7 @@ export type Database = {
           is_active?: boolean | null
           manufacturer?: string | null
           model_name: string
+          stock?: number | null
           type?: string | null
           updated_at?: string | null
         }
@@ -1748,6 +1750,7 @@ export type Database = {
           is_active?: boolean | null
           manufacturer?: string | null
           model_name?: string
+          stock?: number | null
           type?: string | null
           updated_at?: string | null
         }
