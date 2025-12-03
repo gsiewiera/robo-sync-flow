@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Upload, X, ImageIcon } from "lucide-react";
 
 const formSchema = z.object({
   model_name: z.string().min(1, "Model name is required").max(100, "Model name must be less than 100 characters"),
@@ -49,6 +50,7 @@ interface RobotModel {
   type: string | null;
   description: string | null;
   is_active: boolean;
+  image_path?: string | null;
 }
 
 interface RobotModelFormDialogProps {
@@ -74,6 +76,10 @@ export const RobotModelFormDialog = ({
   onSuccess,
 }: RobotModelFormDialogProps) => {
   const [manufacturers, setManufacturers] = useState<string[]>([]);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -89,6 +95,18 @@ export const RobotModelFormDialog = ({
   useEffect(() => {
     fetchManufacturers();
   }, []);
+
+  useEffect(() => {
+    if (model?.image_path) {
+      const { data } = supabase.storage
+        .from("robot-model-images")
+        .getPublicUrl(model.image_path);
+      setImagePreview(data.publicUrl);
+    } else {
+      setImagePreview(null);
+    }
+    setImageFile(null);
+  }, [model, open]);
 
   const fetchManufacturers = async () => {
     const { data } = await supabase
@@ -120,8 +138,57 @@ export const RobotModelFormDialog = ({
     }
   }, [model, form]);
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith("image/")) {
+        toast.error("Please select an image file");
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Image must be less than 5MB");
+        return;
+      }
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => setImagePreview(reader.result as string);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const uploadImage = async (modelId: string): Promise<string | null> => {
+    if (!imageFile) return model?.image_path || null;
+
+    const fileExt = imageFile.name.split(".").pop();
+    const fileName = `${modelId}-${Date.now()}.${fileExt}`;
+
+    // Delete old image if exists
+    if (model?.image_path) {
+      await supabase.storage.from("robot-model-images").remove([model.image_path]);
+    }
+
+    const { error } = await supabase.storage
+      .from("robot-model-images")
+      .upload(fileName, imageFile);
+
+    if (error) {
+      console.error("Error uploading image:", error);
+      return model?.image_path || null;
+    }
+
+    return fileName;
+  };
+
   const onSubmit = async (values: FormValues) => {
-    const data = {
+    setUploading(true);
+    
+    const baseData = {
       model_name: values.model_name.trim(),
       manufacturer: values.manufacturer?.trim() || null,
       type: values.type,
@@ -130,17 +197,34 @@ export const RobotModelFormDialog = ({
     };
 
     let error;
+    let modelId = model?.id;
 
     if (model) {
+      const imagePath = await uploadImage(model.id);
       ({ error } = await supabase
         .from("robot_model_dictionary")
-        .update(data)
+        .update({ ...baseData, image_path: imagePath })
         .eq("id", model.id));
     } else {
-      ({ error } = await supabase
+      const { data: newModel, error: insertError } = await supabase
         .from("robot_model_dictionary")
-        .insert([data]));
+        .insert([baseData])
+        .select("id")
+        .single();
+      
+      error = insertError;
+      modelId = newModel?.id;
+
+      if (!error && modelId && imageFile) {
+        const imagePath = await uploadImage(modelId);
+        await supabase
+          .from("robot_model_dictionary")
+          .update({ image_path: imagePath })
+          .eq("id", modelId);
+      }
     }
+
+    setUploading(false);
 
     if (error) {
       console.error("Error saving robot model:", error);
@@ -252,6 +336,46 @@ export const RobotModelFormDialog = ({
               )}
             />
 
+            {/* Image Upload */}
+            <div className="space-y-2">
+              <FormLabel>Image</FormLabel>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+              {imagePreview ? (
+                <div className="relative w-full h-32 rounded-lg overflow-hidden border">
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="w-full h-full object-cover"
+                  />
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    className="absolute top-2 right-2 h-6 w-6"
+                    onClick={removeImage}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full h-32 flex flex-col gap-2"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground">Click to upload image</span>
+                </Button>
+              )}
+            </div>
+
             <FormField
               control={form.control}
               name="is_active"
@@ -282,8 +406,8 @@ export const RobotModelFormDialog = ({
               >
                 Cancel
               </Button>
-              <Button type="submit" size="sm">
-                {model ? "Update" : "Create"}
+              <Button type="submit" size="sm" disabled={uploading}>
+                {uploading ? "Saving..." : model ? "Update" : "Create"}
               </Button>
             </div>
           </form>

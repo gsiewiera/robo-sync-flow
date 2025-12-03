@@ -17,6 +17,7 @@ interface RobotModel {
   manufacturer: string | null;
   description: string | null;
   is_active: boolean;
+  image_path: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -114,6 +115,15 @@ const RobotModelDetail = () => {
               <CardTitle className="text-base">General Information</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              {model.image_path && (
+                <div className="w-full h-48 rounded-lg overflow-hidden border bg-muted">
+                  <img
+                    src={supabase.storage.from("robot-model-images").getPublicUrl(model.image_path).data.publicUrl}
+                    alt={model.model_name}
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-muted-foreground">Model Name</p>

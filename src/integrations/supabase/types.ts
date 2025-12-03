@@ -1722,6 +1722,7 @@ export type Database = {
           created_at: string | null
           description: string | null
           id: string
+          image_path: string | null
           is_active: boolean | null
           manufacturer: string | null
           model_name: string
@@ -1732,6 +1733,7 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           id?: string
+          image_path?: string | null
           is_active?: boolean | null
           manufacturer?: string | null
           model_name: string
@@ -1742,6 +1744,7 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           id?: string
+          image_path?: string | null
           is_active?: boolean | null
           manufacturer?: string | null
           model_name?: string
