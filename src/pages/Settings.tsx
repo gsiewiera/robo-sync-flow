@@ -9,6 +9,7 @@ import { VatSettings } from "@/components/settings/VatSettings";
 import { PrintoutTemplatesSettings } from "@/components/settings/PrintoutTemplatesSettings";
 import { ContractsSettings } from "@/components/settings/ContractsSettings";
 import { ReportSubscriptionsSettings } from "@/components/settings/ReportSubscriptionsSettings";
+import { CompanyInfoSettings } from "@/components/settings/CompanyInfoSettings";
 
 const Settings = () => {
   return (
@@ -20,11 +21,12 @@ const Settings = () => {
         </div>
 
         <Tabs defaultValue="profile" className="w-full">
-          <TabsList className="grid w-full grid-cols-9 lg:w-auto">
+          <TabsList className="grid w-full grid-cols-10 lg:w-auto">
             <TabsTrigger value="profile">Profile</TabsTrigger>
             <TabsTrigger value="password">Password</TabsTrigger>
             <TabsTrigger value="theme">Theme</TabsTrigger>
             <TabsTrigger value="roles">Roles</TabsTrigger>
+            <TabsTrigger value="company">Company</TabsTrigger>
             <TabsTrigger value="dictionaries">Dictionaries</TabsTrigger>
             <TabsTrigger value="vat">VAT</TabsTrigger>
             <TabsTrigger value="printouts">Printouts</TabsTrigger>
@@ -46,6 +48,10 @@ const Settings = () => {
 
           <TabsContent value="roles" className="mt-6">
             <RoleDisplay />
+          </TabsContent>
+
+          <TabsContent value="company" className="mt-6">
+            <CompanyInfoSettings />
           </TabsContent>
 
           <TabsContent value="dictionaries" className="mt-6">

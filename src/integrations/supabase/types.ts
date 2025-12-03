@@ -355,6 +355,48 @@ export type Database = {
           },
         ]
       }
+      company_addresses: {
+        Row: {
+          address: string
+          address_type: string
+          city: string | null
+          country: string | null
+          created_at: string
+          id: string
+          is_primary: boolean | null
+          label: string | null
+          notes: string | null
+          postal_code: string | null
+          updated_at: string
+        }
+        Insert: {
+          address: string
+          address_type?: string
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          id?: string
+          is_primary?: boolean | null
+          label?: string | null
+          notes?: string | null
+          postal_code?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string
+          address_type?: string
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          id?: string
+          is_primary?: boolean | null
+          label?: string | null
+          notes?: string | null
+          postal_code?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       contract_email_history: {
         Row: {
           contract_version_id: string
