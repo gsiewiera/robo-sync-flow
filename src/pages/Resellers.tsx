@@ -39,6 +39,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { ColumnVisibilityToggle, ColumnConfig } from "@/components/ui/column-visibility-toggle";
 
 interface Reseller {
   id: string;
@@ -52,6 +53,15 @@ interface Reseller {
   created_at: string | null;
 }
 
+const columns: ColumnConfig[] = [
+  { key: "name", label: "Name", defaultVisible: true },
+  { key: "nip", label: "NIP", defaultVisible: true },
+  { key: "city", label: "City", defaultVisible: true },
+  { key: "contact", label: "Primary Contact", defaultVisible: true },
+  { key: "status", label: "Status", defaultVisible: true },
+  { key: "created_at", label: "Created", defaultVisible: false },
+];
+
 const Resellers = () => {
   const { t } = useTranslation();
   const [resellers, setResellers] = useState<Reseller[]>([]);
@@ -62,9 +72,12 @@ const Resellers = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingReseller, setEditingReseller] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [visibleColumns, setVisibleColumns] = useState<string[]>(
+    columns.filter(col => col.defaultVisible !== false).map(col => col.key)
+  );
   const navigate = useNavigate();
   const { toast } = useToast();
-  const recordsPerPage = 20;
+  const recordsPerPage = 30;
 
   const [formData, setFormData] = useState({
     name: "",
@@ -267,16 +280,25 @@ const Resellers = () => {
         </div>
 
         <Card className="p-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-            <Input
-              placeholder={t("common.search")}
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="pl-10"
+          <div className="flex gap-4 items-center">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+              <Input
+                placeholder={t("common.search")}
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="pl-10"
+              />
+            </div>
+            <ColumnVisibilityToggle
+              columns={columns}
+              visibleColumns={visibleColumns}
+              onToggleColumn={(key) => setVisibleColumns(prev => 
+                prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
+              )}
             />
           </div>
         </Card>
@@ -284,92 +306,109 @@ const Resellers = () => {
         <Card>
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead>
-                  <Button
-                    variant="ghost"
-                    onClick={() => handleSort("name")}
-                    className="hover:bg-transparent p-0"
-                  >
-                    {t("common.name")}
-                    {getSortIcon("name")}
-                  </Button>
-                </TableHead>
-                <TableHead>{t("resellers.nip")}</TableHead>
-                <TableHead>
-                  <Button
-                    variant="ghost"
-                    onClick={() => handleSort("city")}
-                    className="hover:bg-transparent p-0"
-                  >
-                    {t("common.city")}
-                    {getSortIcon("city")}
-                  </Button>
-                </TableHead>
-                <TableHead>{t("resellers.primaryContact")}</TableHead>
-                <TableHead>{t("common.status")}</TableHead>
-                <TableHead>
-                  <Button
-                    variant="ghost"
-                    onClick={() => handleSort("created_at")}
-                    className="hover:bg-transparent p-0"
-                  >
-                    {t("common.created")}
-                    {getSortIcon("created_at")}
-                  </Button>
-                </TableHead>
-                <TableHead className="text-right">{t("common.actions")}</TableHead>
+              <TableRow className="h-9">
+                {visibleColumns.includes("name") && (
+                  <TableHead className="py-1.5 text-xs">
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort("name")}
+                      className="hover:bg-transparent p-0 h-6 text-xs"
+                    >
+                      {t("common.name")}
+                      {getSortIcon("name")}
+                    </Button>
+                  </TableHead>
+                )}
+                {visibleColumns.includes("nip") && <TableHead className="py-1.5 text-xs">{t("resellers.nip")}</TableHead>}
+                {visibleColumns.includes("city") && (
+                  <TableHead className="py-1.5 text-xs">
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort("city")}
+                      className="hover:bg-transparent p-0 h-6 text-xs"
+                    >
+                      {t("common.city")}
+                      {getSortIcon("city")}
+                    </Button>
+                  </TableHead>
+                )}
+                {visibleColumns.includes("contact") && <TableHead className="py-1.5 text-xs">{t("resellers.primaryContact")}</TableHead>}
+                {visibleColumns.includes("status") && <TableHead className="py-1.5 text-xs">{t("common.status")}</TableHead>}
+                {visibleColumns.includes("created_at") && (
+                  <TableHead className="py-1.5 text-xs">
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort("created_at")}
+                      className="hover:bg-transparent p-0 h-6 text-xs"
+                    >
+                      {t("common.created")}
+                      {getSortIcon("created_at")}
+                    </Button>
+                  </TableHead>
+                )}
+                <TableHead className="w-20 py-1.5 text-xs text-right">{t("common.actions")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {currentRecords.map((reseller) => (
                 <TableRow 
                   key={reseller.id} 
-                  className="cursor-pointer hover:bg-muted/50"
+                  className="h-9 cursor-pointer hover:bg-muted/50"
                   onClick={() => navigate(`/resellers/${reseller.id}`)}
                 >
-                  <TableCell className="font-medium">{reseller.name}</TableCell>
-                  <TableCell>{reseller.nip || "-"}</TableCell>
-                  <TableCell>{reseller.city || "-"}</TableCell>
-                  <TableCell>
-                    <div className="text-sm">
-                      <div>{reseller.primary_contact_name || "-"}</div>
-                      <div className="text-muted-foreground text-xs">
-                        {reseller.primary_contact_email || "-"}
-                      </div>
+                  {visibleColumns.includes("name") && (
+                    <TableCell className="py-1.5 text-sm font-medium">{reseller.name}</TableCell>
+                  )}
+                  {visibleColumns.includes("nip") && (
+                    <TableCell className="py-1.5 text-sm text-muted-foreground">{reseller.nip || "-"}</TableCell>
+                  )}
+                  {visibleColumns.includes("city") && (
+                    <TableCell className="py-1.5 text-sm">{reseller.city || "-"}</TableCell>
+                  )}
+                  {visibleColumns.includes("contact") && (
+                    <TableCell className="py-1.5">
+                      <span className="text-sm">{reseller.primary_contact_name || "-"}</span>
+                    </TableCell>
+                  )}
+                  {visibleColumns.includes("status") && (
+                    <TableCell className="py-1.5">
+                      <Badge className={`${statusColors[reseller.status] || "bg-muted"} text-xs px-1.5 py-0`}>
+                        {t(`status.${reseller.status}`)}
+                      </Badge>
+                    </TableCell>
+                  )}
+                  {visibleColumns.includes("created_at") && (
+                    <TableCell className="py-1.5 text-xs text-muted-foreground">
+                      {reseller.created_at
+                        ? new Date(reseller.created_at).toLocaleDateString()
+                        : "-"}
+                    </TableCell>
+                  )}
+                  <TableCell className="py-1.5 text-right" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex gap-0.5 justify-end">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0"
+                        onClick={() => navigate(`/resellers/${reseller.id}`)}
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0"
+                        onClick={() => handleEdit(reseller)}
+                      >
+                        <Edit className="w-3.5 h-3.5" />
+                      </Button>
                     </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge className={statusColors[reseller.status] || "bg-muted"}>
-                      {t(`status.${reseller.status}`)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {reseller.created_at
-                      ? new Date(reseller.created_at).toLocaleDateString()
-                      : "-"}
-                  </TableCell>
-                  <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => navigate(`/resellers/${reseller.id}`)}
-                    >
-                      <Eye className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleEdit(reseller)}
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
                   </TableCell>
                 </TableRow>
               ))}
               {currentRecords.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={visibleColumns.length + 1} className="text-center py-6 text-muted-foreground text-sm">
                     No resellers found
                   </TableCell>
                 </TableRow>
