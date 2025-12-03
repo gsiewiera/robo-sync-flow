@@ -33,6 +33,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Package, Plus, Pencil, Trash2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
+import { ColumnVisibilityToggle, ColumnConfig } from "@/components/ui/column-visibility-toggle";
 
 interface Item {
   id: string;
@@ -51,6 +52,27 @@ const Items = () => {
   const [editingItem, setEditingItem] = useState<Item | null>(null);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+
+  const columns: ColumnConfig[] = [
+    { key: "name", label: "Name", defaultVisible: true },
+    { key: "type", label: "Type", defaultVisible: true },
+    { key: "price_net", label: "Price (Net)", defaultVisible: true },
+    { key: "vat_rate", label: "VAT Rate", defaultVisible: true },
+    { key: "price_gross", label: "Price (Gross)", defaultVisible: true },
+    { key: "status", label: "Status", defaultVisible: true },
+  ];
+
+  const [visibleColumns, setVisibleColumns] = useState<string[]>(
+    columns.filter((col) => col.defaultVisible).map((col) => col.key)
+  );
+
+  const toggleColumn = (columnKey: string) => {
+    setVisibleColumns((prev) =>
+      prev.includes(columnKey)
+        ? prev.filter((key) => key !== columnKey)
+        : [...prev, columnKey]
+    );
+  };
 
   const [formData, setFormData] = useState({
     name: "",
@@ -199,13 +221,19 @@ const Items = () => {
             <h1 className="text-3xl font-bold text-foreground">Items</h1>
             <p className="text-muted-foreground">Manage sale items and services</p>
           </div>
-          <Dialog open={isDialogOpen} onOpenChange={handleDialogChange}>
-            <DialogTrigger asChild>
-              <Button size="lg">
-                <Plus className="w-4 h-4 mr-2" />
-                Add Item
-              </Button>
-            </DialogTrigger>
+          <div className="flex items-center gap-2">
+            <ColumnVisibilityToggle
+              columns={columns}
+              visibleColumns={visibleColumns}
+              onToggleColumn={toggleColumn}
+            />
+            <Dialog open={isDialogOpen} onOpenChange={handleDialogChange}>
+              <DialogTrigger asChild>
+                <Button size="lg">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Item
+                </Button>
+              </DialogTrigger>
             <DialogContent className="max-w-2xl">
               <DialogHeader>
                 <DialogTitle>
@@ -321,26 +349,39 @@ const Items = () => {
               </form>
             </DialogContent>
           </Dialog>
+          </div>
         </div>
 
         <Card className="p-6">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Price (Net)</TableHead>
-                  <TableHead>VAT Rate</TableHead>
-                  <TableHead>Price (Gross)</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                <TableRow className="h-9">
+                  {visibleColumns.includes("name") && (
+                    <TableHead className="py-1.5 text-xs">Name</TableHead>
+                  )}
+                  {visibleColumns.includes("type") && (
+                    <TableHead className="py-1.5 text-xs">Type</TableHead>
+                  )}
+                  {visibleColumns.includes("price_net") && (
+                    <TableHead className="py-1.5 text-xs">Price (Net)</TableHead>
+                  )}
+                  {visibleColumns.includes("vat_rate") && (
+                    <TableHead className="py-1.5 text-xs">VAT Rate</TableHead>
+                  )}
+                  {visibleColumns.includes("price_gross") && (
+                    <TableHead className="py-1.5 text-xs">Price (Gross)</TableHead>
+                  )}
+                  {visibleColumns.includes("status") && (
+                    <TableHead className="py-1.5 text-xs">Status</TableHead>
+                  )}
+                  <TableHead className="text-right py-1.5 text-xs">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {items.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8">
+                    <TableCell colSpan={visibleColumns.length + 1} className="text-center py-8">
                       <Package className="w-12 h-12 mx-auto text-muted-foreground mb-2" />
                       <p className="text-muted-foreground">No items found</p>
                       <p className="text-sm text-muted-foreground">
@@ -352,46 +393,61 @@ const Items = () => {
                   items.map((item) => {
                     const priceGross = item.price_net * (1 + item.vat_rate / 100);
                     return (
-                      <TableRow key={item.id}>
-                        <TableCell>
-                          <div>
-                            <div className="font-medium">{item.name}</div>
-                            {item.description && (
-                              <div className="text-sm text-muted-foreground line-clamp-1">
-                                {item.description}
-                              </div>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{item.item_type}</Badge>
-                        </TableCell>
-                        <TableCell>{formatMoney(item.price_net)} PLN</TableCell>
-                        <TableCell>{item.vat_rate}%</TableCell>
-                        <TableCell className="font-medium">
-                          {formatMoney(priceGross)} PLN
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={item.is_active ? "default" : "secondary"}
-                          >
-                            {item.is_active ? "Active" : "Inactive"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
+                      <TableRow key={item.id} className="h-9">
+                        {visibleColumns.includes("name") && (
+                          <TableCell className="py-1.5">
+                            <div>
+                              <div className="text-sm font-medium">{item.name}</div>
+                              {item.description && (
+                                <div className="text-xs text-muted-foreground line-clamp-1">
+                                  {item.description}
+                                </div>
+                              )}
+                            </div>
+                          </TableCell>
+                        )}
+                        {visibleColumns.includes("type") && (
+                          <TableCell className="py-1.5">
+                            <Badge variant="outline" className="text-xs px-1.5 py-0">{item.item_type}</Badge>
+                          </TableCell>
+                        )}
+                        {visibleColumns.includes("price_net") && (
+                          <TableCell className="py-1.5 text-sm">{formatMoney(item.price_net)} PLN</TableCell>
+                        )}
+                        {visibleColumns.includes("vat_rate") && (
+                          <TableCell className="py-1.5 text-sm">{item.vat_rate}%</TableCell>
+                        )}
+                        {visibleColumns.includes("price_gross") && (
+                          <TableCell className="py-1.5 text-sm font-medium">
+                            {formatMoney(priceGross)} PLN
+                          </TableCell>
+                        )}
+                        {visibleColumns.includes("status") && (
+                          <TableCell className="py-1.5">
+                            <Badge
+                              variant={item.is_active ? "default" : "secondary"}
+                              className="text-xs px-1.5 py-0"
+                            >
+                              {item.is_active ? "Active" : "Inactive"}
+                            </Badge>
+                          </TableCell>
+                        )}
+                        <TableCell className="text-right py-1.5">
                           <Button
                             variant="ghost"
                             size="sm"
+                            className="h-6 w-6 p-0"
                             onClick={() => handleEdit(item)}
                           >
-                            <Pencil className="w-4 h-4" />
+                            <Pencil className="w-3.5 h-3.5" />
                           </Button>
                           <Button
                             variant="ghost"
                             size="sm"
+                            className="h-6 w-6 p-0"
                             onClick={() => handleDelete(item.id)}
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="w-3.5 h-3.5" />
                           </Button>
                         </TableCell>
                       </TableRow>
