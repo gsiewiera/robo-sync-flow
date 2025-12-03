@@ -348,8 +348,8 @@ export function ClientInlineEdit({ client, onSave, onCancel }: ClientInlineEditP
       </div>
 
       <div className="space-y-6">
-        {/* Assignment & Balance */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Assignment */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Assigned Salesperson</Label>
               <Select
@@ -392,12 +392,6 @@ export function ClientInlineEdit({ client, onSave, onCancel }: ClientInlineEditP
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label>Balance</Label>
-              <div className="h-10 px-3 py-2 rounded-md border border-input bg-muted text-muted-foreground flex items-center">
-                {formData.balance.toLocaleString('pl-PL', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).replace(/,/g, ' ')}
-              </div>
-          </div>
         </div>
 
         {/* Company Information */}
