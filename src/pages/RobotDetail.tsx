@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Calendar, Clock, Package, MapPin, Plus, Wrench, ClipboardList } from "lucide-react";
+import { ArrowLeft, Calendar, Clock, Package, MapPin, Plus, Wrench, ClipboardList, FileText } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useParams, useNavigate } from "react-router-dom";
@@ -11,6 +11,7 @@ import { AddressMap } from "@/components/clients/AddressMap";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TicketFormDialog } from "@/components/service/TicketFormDialog";
 import { TaskFormSheet } from "@/components/tasks/TaskFormSheet";
+import { RobotDocuments } from "@/components/robots/RobotDocuments";
 
 interface Robot {
   id: string;
@@ -240,9 +241,10 @@ const RobotDetail = () => {
         </div>
 
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 lg:w-[400px]">
+          <TabsList className="grid w-full grid-cols-4 lg:w-[500px]">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="location">Location</TabsTrigger>
+            <TabsTrigger value="documents">Documents</TabsTrigger>
             <TabsTrigger value="service">Service & Tasks</TabsTrigger>
           </TabsList>
 
@@ -384,6 +386,10 @@ const RobotDetail = () => {
                 </div>
               </Card>
             )}
+          </TabsContent>
+
+          <TabsContent value="documents" className="mt-6">
+            <RobotDocuments robotId={robot.id} />
           </TabsContent>
 
           <TabsContent value="service" className="space-y-6 mt-6">
