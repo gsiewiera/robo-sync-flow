@@ -6,13 +6,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   ArrowLeft, Mail, Phone, MapPin, FileText, ShoppingCart, Bot, 
   Globe, Edit, DollarSign, Receipt, CreditCard, CheckSquare, Calendar,
-  Users, Plus, Trash2, Pencil, Upload, File, Download, FolderOpen, User
+  Users, Plus, Trash2, Pencil, Upload, File, Download, FolderOpen, User, MapPinned
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useParams, useNavigate } from "react-router-dom";
 import { ClientFormDialog } from "@/components/clients/ClientFormDialog";
 import { ContactFormDialog } from "@/components/clients/ContactFormDialog";
+import { AddressFormDialog } from "@/components/clients/AddressFormDialog";
 import { formatMoney } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -118,6 +119,19 @@ interface Contact {
   is_primary: boolean;
 }
 
+interface Address {
+  id: string;
+  client_id: string;
+  address_type: string;
+  label: string | null;
+  address: string;
+  city: string | null;
+  postal_code: string | null;
+  country: string | null;
+  is_primary: boolean;
+  notes: string | null;
+}
+
 interface Document {
   id: string;
   file_name: string;
@@ -187,12 +201,17 @@ const ClientDetail = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [documentToDelete, setDocumentToDelete] = useState<Document | null>(null);
+  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [isAddressDialogOpen, setIsAddressDialogOpen] = useState(false);
+  const [editingAddress, setEditingAddress] = useState<Address | null>(null);
+  const [addressToDelete, setAddressToDelete] = useState<Address | null>(null);
 
   useEffect(() => {
     if (id) {
       fetchClientData();
       fetchDocumentCategories();
       checkAdminRole();
+      fetchAddresses();
     }
   }, [id]);
 
@@ -218,6 +237,35 @@ const ClientDetail = () => {
     if (data) {
       setDocumentCategories(data.map(d => d.name));
     }
+  };
+
+  const fetchAddresses = async () => {
+    const { data } = await supabase
+      .from("client_addresses")
+      .select("*")
+      .eq("client_id", id)
+      .order("is_primary", { ascending: false })
+      .order("created_at", { ascending: false });
+    if (data) {
+      setAddresses(data);
+    }
+  };
+
+  const handleDeleteAddress = async () => {
+    if (!addressToDelete) return;
+    
+    const { error } = await supabase
+      .from("client_addresses")
+      .delete()
+      .eq("id", addressToDelete.id);
+
+    if (error) {
+      toast({ title: "Error deleting address", variant: "destructive" });
+    } else {
+      toast({ title: "Address deleted" });
+      fetchAddresses();
+    }
+    setAddressToDelete(null);
   };
 
   const fetchClientData = async () => {
@@ -738,6 +786,10 @@ const ClientDetail = () => {
               <FolderOpen className="w-4 h-4 mr-2" />
               Documents ({documents.length})
             </TabsTrigger>
+            <TabsTrigger value="addresses">
+              <MapPinned className="w-4 h-4 mr-2" />
+              Addresses ({addresses.length})
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="contracts" className="space-y-4">
@@ -1142,6 +1194,74 @@ const ClientDetail = () => {
               </Card>
             )}
           </TabsContent>
+
+          <TabsContent value="addresses" className="space-y-4">
+            <div className="flex justify-end">
+              <Button onClick={() => { setEditingAddress(null); setIsAddressDialogOpen(true); }}>
+                <Plus className="w-4 h-4 mr-2" />
+                Add Address
+              </Button>
+            </div>
+            {addresses.map((address) => (
+              <Card key={address.id} className="p-4 hover:shadow-md transition-shadow">
+                <div className="flex items-start justify-between">
+                  <div className="flex gap-3">
+                    <div className="p-2 bg-muted rounded-lg">
+                      <MapPin className="w-5 h-5 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-semibold">
+                          {address.label || address.address_type.charAt(0).toUpperCase() + address.address_type.slice(1)}
+                        </h3>
+                        <Badge variant="outline" className="text-xs capitalize">
+                          {address.address_type}
+                        </Badge>
+                        {address.is_primary && (
+                          <Badge className="bg-primary text-primary-foreground text-xs">
+                            Primary
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-sm">{address.address}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {address.postal_code} {address.city}
+                        {address.country && `, ${address.country}`}
+                      </p>
+                      {address.notes && (
+                        <p className="text-xs text-muted-foreground mt-2 italic">{address.notes}</p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => { setEditingAddress(address); setIsAddressDialogOpen(true); }}
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setAddressToDelete(address)}
+                    >
+                      <Trash2 className="w-4 h-4 text-destructive" />
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            ))}
+            {addresses.length === 0 && (
+              <Card className="p-8 text-center">
+                <MapPinned className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
+                <p className="text-muted-foreground">No addresses added yet</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Add office, warehouse, or shipping addresses
+                </p>
+              </Card>
+            )}
+          </TabsContent>
         </Tabs>
       </div>
 
@@ -1189,6 +1309,31 @@ const ClientDetail = () => {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteDocument} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AddressFormDialog
+        open={isAddressDialogOpen}
+        onOpenChange={setIsAddressDialogOpen}
+        clientId={id!}
+        address={editingAddress}
+        onSuccess={fetchAddresses}
+      />
+
+      <AlertDialog open={!!addressToDelete} onOpenChange={() => setAddressToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Address</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this address? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteAddress} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
