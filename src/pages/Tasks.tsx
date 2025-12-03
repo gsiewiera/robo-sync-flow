@@ -303,7 +303,7 @@ const Tasks = () => {
 
         {/* Filters */}
         <Card className="p-4">
-          <div className="flex flex-wrap gap-4">
+          <div className="flex flex-nowrap items-center gap-2 overflow-x-auto">
             <Button variant={forToday ? "default" : "outline"} onClick={() => setForToday(!forToday)} className="h-10">
               <Filter className="mr-2 h-4 w-4" />
               For Today
@@ -311,7 +311,7 @@ const Tasks = () => {
 
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" className="h-10 w-[200px] justify-between">
+                <Button variant="outline" className="h-10 min-w-[140px] justify-between">
                   Task {titleFilters.length > 0 && `(${titleFilters.length})`}
                   <ChevronDown className="ml-2 h-4 w-4" />
                 </Button>
@@ -330,7 +330,7 @@ const Tasks = () => {
 
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" className="h-10 w-[180px] justify-between">
+                <Button variant="outline" className="h-10 min-w-[140px] justify-between">
                   Status {statusFilters.length > 0 && `(${statusFilters.length})`}
                   <ChevronDown className="ml-2 h-4 w-4" />
                 </Button>
@@ -361,7 +361,7 @@ const Tasks = () => {
 
             {(userRole === "admin" || userRole === "manager") && <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" className="h-10 w-[200px] justify-between">
+                  <Button variant="outline" className="h-10 min-w-[140px] justify-between">
                     Employee {assignedToFilters.length > 0 && `(${assignedToFilters.length})`}
                     <ChevronDown className="ml-2 h-4 w-4" />
                   </Button>
@@ -385,7 +385,7 @@ const Tasks = () => {
 
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" className="h-10 w-[200px] justify-between">
+                <Button variant="outline" className="h-10 min-w-[140px] justify-between">
                   Contract {contractFilters.length > 0 && `(${contractFilters.length})`}
                   <ChevronDown className="ml-2 h-4 w-4" />
                 </Button>
