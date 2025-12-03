@@ -12,7 +12,7 @@
     "resellers": "Wiederverkäufer",
     "contracts": "Verträge",
     "invoices": "Rechnungen",
-    "service": "Service",
+    "service": "Support",
     "robots": "Roboter",
     "items": "Artikel",
     "pricing": "Preise",
@@ -140,8 +140,8 @@
     "amount": "Betrag"
   },
   "service": {
-    "title": "Service",
-    "description": "Service-Tickets und Wartung verwalten",
+    "title": "Support",
+    "description": "Support-Tickets und Wartung verwalten",
     "addTicket": "Ticket hinzufügen",
     "ticketNumber": "Ticketnummer",
     "noTickets": "Keine Tickets gefunden"
