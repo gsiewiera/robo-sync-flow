@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { formatMoney } from "@/lib/utils";
 import { ArrowUpDown, ArrowUp, ArrowDown, Eye, X, Mail, Plus } from "lucide-react";
+import { ColumnVisibilityToggle, ColumnConfig } from "@/components/ui/column-visibility-toggle";
 import { NewContractDialog } from "@/components/contracts/NewContractDialog";
 import {
   Select,
@@ -81,7 +82,29 @@ const Contracts = () => {
   const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [showNewContractDialog, setShowNewContractDialog] = useState(false);
   const navigate = useNavigate();
-  const recordsPerPage = 20;
+  const recordsPerPage = 30;
+
+  const columns: ColumnConfig[] = [
+    { key: "contract_number", label: t("contracts.contractNumber"), defaultVisible: true },
+    { key: "client", label: t("contracts.client"), defaultVisible: true },
+    { key: "status", label: t("common.status"), defaultVisible: true },
+    { key: "start_date", label: t("contracts.startDate"), defaultVisible: true },
+    { key: "end_date", label: t("contracts.endDate"), defaultVisible: true },
+    { key: "monthly_payment", label: t("contracts.monthlyPayment"), defaultVisible: true },
+    { key: "created_at", label: t("common.created"), defaultVisible: false },
+  ];
+
+  const [visibleColumns, setVisibleColumns] = useState<string[]>(
+    columns.filter((col) => col.defaultVisible).map((col) => col.key)
+  );
+
+  const toggleColumn = (columnKey: string) => {
+    setVisibleColumns((prev) =>
+      prev.includes(columnKey)
+        ? prev.filter((key) => key !== columnKey)
+        : [...prev, columnKey]
+    );
+  };
 
   useEffect(() => {
     fetchContracts();
@@ -264,78 +287,98 @@ const Contracts = () => {
               </div>
             </div>
 
-            {hasActiveFilters && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clearFilters}
-                className="mt-6"
-              >
-                <X className="h-4 w-4 mr-2" />
-                {t("common.clear")}
-              </Button>
-            )}
+            <div className="flex items-center gap-2 mt-6">
+              {hasActiveFilters && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearFilters}
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  {t("common.clear")}
+                </Button>
+              )}
+              <ColumnVisibilityToggle
+                columns={columns}
+                visibleColumns={visibleColumns}
+                onToggleColumn={toggleColumn}
+              />
+            </div>
           </div>
         </Card>
 
         <Card>
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleSort("contract_number")}
-                    className="h-8 px-2 -ml-2 font-medium hover:bg-transparent"
-                  >
-                    {t("contracts.contractNumber")}
-                    {getSortIcon("contract_number")}
-                  </Button>
-                </TableHead>
-                <TableHead>{t("contracts.client")}</TableHead>
-                <TableHead>{t("common.status")}</TableHead>
-                <TableHead>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleSort("start_date")}
-                    className="h-8 px-2 -ml-2 font-medium hover:bg-transparent"
-                  >
-                    {t("contracts.startDate")}
-                    {getSortIcon("start_date")}
-                  </Button>
-                </TableHead>
-                <TableHead>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleSort("end_date")}
-                    className="h-8 px-2 -ml-2 font-medium hover:bg-transparent"
-                  >
-                    {t("contracts.endDate")}
-                    {getSortIcon("end_date")}
-                  </Button>
-                </TableHead>
-                <TableHead>{t("contracts.monthlyPayment")}</TableHead>
-                <TableHead>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleSort("created_at")}
-                    className="h-8 px-2 -ml-2 font-medium hover:bg-transparent"
-                  >
-                    {t("common.created")}
-                    {getSortIcon("created_at")}
-                  </Button>
-                </TableHead>
-                <TableHead className="w-20">{t("common.actions")}</TableHead>
+              <TableRow className="h-9">
+                {visibleColumns.includes("contract_number") && (
+                  <TableHead className="py-1.5">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleSort("contract_number")}
+                      className="h-7 px-2 -ml-2 text-xs font-medium hover:bg-transparent"
+                    >
+                      {t("contracts.contractNumber")}
+                      {getSortIcon("contract_number")}
+                    </Button>
+                  </TableHead>
+                )}
+                {visibleColumns.includes("client") && (
+                  <TableHead className="py-1.5 text-xs">{t("contracts.client")}</TableHead>
+                )}
+                {visibleColumns.includes("status") && (
+                  <TableHead className="py-1.5 text-xs">{t("common.status")}</TableHead>
+                )}
+                {visibleColumns.includes("start_date") && (
+                  <TableHead className="py-1.5">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleSort("start_date")}
+                      className="h-7 px-2 -ml-2 text-xs font-medium hover:bg-transparent"
+                    >
+                      {t("contracts.startDate")}
+                      {getSortIcon("start_date")}
+                    </Button>
+                  </TableHead>
+                )}
+                {visibleColumns.includes("end_date") && (
+                  <TableHead className="py-1.5">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleSort("end_date")}
+                      className="h-7 px-2 -ml-2 text-xs font-medium hover:bg-transparent"
+                    >
+                      {t("contracts.endDate")}
+                      {getSortIcon("end_date")}
+                    </Button>
+                  </TableHead>
+                )}
+                {visibleColumns.includes("monthly_payment") && (
+                  <TableHead className="py-1.5 text-xs">{t("contracts.monthlyPayment")}</TableHead>
+                )}
+                {visibleColumns.includes("created_at") && (
+                  <TableHead className="py-1.5">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleSort("created_at")}
+                      className="h-7 px-2 -ml-2 text-xs font-medium hover:bg-transparent"
+                    >
+                      {t("common.created")}
+                      {getSortIcon("created_at")}
+                    </Button>
+                  </TableHead>
+                )}
+                <TableHead className="w-16 py-1.5 text-xs">{t("common.actions")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {currentRecords.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={visibleColumns.length + 1} className="text-center py-8 text-muted-foreground text-sm">
                     {t("contracts.noContracts")}
                   </TableCell>
                 </TableRow>
@@ -343,55 +386,69 @@ const Contracts = () => {
                 currentRecords.map((contract) => (
                   <TableRow 
                     key={contract.id} 
-                    className="h-12 cursor-pointer hover:bg-muted/50"
+                    className="h-9 cursor-pointer hover:bg-muted/50"
                     onClick={() => navigate(`/contracts/${contract.id}`)}
                   >
-                    <TableCell className="font-medium">{contract.contract_number}</TableCell>
-                    <TableCell>{contract.clients?.name || "-"}</TableCell>
-                    <TableCell>
-                      <Badge className={statusColors[contract.status]}>
-                        {t(`status.${contract.status}`)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {contract.start_date
-                        ? new Date(contract.start_date).toLocaleDateString()
-                        : "-"}
-                    </TableCell>
-                    <TableCell>
-                      {contract.end_date
-                        ? new Date(contract.end_date).toLocaleDateString()
-                        : "-"}
-                    </TableCell>
-                    <TableCell>
-                      {contract.monthly_payment
-                        ? `${formatMoney(contract.monthly_payment)} PLN`
-                        : "-"}
-                    </TableCell>
-                    <TableCell>
-                      {contract.created_at
-                        ? new Date(contract.created_at).toLocaleDateString()
-                        : "-"}
-                    </TableCell>
-                    <TableCell onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center gap-1">
+                    {visibleColumns.includes("contract_number") && (
+                      <TableCell className="py-1.5 text-sm font-medium">{contract.contract_number}</TableCell>
+                    )}
+                    {visibleColumns.includes("client") && (
+                      <TableCell className="py-1.5 text-sm">{contract.clients?.name || "-"}</TableCell>
+                    )}
+                    {visibleColumns.includes("status") && (
+                      <TableCell className="py-1.5">
+                        <Badge className={`${statusColors[contract.status]} text-xs px-1.5 py-0`}>
+                          {t(`status.${contract.status}`)}
+                        </Badge>
+                      </TableCell>
+                    )}
+                    {visibleColumns.includes("start_date") && (
+                      <TableCell className="py-1.5 text-sm">
+                        {contract.start_date
+                          ? new Date(contract.start_date).toLocaleDateString()
+                          : "-"}
+                      </TableCell>
+                    )}
+                    {visibleColumns.includes("end_date") && (
+                      <TableCell className="py-1.5 text-sm">
+                        {contract.end_date
+                          ? new Date(contract.end_date).toLocaleDateString()
+                          : "-"}
+                      </TableCell>
+                    )}
+                    {visibleColumns.includes("monthly_payment") && (
+                      <TableCell className="py-1.5 text-sm">
+                        {contract.monthly_payment
+                          ? `${formatMoney(contract.monthly_payment)} PLN`
+                          : "-"}
+                      </TableCell>
+                    )}
+                    {visibleColumns.includes("created_at") && (
+                      <TableCell className="py-1.5 text-sm">
+                        {contract.created_at
+                          ? new Date(contract.created_at).toLocaleDateString()
+                          : "-"}
+                      </TableCell>
+                    )}
+                    <TableCell className="py-1.5" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center gap-0.5">
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-8 w-8 p-0"
+                          className="h-6 w-6 p-0"
                           onClick={() => openEmailDialog(contract)}
                           title="Send email"
                         >
-                          <Mail className="h-4 w-4" />
+                          <Mail className="h-3.5 w-3.5" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-8 w-8 p-0"
+                          className="h-6 w-6 p-0"
                           onClick={() => navigate(`/contracts/${contract.id}`)}
                           title="View details"
                         >
-                          <Eye className="h-4 w-4" />
+                          <Eye className="h-3.5 w-3.5" />
                         </Button>
                       </div>
                     </TableCell>
