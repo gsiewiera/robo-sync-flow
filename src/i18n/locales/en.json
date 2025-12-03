@@ -24,7 +24,8 @@
     "settings": "Settings",
     "logout": "Logout",
     "navigation": "Navigation",
-    "reports": "Reports"
+    "reports": "Reports",
+    "notes": "Notes"
   },
   "reports": {
     "activity": "Activity",
@@ -243,5 +244,44 @@
   },
   "language": {
     "select": "Select Language"
+  },
+  "notes": {
+    "title": "Notes",
+    "description": "Manage contact notes and follow-ups",
+    "addNote": "Add Note",
+    "editNote": "Edit Note",
+    "noNotes": "No notes found",
+    "client": "Client",
+    "contactPerson": "Contact Person",
+    "offer": "Offer",
+    "salesperson": "Salesperson",
+    "contactType": "Contact Type",
+    "allClients": "All Clients",
+    "allTypes": "All Types",
+    "allSalespeople": "All Salespeople",
+    "selectClient": "Select client",
+    "selectOffer": "Select offer",
+    "selectSalesperson": "Select",
+    "priorityNormal": "Normal",
+    "priorityHigh": "High",
+    "note": "Note",
+    "notePlaceholder": "Enter note details",
+    "needs": "Needs",
+    "needsPlaceholder": "Client needs and requirements",
+    "keyPoints": "Key Points",
+    "keyPointsPlaceholder": "Key discussion points",
+    "commitmentsUs": "Commitments (Us)",
+    "commitmentsUsPlaceholder": "Our commitments",
+    "commitmentsClient": "Commitments (Client)",
+    "commitmentsClientPlaceholder": "Client commitments",
+    "risks": "Risks",
+    "risksPlaceholder": "Potential risks or concerns",
+    "nextStep": "Next Step",
+    "nextStepPlaceholder": "Next action to take",
+    "createTask": "Create Task",
+    "created": "Note created successfully",
+    "updated": "Note updated successfully",
+    "saveError": "Failed to save note",
+    "contactPersonPlaceholder": "Enter contact person"
   }
 }

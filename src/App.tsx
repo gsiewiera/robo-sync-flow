@@ -28,6 +28,7 @@ import Items from "./pages/Items";
 import Pricing from "./pages/Pricing";
 import Invoices from "./pages/Invoices";
 import Leads from "./pages/Leads";
+import Notes from "./pages/Notes";
 import AdminUsers from "./pages/AdminUsers";
 import UserProfile from "./pages/UserProfile";
 import Leaderboard from "./pages/Leaderboard";
@@ -100,6 +101,7 @@ const App = () => (
           <Route path="/pricing" element={<ProtectedRoute><Pricing /></ProtectedRoute>} />
           <Route path="/invoices" element={<ProtectedRoute><Invoices /></ProtectedRoute>} />
           <Route path="/leads" element={<ProtectedRoute><Leads /></ProtectedRoute>} />
+          <Route path="/notes" element={<ProtectedRoute><Notes /></ProtectedRoute>} />
           <Route path="/admin/users" element={<ProtectedRoute><AdminUsers /></ProtectedRoute>} />
           <Route path="/admin/users/:id" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
           <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />

@@ -1,0 +1,457 @@
+import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { Plus, ListTodo } from "lucide-react";
+
+interface Note {
+  id: string;
+  client_id: string | null;
+  contact_person: string | null;
+  offer_id: string | null;
+  note_date: string;
+  salesperson_id: string | null;
+  priority: string;
+  contact_type: string;
+  note: string | null;
+  needs: string | null;
+  key_points: string | null;
+  commitments_us: string | null;
+  commitments_client: string | null;
+  risks: string | null;
+  next_step: string | null;
+}
+
+interface Client {
+  id: string;
+  name: string;
+}
+
+interface Profile {
+  id: string;
+  full_name: string;
+}
+
+interface Offer {
+  id: string;
+  offer_number: string;
+}
+
+interface NoteFormSheetProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  note: Note | null;
+  onSuccess: () => void;
+  clients: Client[];
+  salespeople: Profile[];
+}
+
+export const NoteFormSheet = ({
+  open,
+  onOpenChange,
+  note,
+  onSuccess,
+  clients,
+  salespeople,
+}: NoteFormSheetProps) => {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [offers, setOffers] = useState<Offer[]>([]);
+  const [formData, setFormData] = useState({
+    client_id: "",
+    contact_person: "",
+    offer_id: "",
+    note_date: new Date().toISOString().split("T")[0],
+    salesperson_id: "",
+    priority: "normal",
+    contact_type: "other",
+    note: "",
+    needs: "",
+    key_points: "",
+    commitments_us: "",
+    commitments_client: "",
+    risks: "",
+    next_step: "",
+  });
+
+  useEffect(() => {
+    if (note) {
+      setFormData({
+        client_id: note.client_id || "",
+        contact_person: note.contact_person || "",
+        offer_id: note.offer_id || "",
+        note_date: note.note_date,
+        salesperson_id: note.salesperson_id || "",
+        priority: note.priority,
+        contact_type: note.contact_type,
+        note: note.note || "",
+        needs: note.needs || "",
+        key_points: note.key_points || "",
+        commitments_us: note.commitments_us || "",
+        commitments_client: note.commitments_client || "",
+        risks: note.risks || "",
+        next_step: note.next_step || "",
+      });
+    } else {
+      resetForm();
+    }
+  }, [note, open]);
+
+  useEffect(() => {
+    if (formData.client_id) {
+      fetchOffers(formData.client_id);
+    } else {
+      setOffers([]);
+    }
+  }, [formData.client_id]);
+
+  const fetchOffers = async (clientId: string) => {
+    const { data } = await supabase
+      .from("offers")
+      .select("id, offer_number")
+      .eq("client_id", clientId)
+      .order("created_at", { ascending: false });
+    setOffers(data || []);
+  };
+
+  const resetForm = () => {
+    setFormData({
+      client_id: "",
+      contact_person: "",
+      offer_id: "",
+      note_date: new Date().toISOString().split("T")[0],
+      salesperson_id: "",
+      priority: "normal",
+      contact_type: "other",
+      note: "",
+      needs: "",
+      key_points: "",
+      commitments_us: "",
+      commitments_client: "",
+      risks: "",
+      next_step: "",
+    });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const payload = {
+        client_id: formData.client_id || null,
+        contact_person: formData.contact_person || null,
+        offer_id: formData.offer_id || null,
+        note_date: formData.note_date,
+        salesperson_id: formData.salesperson_id || null,
+        priority: formData.priority,
+        contact_type: formData.contact_type,
+        note: formData.note || null,
+        needs: formData.needs || null,
+        key_points: formData.key_points || null,
+        commitments_us: formData.commitments_us || null,
+        commitments_client: formData.commitments_client || null,
+        risks: formData.risks || null,
+        next_step: formData.next_step || null,
+      };
+
+      if (note) {
+        const { error } = await supabase
+          .from("notes")
+          .update(payload)
+          .eq("id", note.id);
+
+        if (error) throw error;
+        toast.success(t("notes.updated", "Note updated successfully"));
+      } else {
+        const { error } = await supabase.from("notes").insert([payload]);
+
+        if (error) throw error;
+        toast.success(t("notes.created", "Note created successfully"));
+      }
+
+      onSuccess();
+    } catch (error) {
+      console.error("Error saving note:", error);
+      toast.error(t("notes.saveError", "Failed to save note"));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateTask = () => {
+    // Navigate to tasks with pre-filled data
+    const params = new URLSearchParams();
+    if (formData.client_id) params.set("client_id", formData.client_id);
+    if (formData.next_step) params.set("title", formData.next_step);
+    navigate(`/tasks?${params.toString()}&new=true`);
+  };
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle>
+            {note ? t("notes.editNote", "Edit Note") : t("notes.addNote", "Add Note")}
+          </SheetTitle>
+        </SheetHeader>
+
+        <form onSubmit={handleSubmit} className="space-y-4 mt-6">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>{t("notes.client", "Client")}</Label>
+              <Select
+                value={formData.client_id}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, client_id: value, offer_id: "" })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={t("notes.selectClient", "Select client")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {clients.map((client) => (
+                    <SelectItem key={client.id} value={client.id}>
+                      {client.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>{t("notes.contactPerson", "Contact Person")}</Label>
+              <Input
+                value={formData.contact_person}
+                onChange={(e) =>
+                  setFormData({ ...formData, contact_person: e.target.value })
+                }
+                placeholder={t("notes.contactPersonPlaceholder", "Enter contact person")}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>{t("notes.offer", "Offer")}</Label>
+              <Select
+                value={formData.offer_id}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, offer_id: value })
+                }
+                disabled={!formData.client_id}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={t("notes.selectOffer", "Select offer")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {offers.map((offer) => (
+                    <SelectItem key={offer.id} value={offer.id}>
+                      {offer.offer_number}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>{t("common.date")}</Label>
+              <Input
+                type="date"
+                value={formData.note_date}
+                onChange={(e) =>
+                  setFormData({ ...formData, note_date: e.target.value })
+                }
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label>{t("notes.salesperson", "Salesperson")}</Label>
+              <Select
+                value={formData.salesperson_id}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, salesperson_id: value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={t("notes.selectSalesperson", "Select")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {salespeople.map((sp) => (
+                    <SelectItem key={sp.id} value={sp.id}>
+                      {sp.full_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>{t("common.priority")}</Label>
+              <Select
+                value={formData.priority}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, priority: value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="normal">{t("notes.priorityNormal", "Normal")}</SelectItem>
+                  <SelectItem value="high">{t("notes.priorityHigh", "High")}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>{t("notes.contactType", "Contact Type")}</Label>
+              <Select
+                value={formData.contact_type}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, contact_type: value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="email">Email</SelectItem>
+                  <SelectItem value="call">Call</SelectItem>
+                  <SelectItem value="sms">SMS</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>{t("notes.note", "Note")}</Label>
+            <Textarea
+              value={formData.note}
+              onChange={(e) => setFormData({ ...formData, note: e.target.value })}
+              placeholder={t("notes.notePlaceholder", "Enter note details")}
+              rows={3}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>{t("notes.needs", "Needs")}</Label>
+            <Textarea
+              value={formData.needs}
+              onChange={(e) => setFormData({ ...formData, needs: e.target.value })}
+              placeholder={t("notes.needsPlaceholder", "Client needs and requirements")}
+              rows={2}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>{t("notes.keyPoints", "Key Points")}</Label>
+            <Textarea
+              value={formData.key_points}
+              onChange={(e) =>
+                setFormData({ ...formData, key_points: e.target.value })
+              }
+              placeholder={t("notes.keyPointsPlaceholder", "Key discussion points")}
+              rows={2}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>{t("notes.commitmentsUs", "Commitments (Us)")}</Label>
+              <Textarea
+                value={formData.commitments_us}
+                onChange={(e) =>
+                  setFormData({ ...formData, commitments_us: e.target.value })
+                }
+                placeholder={t("notes.commitmentsUsPlaceholder", "Our commitments")}
+                rows={2}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>{t("notes.commitmentsClient", "Commitments (Client)")}</Label>
+              <Textarea
+                value={formData.commitments_client}
+                onChange={(e) =>
+                  setFormData({ ...formData, commitments_client: e.target.value })
+                }
+                placeholder={t("notes.commitmentsClientPlaceholder", "Client commitments")}
+                rows={2}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>{t("notes.risks", "Risks")}</Label>
+            <Textarea
+              value={formData.risks}
+              onChange={(e) => setFormData({ ...formData, risks: e.target.value })}
+              placeholder={t("notes.risksPlaceholder", "Potential risks or concerns")}
+              rows={2}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>{t("notes.nextStep", "Next Step")}</Label>
+            <Textarea
+              value={formData.next_step}
+              onChange={(e) =>
+                setFormData({ ...formData, next_step: e.target.value })
+              }
+              placeholder={t("notes.nextStepPlaceholder", "Next action to take")}
+              rows={2}
+            />
+          </div>
+
+          <div className="flex justify-between pt-4 border-t">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleCreateTask}
+              disabled={!formData.next_step}
+            >
+              <ListTodo className="h-4 w-4 mr-2" />
+              {t("notes.createTask", "Create Task")}
+            </Button>
+
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+              >
+                {t("common.cancel")}
+              </Button>
+              <Button type="submit" disabled={loading}>
+                {loading ? t("common.saving", "Saving...") : t("common.save")}
+              </Button>
+            </div>
+          </div>
+        </form>
+      </SheetContent>
+    </Sheet>
+  );
+};
