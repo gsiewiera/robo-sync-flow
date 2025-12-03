@@ -30,7 +30,11 @@ import {
 import { ArrowLeft, Pencil, Cpu, Save, X, ImageIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RobotModelPricing } from "@/components/robot-models/RobotModelPricing";
+import { RobotModelUnits } from "@/components/robot-models/RobotModelUnits";
+import { RobotModelStock } from "@/components/robot-models/RobotModelStock";
+import { RobotModelDocuments } from "@/components/robot-models/RobotModelDocuments";
 
 const formSchema = z.object({
   model_name: z.string().min(1, "Model name is required").max(100),
@@ -538,8 +542,27 @@ const RobotModelDetail = () => {
           </div>
         )}
 
-        {/* Pricing Section - always visible below model info */}
-        <RobotModelPricing modelName={model.model_name} isAdmin={isAdmin} />
+        {/* Tabs Section */}
+        <Tabs defaultValue="pricing" className="w-full">
+          <TabsList>
+            <TabsTrigger value="pricing">Pricing</TabsTrigger>
+            <TabsTrigger value="units">Units</TabsTrigger>
+            <TabsTrigger value="stock">Stock</TabsTrigger>
+            <TabsTrigger value="documents">Documents</TabsTrigger>
+          </TabsList>
+          <TabsContent value="pricing" className="mt-4">
+            <RobotModelPricing modelName={model.model_name} isAdmin={isAdmin} />
+          </TabsContent>
+          <TabsContent value="units" className="mt-4">
+            <RobotModelUnits modelName={model.model_name} />
+          </TabsContent>
+          <TabsContent value="stock" className="mt-4">
+            <RobotModelStock modelName={model.model_name} />
+          </TabsContent>
+          <TabsContent value="documents" className="mt-4">
+            <RobotModelDocuments modelId={model.id} isAdmin={isAdmin} />
+          </TabsContent>
+        </Tabs>
       </div>
     </Layout>
   );
