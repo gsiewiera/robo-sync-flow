@@ -14,6 +14,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { ClientFormDialog } from "@/components/clients/ClientFormDialog";
 import { ContactFormDialog } from "@/components/clients/ContactFormDialog";
 import { AddressFormDialog } from "@/components/clients/AddressFormDialog";
+import { AddressMap } from "@/components/clients/AddressMap";
 import { formatMoney } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -710,17 +711,35 @@ const ClientDetail = () => {
                 Location
               </h3>
               <div className="space-y-1">
-                {client.address ? (
-                  <>
-                    <p className="font-medium text-sm">{client.address}</p>
-                    <p className="font-medium text-sm">
-                      {client.postal_code} {client.city}
-                    </p>
-                    <p className="font-medium text-sm">{client.country}</p>
-                  </>
-                ) : (
-                  <p className="text-muted-foreground italic text-sm">No address set</p>
-                )}
+                {(() => {
+                  const primaryAddress = addresses.find(a => a.is_primary) || addresses[0];
+                  if (primaryAddress) {
+                    return (
+                      <>
+                        <p className="font-medium text-sm">{primaryAddress.address}</p>
+                        <p className="font-medium text-sm">
+                          {primaryAddress.postal_code} {primaryAddress.city}
+                        </p>
+                        <p className="font-medium text-sm">{primaryAddress.country}</p>
+                        {primaryAddress.label && (
+                          <Badge variant="outline" className="text-xs mt-1">{primaryAddress.label}</Badge>
+                        )}
+                      </>
+                    );
+                  } else if (client.address) {
+                    return (
+                      <>
+                        <p className="font-medium text-sm">{client.address}</p>
+                        <p className="font-medium text-sm">
+                          {client.postal_code} {client.city}
+                        </p>
+                        <p className="font-medium text-sm">{client.country}</p>
+                      </>
+                    );
+                  } else {
+                    return <p className="text-muted-foreground italic text-sm">No address set</p>;
+                  }
+                })()}
               </div>
             </div>
 
@@ -776,15 +795,15 @@ const ClientDetail = () => {
             </TabsTrigger>
             <TabsTrigger value="invoices">
               <Receipt className="w-4 h-4 mr-2" />
-              Invoices & Payments ({invoices.length})
+              Payments ({invoices.length})
             </TabsTrigger>
             <TabsTrigger value="tickets">
               <FileText className="w-4 h-4 mr-2" />
-              Support Tickets (0)
+              Tickets (0)
             </TabsTrigger>
             <TabsTrigger value="documents">
               <FolderOpen className="w-4 h-4 mr-2" />
-              Documents ({documents.length})
+              Docs ({documents.length})
             </TabsTrigger>
             <TabsTrigger value="addresses">
               <MapPinned className="w-4 h-4 mr-2" />
@@ -1252,6 +1271,9 @@ const ClientDetail = () => {
                 </div>
               </Card>
             ))}
+            {addresses.length > 0 && (
+              <AddressMap addresses={addresses} />
+            )}
             {addresses.length === 0 && (
               <Card className="p-8 text-center">
                 <MapPinned className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
