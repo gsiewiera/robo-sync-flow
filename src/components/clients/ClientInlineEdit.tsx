@@ -244,7 +244,6 @@ export function ClientInlineEdit({ client, onSave, onCancel }: ClientInlineEditP
         general_email: formData.general_email || null,
         general_phone: formData.general_phone || null,
         website_url: formData.website_url || null,
-        balance: formData.balance || 0,
         status: formData.status,
         reseller_id: formData.reseller_id || null,
         assigned_salesperson_id: formData.assigned_salesperson_id || null,
@@ -388,11 +387,9 @@ export function ClientInlineEdit({ client, onSave, onCancel }: ClientInlineEditP
             </div>
             <div className="space-y-2">
               <Label>Balance</Label>
-              <Input
-                type="number"
-                value={formData.balance}
-                onChange={(e) => setFormData({ ...formData, balance: parseFloat(e.target.value) || 0 })}
-              />
+              <div className="h-10 px-3 py-2 rounded-md border border-input bg-muted text-muted-foreground flex items-center">
+                {formData.balance.toLocaleString('pl-PL', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).replace(/,/g, ' ')}
+              </div>
             </div>
           </div>
         </div>
