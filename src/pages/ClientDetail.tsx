@@ -1238,70 +1238,62 @@ const ClientDetail = () => {
                 Add Address
               </Button>
             </div>
-            {addresses.map((address) => (
-              <Card key={address.id} className="p-4 hover:shadow-md transition-shadow">
-                <div className="flex items-start justify-between">
-                  <div className="flex gap-3">
-                    <div className="p-2 bg-muted rounded-lg">
-                      <MapPin className="w-5 h-5 text-muted-foreground" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold">
-                          {address.label || address.address_type.charAt(0).toUpperCase() + address.address_type.slice(1)}
-                        </h3>
-                        <Badge variant="outline" className="text-xs capitalize">
-                          {address.address_type}
-                        </Badge>
-                        {address.is_primary && (
-                          <Badge className="bg-primary text-primary-foreground text-xs">
-                            Primary
-                          </Badge>
-                        )}
+            {addresses.length > 0 ? (
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                {/* Addresses list - 1/3 width */}
+                <div className="space-y-3">
+                  {addresses.map((address) => (
+                    <Card key={address.id} className="p-3 hover:shadow-md transition-shadow">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex gap-2 min-w-0 flex-1">
+                          <div className="p-1.5 bg-muted rounded-lg shrink-0">
+                            <MapPin className="w-4 h-4 text-muted-foreground" />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
+                              <h3 className="font-semibold text-sm truncate">
+                                {address.label || address.address_type.charAt(0).toUpperCase() + address.address_type.slice(1)}
+                              </h3>
+                              {address.is_primary && (
+                                <Badge className="bg-primary text-primary-foreground text-xs px-1.5 py-0">
+                                  Primary
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="text-xs truncate">{address.address}</p>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {address.postal_code} {address.city}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-0.5 shrink-0">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            onClick={() => { setEditingAddress(address); setIsAddressDialogOpen(true); }}
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            onClick={() => setAddressToDelete(address)}
+                          >
+                            <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                          </Button>
+                        </div>
                       </div>
-                      <p className="text-sm">{address.address}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {address.postal_code} {address.city}
-                        {address.country && `, ${address.country}`}
-                      </p>
-                      {address.notes && (
-                        <p className="text-xs text-muted-foreground mt-2 italic">{address.notes}</p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => {
-                        setIsMapDialogOpen(true);
-                      }}
-                      title="View on map"
-                    >
-                      <MapPinned className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => { setEditingAddress(address); setIsAddressDialogOpen(true); }}
-                    >
-                      <Pencil className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setAddressToDelete(address)}
-                    >
-                      <Trash2 className="w-4 h-4 text-destructive" />
-                    </Button>
-                  </div>
+                    </Card>
+                  ))}
                 </div>
-              </Card>
-            ))}
-            {addresses.length > 0 && (
-              <AddressMap addresses={addresses} />
-            )}
-            {addresses.length === 0 && (
+                {/* Map - 2/3 width */}
+                <div className="lg:col-span-2">
+                  <AddressMap addresses={addresses} />
+                </div>
+              </div>
+            ) : (
               <Card className="p-8 text-center">
                 <MapPinned className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
                 <p className="text-muted-foreground">No addresses added yet</p>
@@ -1390,7 +1382,7 @@ const ClientDetail = () => {
       </AlertDialog>
 
       <Dialog open={isMapDialogOpen} onOpenChange={setIsMapDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh]">
+        <DialogContent className="max-w-6xl max-h-[90vh]">
           <div className="h-[500px]">
             <AddressMap addresses={addresses} />
           </div>
