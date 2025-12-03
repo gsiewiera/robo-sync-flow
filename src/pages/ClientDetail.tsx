@@ -7,7 +7,7 @@ import {
   ArrowLeft, Mail, Phone, MapPin, FileText, ShoppingCart, Bot, 
   Globe, Edit, DollarSign, Receipt, CreditCard, CheckSquare, Calendar,
   Users, Plus, Trash2, Pencil, Upload, File, Download, FolderOpen, User, MapPinned,
-  StickyNote
+  StickyNote, Wrench
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,6 +20,7 @@ import { NoteFormSheet } from "@/components/notes/NoteFormSheet";
 import { TaskFormSheet } from "@/components/tasks/TaskFormSheet";
 import { NewOfferDialog } from "@/components/offers/NewOfferDialog";
 import { NewContractDialog } from "@/components/contracts/NewContractDialog";
+import { TicketFormDialog } from "@/components/service/TicketFormDialog";
 import { formatMoney } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -176,6 +177,16 @@ interface Document {
   uploader_name?: string;
 }
 
+interface ServiceTicket {
+  id: string;
+  ticket_number: string;
+  title: string;
+  status: string;
+  priority: string;
+  created_at: string;
+  due_date: string | null;
+}
+
 const DEFAULT_ROLES = ["contact", "billing", "technical", "decision maker", "manager"];
 
 const statusColors: Record<string, string> = {
@@ -244,6 +255,8 @@ const ClientDetail = () => {
   const [isOfferDialogOpen, setIsOfferDialogOpen] = useState(false);
   const [isContractDialogOpen, setIsContractDialogOpen] = useState(false);
   const [salespeople, setSalespeople] = useState<{ id: string; full_name: string }[]>([]);
+  const [tickets, setTickets] = useState<ServiceTicket[]>([]);
+  const [isTicketFormOpen, setIsTicketFormOpen] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -252,6 +265,7 @@ const ClientDetail = () => {
       checkAdminRole();
       fetchAddresses();
       fetchSalespeople();
+      fetchTickets();
     }
   }, [id]);
 
@@ -298,6 +312,17 @@ const ClientDetail = () => {
       .order("created_at", { ascending: false });
     if (data) {
       setAddresses(data);
+    }
+  };
+
+  const fetchTickets = async () => {
+    const { data } = await supabase
+      .from("service_tickets")
+      .select("id, ticket_number, title, status, priority, created_at, due_date")
+      .eq("client_id", id)
+      .order("created_at", { ascending: false });
+    if (data) {
+      setTickets(data);
     }
   };
 
@@ -872,8 +897,8 @@ const ClientDetail = () => {
               Payments ({invoices.length})
             </TabsTrigger>
             <TabsTrigger value="tickets">
-              <FileText className="w-4 h-4 mr-2" />
-              Tickets (0)
+              <Wrench className="w-4 h-4 mr-2" />
+              Tickets ({tickets.length})
             </TabsTrigger>
             <TabsTrigger value="documents">
               <FolderOpen className="w-4 h-4 mr-2" />
@@ -1218,9 +1243,53 @@ const ClientDetail = () => {
           </TabsContent>
 
           <TabsContent value="tickets" className="space-y-4">
-            <Card className="p-8 text-center">
-              <p className="text-muted-foreground">Support tickets integration coming soon</p>
-            </Card>
+            <div className="flex justify-end">
+              <Button onClick={() => setIsTicketFormOpen(true)}>
+                <Plus className="w-4 h-4 mr-2" />
+                Add Ticket
+              </Button>
+            </div>
+            {tickets.map((ticket) => (
+              <Card
+                key={ticket.id}
+                className="p-4 hover:shadow-lg transition-shadow cursor-pointer"
+                onClick={() => navigate(`/service/${ticket.id}`)}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-warning/10 rounded-lg">
+                      <Wrench className="w-5 h-5 text-warning" />
+                    </div>
+                    <div>
+                      <p className="font-medium">{ticket.ticket_number}</p>
+                      <p className="text-sm text-muted-foreground">{ticket.title}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge className={
+                      ticket.priority === "high" ? "bg-destructive text-destructive-foreground" :
+                      ticket.priority === "medium" ? "bg-primary text-primary-foreground" :
+                      "bg-muted text-muted-foreground"
+                    }>
+                      {ticket.priority}
+                    </Badge>
+                    <Badge className={
+                      ticket.status === "open" ? "bg-warning text-warning-foreground" :
+                      ticket.status === "in_progress" ? "bg-primary text-primary-foreground" :
+                      ticket.status === "resolved" ? "bg-success text-success-foreground" :
+                      "bg-muted text-muted-foreground"
+                    }>
+                      {ticket.status.replace("_", " ")}
+                    </Badge>
+                  </div>
+                </div>
+              </Card>
+            ))}
+            {tickets.length === 0 && (
+              <Card className="p-8 text-center">
+                <p className="text-muted-foreground">No service tickets found for this client</p>
+              </Card>
+            )}
           </TabsContent>
 
           <TabsContent value="robots" className="space-y-4">
@@ -1566,6 +1635,18 @@ const ClientDetail = () => {
           onSuccess={() => {
             fetchClientData();
             setIsContractDialogOpen(false);
+          }}
+          initialClientId={client.id}
+        />
+      )}
+
+      {client && (
+        <TicketFormDialog
+          open={isTicketFormOpen}
+          onOpenChange={setIsTicketFormOpen}
+          onSuccess={() => {
+            fetchTickets();
+            setIsTicketFormOpen(false);
           }}
           initialClientId={client.id}
         />
