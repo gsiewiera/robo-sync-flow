@@ -52,7 +52,7 @@ export const DictionariesSettings = () => {
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState<string>("km_rate");
   const [dictionaries, setDictionaries] = useState<Dictionary>({
-    robot_models: ["UR3", "UR5", "UR10", "UR16"],
+    robot_models: [],
     robot_types: ["Collaborative", "Industrial", "Mobile", "Delta"],
     manufacturers: [],
     client_types: ["Enterprise", "SME", "Startup", "Government"],
@@ -73,6 +73,7 @@ export const DictionariesSettings = () => {
   useEffect(() => {
     checkAdminRole();
     fetchManufacturers();
+    fetchRobotModels();
     fetchNumericSettings();
   }, []);
 
@@ -100,6 +101,20 @@ export const DictionariesSettings = () => {
       setDictionaries((prev) => ({
         ...prev,
         manufacturers: data.map((m) => m.manufacturer_name),
+      }));
+    }
+  };
+
+  const fetchRobotModels = async () => {
+    const { data, error } = await supabase
+      .from("robot_model_dictionary")
+      .select("model_name")
+      .order("model_name");
+
+    if (!error && data) {
+      setDictionaries((prev) => ({
+        ...prev,
+        robot_models: data.map((m) => m.model_name),
       }));
     }
   };
@@ -155,6 +170,22 @@ export const DictionariesSettings = () => {
       return;
     }
 
+    // Handle robot_models with database
+    if (category === "robot_models") {
+      const { error } = await supabase
+        .from("robot_model_dictionary")
+        .insert({ model_name: value.trim() });
+
+      if (error) {
+        console.error("Error adding robot model:", error);
+        toast.error("Failed to add robot model");
+        return;
+      }
+      await fetchRobotModels();
+      toast.success("Robot model added successfully");
+      return;
+    }
+
     // Handle other categories (client-side only for now)
     setDictionaries((prev) => ({
       ...prev,
@@ -178,6 +209,24 @@ export const DictionariesSettings = () => {
       }
       await fetchManufacturers();
       toast.success("Manufacturer removed successfully");
+      return;
+    }
+
+    // Handle robot_models with database
+    if (category === "robot_models") {
+      const modelName = dictionaries.robot_models[index];
+      const { error } = await supabase
+        .from("robot_model_dictionary")
+        .delete()
+        .eq("model_name", modelName);
+
+      if (error) {
+        console.error("Error removing robot model:", error);
+        toast.error("Failed to remove robot model");
+        return;
+      }
+      await fetchRobotModels();
+      toast.success("Robot model removed successfully");
       return;
     }
 

@@ -1717,6 +1717,24 @@ export type Database = {
         }
         Relationships: []
       }
+      robot_model_dictionary: {
+        Row: {
+          created_at: string | null
+          id: string
+          model_name: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          model_name: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          model_name?: string
+        }
+        Relationships: []
+      }
       robot_pricing: {
         Row: {
           created_at: string | null
