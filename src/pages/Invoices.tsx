@@ -170,19 +170,6 @@ const Invoices = () => {
         </div>
 
         <Card className="shadow-lg border-primary/20">
-          <CardHeader className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent pb-4">
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Filter className="w-5 h-5 text-primary" />
-                Filters
-              </CardTitle>
-              {hasActiveFilters && (
-                <Badge variant="secondary" className="animate-fade-in">
-                  {invoices.length} result{invoices.length !== 1 ? "s" : ""}
-                </Badge>
-              )}
-            </div>
-          </CardHeader>
           <CardContent className="pt-6 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="space-y-2">
