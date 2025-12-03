@@ -273,20 +273,18 @@ const RobotDetail = () => {
                 <MapPin className="w-5 h-5 text-primary" />
                 <h2 className="text-xl font-semibold">Installation Location</h2>
               </div>
-              {clientAddresses.length > 1 && (
-                <Select value={selectedAddressId || clientAddresses[0]?.id} onValueChange={setSelectedAddressId}>
-                  <SelectTrigger className="w-[250px] bg-background">
-                    <SelectValue placeholder="Select address" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-background z-50">
-                    {clientAddresses.map((addr) => (
-                      <SelectItem key={addr.id} value={addr.id}>
-                        {addr.label || addr.address.substring(0, 30)}{addr.is_primary && " (Primary)"}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
+              <Select value={selectedAddressId || clientAddresses[0]?.id} onValueChange={setSelectedAddressId}>
+                <SelectTrigger className="w-[250px] bg-background">
+                  <SelectValue placeholder="Select address" />
+                </SelectTrigger>
+                <SelectContent className="bg-background z-50">
+                  {clientAddresses.map((addr) => (
+                    <SelectItem key={addr.id} value={addr.id}>
+                      {addr.label || addr.address.substring(0, 30)}{addr.is_primary && " (Primary)"}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-4">
               {selectedAddress && (
