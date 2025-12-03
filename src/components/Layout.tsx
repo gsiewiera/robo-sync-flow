@@ -156,7 +156,6 @@ function AppSidebar() {
           <h1 className="text-lg font-bold text-sidebar-foreground">
             {open ? t("app.title") : "RC"}
           </h1>
-          {open && <p className="text-xs text-sidebar-foreground/60">{t("app.subtitle")}</p>}
         </div>
 
         {rolesLoading ? (

@@ -1,7 +1,6 @@
 {
   "app": {
-    "title": "RoboCRM",
-    "subtitle": "机器人管理"
+    "title": "RoboCRM"
   },
   "nav": {
     "dashboard": "仪表板",
