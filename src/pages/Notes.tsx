@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, ListTodo, TableIcon, Users, CalendarIcon } from "lucide-react";
+import { Plus, Search, ListTodo, TableIcon, Users, CalendarIcon, BarChart3 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { format, subDays, subWeeks, subMonths, startOfDay, endOfDay } from "date-fns";
+import { format, subDays, subWeeks, subMonths, startOfDay, endOfDay, eachDayOfInterval, isSameDay } from "date-fns";
 import { NoteFormSheet } from "@/components/notes/NoteFormSheet";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -96,7 +96,7 @@ const Notes = () => {
   const [datePreset, setDatePreset] = useState<DatePreset>("today");
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editingNote, setEditingNote] = useState<Note | null>(null);
-  const [viewMode, setViewMode] = useState<"table" | "grouped">("table");
+  const [viewMode, setViewMode] = useState<"table" | "grouped" | "stats">("table");
 
   useEffect(() => {
     fetchNotes();
@@ -216,6 +216,56 @@ const Notes = () => {
     return Object.values(grouped).sort((a, b) => a.salesperson.localeCompare(b.salesperson));
   }, [notes, dateFrom, dateTo, t]);
 
+  // Calculate stats per salesperson and day
+  const statsData = useMemo(() => {
+    const notesForRange = notes.filter(note => {
+      const noteDate = new Date(note.note_date);
+      return noteDate >= startOfDay(dateFrom) && noteDate <= endOfDay(dateTo);
+    });
+
+    const days = eachDayOfInterval({ start: dateFrom, end: dateTo });
+    const salespersonMap: Record<string, { 
+      id: string; 
+      name: string; 
+      dailyCounts: Record<string, number>; 
+      total: number;
+      byType: Record<string, number>;
+    }> = {};
+
+    notesForRange.forEach(note => {
+      const salespersonId = note.salesperson_id || 'unassigned';
+      const salespersonName = note.profiles?.full_name || t("notes.unassigned", "Unassigned");
+      const noteDay = format(new Date(note.note_date), 'yyyy-MM-dd');
+
+      if (!salespersonMap[salespersonId]) {
+        salespersonMap[salespersonId] = {
+          id: salespersonId,
+          name: salespersonName,
+          dailyCounts: {},
+          total: 0,
+          byType: {}
+        };
+      }
+
+      salespersonMap[salespersonId].dailyCounts[noteDay] = (salespersonMap[salespersonId].dailyCounts[noteDay] || 0) + 1;
+      salespersonMap[salespersonId].total += 1;
+      salespersonMap[salespersonId].byType[note.contact_type] = (salespersonMap[salespersonId].byType[note.contact_type] || 0) + 1;
+    });
+
+    const salespersons = Object.values(salespersonMap).sort((a, b) => b.total - a.total);
+    const totalNotes = notesForRange.length;
+    const avgPerDay = days.length > 0 ? totalNotes / days.length : 0;
+    const avgPerSalesperson = salespersons.length > 0 ? totalNotes / salespersons.length : 0;
+
+    return {
+      days,
+      salespersons,
+      totalNotes,
+      avgPerDay,
+      avgPerSalesperson
+    };
+  }, [notes, dateFrom, dateTo, t]);
+
   const getPriorityBadge = (priority: string) => {
     return priority === "high" ? (
       <Badge variant="destructive">High</Badge>
@@ -238,7 +288,7 @@ const Notes = () => {
     <Layout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "table" | "grouped")}>
+          <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "table" | "grouped" | "stats")}>
             <TabsList>
               <TabsTrigger value="table" className="flex items-center gap-2">
                 <TableIcon className="h-4 w-4" />
@@ -247,6 +297,10 @@ const Notes = () => {
               <TabsTrigger value="grouped" className="flex items-center gap-2">
                 <Users className="h-4 w-4" />
                 {t("notes.groupedView", "By Salesperson")}
+              </TabsTrigger>
+              <TabsTrigger value="stats" className="flex items-center gap-2">
+                <BarChart3 className="h-4 w-4" />
+                {t("notes.statsView", "Stats")}
               </TabsTrigger>
             </TabsList>
           </Tabs>
@@ -447,7 +501,7 @@ const Notes = () => {
               </Table>
             </div>
           </>
-        ) : (
+        ) : viewMode === "grouped" ? (
           <>
             <div className="flex flex-wrap items-center gap-4">
               <Select value={datePreset} onValueChange={(v) => handlePresetChange(v as DatePreset)}>
@@ -555,6 +609,182 @@ const Notes = () => {
                 ))}
                 </div>
               </>
+            )}
+          </>
+        ) : (
+          <>
+            <div className="flex flex-wrap items-center gap-4 mb-4">
+              <Select value={datePreset} onValueChange={(v) => handlePresetChange(v as DatePreset)}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="today">{presetLabels.today}</SelectItem>
+                  <SelectItem value="yesterday">{presetLabels.yesterday}</SelectItem>
+                  <SelectItem value="lastWeek">{presetLabels.lastWeek}</SelectItem>
+                  <SelectItem value="lastMonth">{presetLabels.lastMonth}</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-[240px] justify-start text-left font-normal",
+                      !dateFrom && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {dateFrom && dateTo ? (
+                      <>
+                        {format(dateFrom, "MMM d, yyyy")} - {format(dateTo, "MMM d, yyyy")}
+                      </>
+                    ) : (
+                      <span>{t("notes.selectDateRange", "Select date range")}</span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="range"
+                    selected={{ from: dateFrom, to: dateTo }}
+                    onSelect={(range) => {
+                      if (range?.from) setDateFrom(range.from);
+                      if (range?.to) setDateTo(range.to);
+                    }}
+                    numberOfMonths={2}
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {/* Summary Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    {t("notes.totalNotes", "Total Notes")}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{statsData.totalNotes}</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    {t("notes.avgPerDay", "Avg per Day")}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{statsData.avgPerDay.toFixed(1)}</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    {t("notes.avgPerSalesperson", "Avg per Salesperson")}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{statsData.avgPerSalesperson.toFixed(1)}</div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Stats Table */}
+            <div className="border rounded-lg overflow-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="sticky left-0 bg-background z-10">{t("notes.salesperson", "Salesperson")}</TableHead>
+                    {statsData.days.map(day => (
+                      <TableHead key={day.toISOString()} className="text-center min-w-[80px]">
+                        {format(day, "MMM d")}
+                      </TableHead>
+                    ))}
+                    <TableHead className="text-center font-bold">{t("notes.total", "Total")}</TableHead>
+                    <TableHead className="text-center">{t("notes.avgDay", "Avg/Day")}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {statsData.salespersons.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={statsData.days.length + 3} className="text-center py-8 text-muted-foreground">
+                        {t("notes.noStatsData", "No data for selected period")}
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    <>
+                      {statsData.salespersons.map(sp => (
+                        <TableRow key={sp.id}>
+                          <TableCell className="sticky left-0 bg-background font-medium">{sp.name}</TableCell>
+                          {statsData.days.map(day => {
+                            const dayKey = format(day, 'yyyy-MM-dd');
+                            const count = sp.dailyCounts[dayKey] || 0;
+                            return (
+                              <TableCell key={dayKey} className="text-center">
+                                <span className={cn(
+                                  count === 0 ? "text-muted-foreground" : "",
+                                  count >= statsData.avgPerDay ? "text-green-600 font-medium" : ""
+                                )}>
+                                  {count}
+                                </span>
+                              </TableCell>
+                            );
+                          })}
+                          <TableCell className="text-center font-bold">{sp.total}</TableCell>
+                          <TableCell className="text-center">
+                            {statsData.days.length > 0 ? (sp.total / statsData.days.length).toFixed(1) : 0}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                      {/* Totals Row */}
+                      <TableRow className="bg-muted/50 font-medium">
+                        <TableCell className="sticky left-0 bg-muted/50">{t("notes.total", "Total")}</TableCell>
+                        {statsData.days.map(day => {
+                          const dayKey = format(day, 'yyyy-MM-dd');
+                          const dayTotal = statsData.salespersons.reduce((sum, sp) => sum + (sp.dailyCounts[dayKey] || 0), 0);
+                          return (
+                            <TableCell key={dayKey} className="text-center font-bold">
+                              {dayTotal}
+                            </TableCell>
+                          );
+                        })}
+                        <TableCell className="text-center font-bold">{statsData.totalNotes}</TableCell>
+                        <TableCell className="text-center font-bold">
+                          {statsData.avgPerDay.toFixed(1)}
+                        </TableCell>
+                      </TableRow>
+                    </>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* Contact Type Breakdown */}
+            {statsData.salespersons.length > 0 && (
+              <div className="mt-6">
+                <h3 className="text-lg font-semibold mb-4">{t("notes.byContactType", "By Contact Type")}</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {statsData.salespersons.map(sp => (
+                    <Card key={sp.id}>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm">{sp.name}</CardTitle>
+                      </CardHeader>
+                      <CardContent className="flex flex-wrap gap-2">
+                        {Object.entries(sp.byType).map(([type, count]) => (
+                          <Badge key={type} variant="outline">
+                            {type}: {count}
+                          </Badge>
+                        ))}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
             )}
           </>
         )}
