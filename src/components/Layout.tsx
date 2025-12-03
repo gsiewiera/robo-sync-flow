@@ -198,7 +198,6 @@ function AppSidebar() {
           <>
             {navItems.length > 0 && (
               <SidebarGroup>
-                <SidebarGroupLabel>{t("nav.navigation")}</SidebarGroupLabel>
                 <SidebarGroupContent>
                   <SidebarMenu>
                     {navItems.map((item) => {
