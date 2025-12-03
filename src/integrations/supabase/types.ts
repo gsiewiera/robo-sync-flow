@@ -1720,18 +1720,30 @@ export type Database = {
       robot_model_dictionary: {
         Row: {
           created_at: string | null
+          description: string | null
           id: string
+          is_active: boolean | null
           model_name: string
+          type: string | null
+          updated_at: string | null
         }
         Insert: {
           created_at?: string | null
+          description?: string | null
           id?: string
+          is_active?: boolean | null
           model_name: string
+          type?: string | null
+          updated_at?: string | null
         }
         Update: {
           created_at?: string | null
+          description?: string | null
           id?: string
+          is_active?: boolean | null
           model_name?: string
+          type?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }

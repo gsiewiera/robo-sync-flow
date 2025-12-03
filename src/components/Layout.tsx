@@ -26,7 +26,8 @@ import {
   Trophy,
   Target,
   StickyNote,
-  UserCog
+  UserCog,
+  Cpu
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -73,6 +74,7 @@ const allNavItems: NavItem[] = [
   { icon: Receipt, label: "Invoices", translationKey: "nav.invoices", path: "/invoices", roles: ["admin", "manager", "salesperson"] },
   { icon: Wrench, label: "Service", translationKey: "nav.service", path: "/service", roles: ["admin", "manager", "technician"] },
   { icon: Bot, label: "Robots", translationKey: "nav.robots", path: "/robots", roles: ["admin", "manager", "technician"] },
+  { icon: Cpu, label: "Robot Models", translationKey: "nav.robotModels", path: "/robot-models", roles: ["admin", "manager"] },
   { icon: Package, label: "Items", translationKey: "nav.items", path: "/items", roles: ["admin", "manager"] },
   { icon: DollarSign, label: "Pricing", translationKey: "nav.pricing", path: "/pricing", roles: ["admin", "manager"] },
   { icon: Trophy, label: "Leaderboard", translationKey: "nav.leaderboard", path: "/leaderboard", roles: ["admin", "manager"] },

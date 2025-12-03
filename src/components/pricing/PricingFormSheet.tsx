@@ -118,6 +118,7 @@ export const PricingFormSheet = ({
     const { data, error } = await supabase
       .from("robot_model_dictionary")
       .select("model_name")
+      .eq("is_active", true)
       .order("model_name");
 
     if (!error && data) {

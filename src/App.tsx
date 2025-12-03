@@ -26,6 +26,7 @@ import Service from "./pages/Service";
 import ServiceDetail from "./pages/ServiceDetail";
 import Items from "./pages/Items";
 import Pricing from "./pages/Pricing";
+import RobotModels from "./pages/RobotModels";
 import Invoices from "./pages/Invoices";
 import Leads from "./pages/Leads";
 import Notes from "./pages/Notes";
@@ -99,6 +100,7 @@ const App = () => (
           <Route path="/service/:id" element={<ProtectedRoute><ServiceDetail /></ProtectedRoute>} />
           <Route path="/items" element={<ProtectedRoute><Items /></ProtectedRoute>} />
           <Route path="/pricing" element={<ProtectedRoute><Pricing /></ProtectedRoute>} />
+          <Route path="/robot-models" element={<ProtectedRoute><RobotModels /></ProtectedRoute>} />
           <Route path="/invoices" element={<ProtectedRoute><Invoices /></ProtectedRoute>} />
           <Route path="/leads" element={<ProtectedRoute><Leads /></ProtectedRoute>} />
           <Route path="/notes" element={<ProtectedRoute><Notes /></ProtectedRoute>} />
