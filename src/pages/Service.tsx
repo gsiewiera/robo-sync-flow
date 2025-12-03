@@ -147,35 +147,35 @@ const Service = () => {
     <Layout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <Button onClick={() => setIsTicketFormOpen(true)}>
-            <Plus className="w-4 h-4 mr-2" />
-            Add Ticket
-          </Button>
+          <div className="relative w-80">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search by ticket number or client..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 pr-10"
+            />
+            {searchQuery && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0"
+                onClick={() => setSearchQuery("")}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
           <div className="flex items-center gap-2">
-            <div className="relative w-80">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by ticket number or client..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-10"
-              />
-              {searchQuery && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0"
-                  onClick={() => setSearchQuery("")}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              )}
-            </div>
             <ColumnVisibilityToggle
               columns={columns}
               visibleColumns={visibleColumns}
               onToggleColumn={toggleColumn}
             />
+            <Button onClick={() => setIsTicketFormOpen(true)}>
+              <Plus className="w-4 h-4 mr-2" />
+              Add Ticket
+            </Button>
           </div>
         </div>
 
