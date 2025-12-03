@@ -290,8 +290,8 @@ const Offers = () => {
     <Layout>
       <div className="space-y-6">
         <div className="flex justify-end items-center">
-          <Button onClick={() => setIsNewOfferOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
+          <Button size="sm" onClick={() => setIsNewOfferOpen(true)}>
+            <Plus className="h-3.5 w-3.5 mr-1.5" />
             {t("offers.addOffer")}
           </Button>
         </div>

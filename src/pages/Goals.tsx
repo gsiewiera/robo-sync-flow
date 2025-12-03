@@ -260,8 +260,8 @@ const getProgressPercentage = (current: number, target: number) => {
       <div className="flex justify-end items-center mb-8">
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
+            <Button size="sm">
+              <Plus className="h-3.5 w-3.5 mr-1.5" />
               Create Goal
             </Button>
           </DialogTrigger>

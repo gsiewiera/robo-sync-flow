@@ -220,8 +220,8 @@ const Pricing = () => {
               onToggleColumn={toggleColumn}
             />
             {isAdmin && (
-              <Button onClick={() => setSheetOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />
+              <Button size="sm" onClick={() => setSheetOpen(true)}>
+                <Plus className="h-3.5 w-3.5 mr-1.5" />
                 Add Pricing
               </Button>
             )}

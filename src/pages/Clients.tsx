@@ -232,8 +232,8 @@ const Clients = () => {
     <Layout>
       <div className="space-y-6">
         <div className="flex items-center justify-end">
-          <Button onClick={() => setIsClientDialogOpen(true)}>
-            <Plus className="w-4 h-4 mr-2" />
+          <Button size="sm" onClick={() => setIsClientDialogOpen(true)}>
+            <Plus className="w-3.5 h-3.5 mr-1.5" />
             {t("clients.addClient")}
           </Button>
         </div>
