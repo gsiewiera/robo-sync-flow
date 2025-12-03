@@ -598,14 +598,14 @@ export default function UserProfile() {
               <div className="space-y-2">
                 <Label htmlFor="company_address">Select Company Address</Label>
                 <Select
-                  value={addressForm.assigned_company_address_id}
-                  onValueChange={(value) => setAddressForm({ ...addressForm, assigned_company_address_id: value })}
+                  value={addressForm.assigned_company_address_id || 'none'}
+                  onValueChange={(value) => setAddressForm({ ...addressForm, assigned_company_address_id: value === 'none' ? '' : value })}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select a company address" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">None</SelectItem>
+                  <SelectContent className="bg-popover z-50">
+                    <SelectItem value="none">None</SelectItem>
                     {companyAddresses.map((addr) => (
                       <SelectItem key={addr.id} value={addr.id}>
                         {getAddressTypeLabel(addr.address_type)}
