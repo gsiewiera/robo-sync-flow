@@ -349,10 +349,65 @@ export function ClientInlineEdit({ client, onSave, onCancel }: ClientInlineEditP
       </div>
 
       <div className="space-y-6">
+        {/* Assignment & Balance */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold border-b pb-2">Assignment</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label>Assigned Salesperson</Label>
+              <Select
+                value={formData.assigned_salesperson_id || "__none__"}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, assigned_salesperson_id: value === "__none__" ? "" : value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select salesperson" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">None</SelectItem>
+                  {salespeople.map((person) => (
+                    <SelectItem key={person.id} value={person.id}>
+                      {person.full_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Reseller</Label>
+              <Select
+                value={formData.reseller_id || "__none__"}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, reseller_id: value === "__none__" ? "" : value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select reseller" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">None</SelectItem>
+                  {resellers.map((reseller) => (
+                    <SelectItem key={reseller.id} value={reseller.id}>
+                      {reseller.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Balance</Label>
+              <div className="h-10 px-3 py-2 rounded-md border border-input bg-muted text-muted-foreground flex items-center">
+                {formData.balance.toLocaleString('pl-PL', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).replace(/,/g, ' ')}
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Company Information */}
         <div className="space-y-4">
           <h3 className="text-lg font-semibold border-b pb-2">Company Information</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label>Company Name *</Label>
               <Input
@@ -384,12 +439,6 @@ export function ClientInlineEdit({ client, onSave, onCancel }: ClientInlineEditP
                   <SelectItem value="blocked">Blocked</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Balance</Label>
-              <div className="h-10 px-3 py-2 rounded-md border border-input bg-muted text-muted-foreground flex items-center">
-                {formData.balance.toLocaleString('pl-PL', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).replace(/,/g, ' ')}
-              </div>
             </div>
           </div>
         </div>
@@ -584,55 +633,6 @@ export function ClientInlineEdit({ client, onSave, onCancel }: ClientInlineEditP
               )}
             </div>
           )}
-        </div>
-
-        {/* Assignment */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold border-b pb-2">Assignment</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Assigned Salesperson</Label>
-              <Select
-                value={formData.assigned_salesperson_id || "__none__"}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, assigned_salesperson_id: value === "__none__" ? "" : value })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select salesperson" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none__">None</SelectItem>
-                  {salespeople.map((person) => (
-                    <SelectItem key={person.id} value={person.id}>
-                      {person.full_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Reseller</Label>
-              <Select
-                value={formData.reseller_id || "__none__"}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, reseller_id: value === "__none__" ? "" : value })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select reseller" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none__">None</SelectItem>
-                  {resellers.map((reseller) => (
-                    <SelectItem key={reseller.id} value={reseller.id}>
-                      {reseller.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
         </div>
       </div>
     </Card>
