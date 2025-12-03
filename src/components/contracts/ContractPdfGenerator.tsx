@@ -39,6 +39,19 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+interface ClientContact {
+  id: string;
+  full_name: string;
+  email: string | null;
+}
 
 interface ContractVersion {
   id: string;
@@ -88,6 +101,7 @@ export const ContractPdfGenerator = ({
   const [selectedVersion, setSelectedVersion] = useState<ContractVersion | null>(null);
   const [emailAddress, setEmailAddress] = useState(clientData?.general_email || "");
   const [expandedVersions, setExpandedVersions] = useState<Record<string, boolean>>({});
+  const [clientContacts, setClientContacts] = useState<ClientContact[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -352,10 +366,39 @@ export const ContractPdfGenerator = ({
     setIsPreviewOpen(false);
   };
 
-  const openEmailDialog = (version: ContractVersion) => {
+  const fetchClientContacts = async () => {
+    if (!clientData?.id) return;
+    const { data } = await supabase
+      .from("client_contacts")
+      .select("id, full_name, email")
+      .eq("client_id", clientData.id)
+      .not("email", "is", null);
+    if (data) {
+      setClientContacts(data);
+    }
+  };
+
+  const openEmailDialog = async (version: ContractVersion) => {
     setSelectedVersion(version);
     setEmailAddress(clientData?.general_email || clientData?.primary_contact_email || "");
+    await fetchClientContacts();
     setShowEmailDialog(true);
+  };
+
+  const getEmailOptions = () => {
+    const options: { value: string; label: string }[] = [];
+    if (clientData?.general_email) {
+      options.push({ value: clientData.general_email, label: `General: ${clientData.general_email}` });
+    }
+    if (clientData?.primary_contact_email && clientData.primary_contact_email !== clientData?.general_email) {
+      options.push({ value: clientData.primary_contact_email, label: `Primary: ${clientData.primary_contact_email}` });
+    }
+    clientContacts.forEach(contact => {
+      if (contact.email && !options.some(o => o.value === contact.email)) {
+        options.push({ value: contact.email, label: `${contact.full_name}: ${contact.email}` });
+      }
+    });
+    return options;
   };
 
   const sendEmail = async () => {
@@ -621,16 +664,33 @@ export const ContractPdfGenerator = ({
               Enter the email address where you want to send this contract PDF.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <div className="py-4">
-            <Label htmlFor="email">Email Address</Label>
-            <Input
-              id="email"
-              type="email"
-              value={emailAddress}
-              onChange={(e) => setEmailAddress(e.target.value)}
-              placeholder="client@example.com"
-              className="mt-2"
-            />
+          <div className="py-4 space-y-3">
+            <div>
+              <Label>Select Email Address</Label>
+              <Select value={emailAddress} onValueChange={setEmailAddress}>
+                <SelectTrigger className="mt-2 bg-background">
+                  <SelectValue placeholder="Select an email address" />
+                </SelectTrigger>
+                <SelectContent className="bg-background z-50">
+                  {getEmailOptions().map(option => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="email">Or enter custom email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={emailAddress}
+                onChange={(e) => setEmailAddress(e.target.value)}
+                placeholder="client@example.com"
+                className="mt-2"
+              />
+            </div>
           </div>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isSendingEmail}>Cancel</AlertDialogCancel>
