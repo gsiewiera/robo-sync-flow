@@ -324,46 +324,6 @@ const RobotModelDetail = () => {
                   <CardTitle className="text-base">General Information</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {/* Image Upload */}
-                  <div className="space-y-2">
-                    <FormLabel>Image</FormLabel>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      onChange={handleFileSelect}
-                      className="hidden"
-                    />
-                    {imagePreview ? (
-                      <div className="relative w-full h-48 rounded-lg overflow-hidden border bg-muted">
-                        <img
-                          src={imagePreview}
-                          alt="Preview"
-                          className="w-full h-full object-contain"
-                        />
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="icon"
-                          className="absolute top-2 right-2 h-6 w-6"
-                          onClick={removeImage}
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    ) : (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="w-full h-48 flex flex-col gap-2"
-                        onClick={() => fileInputRef.current?.click()}
-                      >
-                        <ImageIcon className="h-8 w-8 text-muted-foreground" />
-                        <span className="text-xs text-muted-foreground">Click to upload image</span>
-                      </Button>
-                    )}
-                  </div>
-
                   <FormField
                     control={form.control}
                     name="model_name"
@@ -445,6 +405,50 @@ const RobotModelDetail = () => {
                       </FormItem>
                     )}
                   />
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="pt-6 space-y-4">
+                  {/* Image Upload */}
+                  <div className="space-y-2">
+                    <FormLabel>Image</FormLabel>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileSelect}
+                      className="hidden"
+                    />
+                    {imagePreview ? (
+                      <div className="relative w-full h-48 rounded-lg overflow-hidden border bg-muted">
+                        <img
+                          src={imagePreview}
+                          alt="Preview"
+                          className="w-full h-full object-contain"
+                        />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="icon"
+                          className="absolute top-2 right-2 h-6 w-6"
+                          onClick={removeImage}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full h-48 flex flex-col gap-2"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                        <span className="text-xs text-muted-foreground">Click to upload image</span>
+                      </Button>
+                    )}
+                  </div>
 
                   <FormField
                     control={form.control}
@@ -468,26 +472,6 @@ const RobotModelDetail = () => {
                   />
                 </CardContent>
               </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Metadata</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Created</p>
-                    <p className="font-medium">
-                      {new Date(model.created_at).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Last Updated</p>
-                    <p className="font-medium">
-                      {new Date(model.updated_at).toLocaleDateString()}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
             </form>
           </Form>
         ) : (
@@ -497,15 +481,6 @@ const RobotModelDetail = () => {
                 <CardTitle className="text-base">General Information</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {model.image_path && (
-                  <div className="w-full h-48 rounded-lg overflow-hidden border bg-muted">
-                    <img
-                      src={supabase.storage.from("robot-model-images").getPublicUrl(model.image_path).data.publicUrl}
-                      alt={model.model_name}
-                      className="w-full h-full object-contain"
-                    />
-                  </div>
-                )}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-muted-foreground">Model Name</p>
@@ -518,12 +493,6 @@ const RobotModelDetail = () => {
                   <div>
                     <p className="text-sm text-muted-foreground">Manufacturer</p>
                     <p className="font-medium">{model.manufacturer || "-"}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Status</p>
-                    <Badge variant={model.is_active ? "default" : "secondary"} className="mt-1">
-                      {model.is_active ? "Active" : "Inactive"}
-                    </Badge>
                   </div>
                 </div>
                 {model.description && (
@@ -539,21 +508,30 @@ const RobotModelDetail = () => {
             </Card>
 
             <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Metadata</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">Created</p>
-                  <p className="font-medium">
-                    {new Date(model.created_at).toLocaleDateString()}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Last Updated</p>
-                  <p className="font-medium">
-                    {new Date(model.updated_at).toLocaleDateString()}
-                  </p>
+              <CardContent className="pt-6 space-y-4">
+                {model.image_path ? (
+                  <div className="w-full h-48 rounded-lg overflow-hidden border bg-muted">
+                    <img
+                      src={supabase.storage.from("robot-model-images").getPublicUrl(model.image_path).data.publicUrl}
+                      alt={model.model_name}
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-full h-48 rounded-lg border bg-muted flex items-center justify-center">
+                    <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                  </div>
+                )}
+                <div className="flex items-center justify-between rounded-lg border p-3">
+                  <div className="space-y-0.5">
+                    <p className="text-sm font-medium">Status</p>
+                    <p className="text-xs text-muted-foreground">
+                      {model.is_active ? "Model is active" : "Model is inactive"}
+                    </p>
+                  </div>
+                  <Badge variant={model.is_active ? "default" : "secondary"}>
+                    {model.is_active ? "Active" : "Inactive"}
+                  </Badge>
                 </div>
               </CardContent>
             </Card>
