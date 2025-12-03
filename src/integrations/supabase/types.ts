@@ -212,11 +212,13 @@ export type Database = {
           billing_person_name: string | null
           billing_person_phone: string | null
           city: string | null
+          client_type: string | null
           country: string | null
           created_at: string | null
           general_email: string | null
           general_phone: string | null
           id: string
+          market: string | null
           name: string
           nip: string | null
           postal_code: string | null
@@ -224,6 +226,7 @@ export type Database = {
           primary_contact_name: string | null
           primary_contact_phone: string | null
           reseller_id: string | null
+          segment: string | null
           status: string | null
           updated_at: string | null
           website_url: string | null
@@ -236,11 +239,13 @@ export type Database = {
           billing_person_name?: string | null
           billing_person_phone?: string | null
           city?: string | null
+          client_type?: string | null
           country?: string | null
           created_at?: string | null
           general_email?: string | null
           general_phone?: string | null
           id?: string
+          market?: string | null
           name: string
           nip?: string | null
           postal_code?: string | null
@@ -248,6 +253,7 @@ export type Database = {
           primary_contact_name?: string | null
           primary_contact_phone?: string | null
           reseller_id?: string | null
+          segment?: string | null
           status?: string | null
           updated_at?: string | null
           website_url?: string | null
@@ -260,11 +266,13 @@ export type Database = {
           billing_person_name?: string | null
           billing_person_phone?: string | null
           city?: string | null
+          client_type?: string | null
           country?: string | null
           created_at?: string | null
           general_email?: string | null
           general_phone?: string | null
           id?: string
+          market?: string | null
           name?: string
           nip?: string | null
           postal_code?: string | null
@@ -272,6 +280,7 @@ export type Database = {
           primary_contact_name?: string | null
           primary_contact_phone?: string | null
           reseller_id?: string | null
+          segment?: string | null
           status?: string | null
           updated_at?: string | null
           website_url?: string | null
