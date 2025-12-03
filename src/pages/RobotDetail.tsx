@@ -2,10 +2,11 @@ import { Layout } from "@/components/Layout";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Calendar, Clock, Package } from "lucide-react";
+import { ArrowLeft, Calendar, Clock, Package, MapPin } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useParams, useNavigate } from "react-router-dom";
+import { AddressMap } from "@/components/clients/AddressMap";
 
 interface Robot {
   id: string;
@@ -24,6 +25,20 @@ interface Robot {
 interface Client {
   id: string;
   name: string;
+  address: string | null;
+  city: string | null;
+  postal_code: string | null;
+  country: string | null;
+}
+
+interface ClientAddress {
+  id: string;
+  address: string;
+  city: string | null;
+  postal_code: string | null;
+  country: string | null;
+  label: string | null;
+  is_primary: boolean;
 }
 
 interface ServiceTicket {
@@ -54,6 +69,7 @@ const RobotDetail = () => {
   const navigate = useNavigate();
   const [robot, setRobot] = useState<Robot | null>(null);
   const [client, setClient] = useState<Client | null>(null);
+  const [clientAddresses, setClientAddresses] = useState<ClientAddress[]>([]);
   const [tickets, setTickets] = useState<ServiceTicket[]>([]);
 
   useEffect(() => {
@@ -73,14 +89,37 @@ const RobotDetail = () => {
       setRobot(robotData);
 
       if (robotData.client_id) {
+        // Fetch client with address fields
         const { data: clientData } = await supabase
           .from("clients")
-          .select("id, name")
+          .select("id, name, address, city, postal_code, country")
           .eq("id", robotData.client_id)
           .single();
 
         if (clientData) {
           setClient(clientData);
+        }
+
+        // Fetch client addresses
+        const { data: addressesData } = await supabase
+          .from("client_addresses")
+          .select("id, address, city, postal_code, country, label, is_primary")
+          .eq("client_id", robotData.client_id)
+          .order("is_primary", { ascending: false });
+
+        if (addressesData && addressesData.length > 0) {
+          setClientAddresses(addressesData);
+        } else if (clientData?.address) {
+          // Fall back to client's direct address if no separate addresses
+          setClientAddresses([{
+            id: 'client-address',
+            address: clientData.address,
+            city: clientData.city,
+            postal_code: clientData.postal_code,
+            country: clientData.country,
+            label: 'Primary Address',
+            is_primary: true,
+          }]);
         }
       }
     }
@@ -209,6 +248,24 @@ const RobotDetail = () => {
             </div>
           </Card>
         </div>
+
+        {/* Location Section with Map */}
+        {client && clientAddresses.length > 0 && (
+          <Card className="p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <MapPin className="w-5 h-5 text-primary" />
+              <h2 className="text-xl font-semibold">Location</h2>
+            </div>
+            <div className="space-y-4">
+              <div className="text-sm text-muted-foreground">
+                <p className="font-medium text-foreground">{clientAddresses[0]?.address}</p>
+                <p>{clientAddresses[0]?.postal_code} {clientAddresses[0]?.city}</p>
+                <p>{clientAddresses[0]?.country}</p>
+              </div>
+              <AddressMap addresses={clientAddresses} />
+            </div>
+          </Card>
+        )}
 
         <Card className="p-6">
           <h2 className="text-xl font-semibold mb-4">Service History</h2>
