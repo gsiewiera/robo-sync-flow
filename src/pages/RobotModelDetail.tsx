@@ -30,6 +30,7 @@ import {
 import { ArrowLeft, Pencil, Cpu, Save, X, ImageIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { RobotModelPricing } from "@/components/robot-models/RobotModelPricing";
 
 const formSchema = z.object({
   model_name: z.string().min(1, "Model name is required").max(100),
@@ -558,6 +559,9 @@ const RobotModelDetail = () => {
             </Card>
           </div>
         )}
+
+        {/* Pricing Section - always visible below model info */}
+        <RobotModelPricing modelName={model.model_name} isAdmin={isAdmin} />
       </div>
     </Layout>
   );
