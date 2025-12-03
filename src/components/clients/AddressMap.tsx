@@ -2,9 +2,10 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Card } from '@/components/ui/card';
-import { MapPin, AlertCircle, Loader2, Navigation, Clock, Route, Home, Building2, Banknote } from 'lucide-react';
+import { MapPin, AlertCircle, Loader2, Navigation, Clock, Route, Home, Building2, Banknote, ArrowLeftRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { useTranslation } from 'react-i18next';
 
 interface Address {
@@ -53,6 +54,15 @@ export const AddressMap = ({ addresses }: AddressMapProps) => {
   const [isCalculatingRoute, setIsCalculatingRoute] = useState(false);
   const [destinationCoords, setDestinationCoords] = useState<[number, number] | null>(null);
   const [kmRate, setKmRate] = useState<number>(1.50); // default value
+  const [isRoundTrip, setIsRoundTrip] = useState<boolean>(() => {
+    const saved = localStorage.getItem('mapRoundTrip');
+    return saved === 'true';
+  });
+
+  // Save round-trip preference
+  useEffect(() => {
+    localStorage.setItem('mapRoundTrip', isRoundTrip.toString());
+  }, [isRoundTrip]);
 
   // Fetch km rate from database
   useEffect(() => {
@@ -494,19 +504,36 @@ export const AddressMap = ({ addresses }: AddressMapProps) => {
                 <span>{t('addressMap.calculatingRoute', 'Calculating...')}</span>
               </div>
             ) : routeInfo ? (
-              <div className="flex items-center gap-4 text-sm">
+              <div className="flex items-center gap-4 text-sm flex-wrap">
+                {/* Round-trip toggle */}
+                <div className="flex items-center gap-1.5">
+                  <ArrowLeftRight className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground">{t('addressMap.roundTrip', 'Round-trip')}</span>
+                  <Switch
+                    checked={isRoundTrip}
+                    onCheckedChange={setIsRoundTrip}
+                    className="scale-75"
+                  />
+                </div>
+                
+                <div className="h-4 w-px bg-border" />
+                
                 <div className="flex items-center gap-1.5 text-muted-foreground">
                   <Clock className="w-4 h-4" />
-                  <span className="font-medium text-foreground">{formatDuration(routeInfo.duration)}</span>
+                  <span className="font-medium text-foreground">
+                    {formatDuration(routeInfo.duration * (isRoundTrip ? 2 : 1))}
+                  </span>
                 </div>
                 <div className="flex items-center gap-1.5 text-muted-foreground">
                   <Route className="w-4 h-4" />
-                  <span className="font-medium text-foreground">{formatDistance(routeInfo.distance)}</span>
+                  <span className="font-medium text-foreground">
+                    {formatDistance(routeInfo.distance * (isRoundTrip ? 2 : 1))}
+                  </span>
                 </div>
                 <div className="flex items-center gap-1.5 text-muted-foreground">
                   <Banknote className="w-4 h-4" />
                   <span className="font-medium text-foreground">
-                    {((routeInfo.distance / 1000) * kmRate).toFixed(2)} PLN
+                    {((routeInfo.distance / 1000) * kmRate * (isRoundTrip ? 2 : 1)).toFixed(2)} PLN
                   </span>
                   <span className="text-xs">({kmRate.toFixed(2)}/km)</span>
                 </div>
