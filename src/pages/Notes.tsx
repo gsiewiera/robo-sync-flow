@@ -310,52 +310,50 @@ const Notes = () => {
                 </SelectContent>
               </Select>
 
-              <div className="flex items-center gap-2">
-                <Select value={datePreset} onValueChange={(v) => handlePresetChange(v as DatePreset)}>
-                  <SelectTrigger className="w-[140px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="today">{presetLabels.today}</SelectItem>
-                    <SelectItem value="yesterday">{presetLabels.yesterday}</SelectItem>
-                    <SelectItem value="lastWeek">{presetLabels.lastWeek}</SelectItem>
-                    <SelectItem value="lastMonth">{presetLabels.lastMonth}</SelectItem>
-                  </SelectContent>
-                </Select>
+              <Select value={datePreset} onValueChange={(v) => handlePresetChange(v as DatePreset)}>
+                <SelectTrigger className="w-[120px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="today">{presetLabels.today}</SelectItem>
+                  <SelectItem value="yesterday">{presetLabels.yesterday}</SelectItem>
+                  <SelectItem value="lastWeek">{presetLabels.lastWeek}</SelectItem>
+                  <SelectItem value="lastMonth">{presetLabels.lastMonth}</SelectItem>
+                </SelectContent>
+              </Select>
 
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-[240px] justify-start text-left font-normal",
-                        !dateFrom && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {dateFrom && dateTo ? (
-                        <>
-                          {format(dateFrom, "MMM d, yyyy")} - {format(dateTo, "MMM d, yyyy")}
-                        </>
-                      ) : (
-                        <span>{t("notes.selectDateRange", "Select date range")}</span>
-                      )}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="range"
-                      selected={{ from: dateFrom, to: dateTo }}
-                      onSelect={(range) => {
-                        if (range?.from) setDateFrom(range.from);
-                        if (range?.to) setDateTo(range.to);
-                      }}
-                      numberOfMonths={2}
-                      className={cn("p-3 pointer-events-auto")}
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-[220px] justify-start text-left font-normal",
+                      !dateFrom && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {dateFrom && dateTo ? (
+                      <>
+                        {format(dateFrom, "MMM d, yyyy")} - {format(dateTo, "MMM d, yyyy")}
+                      </>
+                    ) : (
+                      <span>{t("notes.selectDateRange", "Select date range")}</span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="range"
+                    selected={{ from: dateFrom, to: dateTo }}
+                    onSelect={(range) => {
+                      if (range?.from) setDateFrom(range.from);
+                      if (range?.to) setDateTo(range.to);
+                    }}
+                    numberOfMonths={2}
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
 
               {(clientFilter !== "all" || typeFilter !== "all" || salespersonFilter !== "all") && (
                 <Button
