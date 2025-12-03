@@ -20,13 +20,13 @@ const Settings = () => {
           <p className="text-muted-foreground">Manage your account and application preferences</p>
         </div>
 
-        <Tabs defaultValue="profile" className="w-full">
+        <Tabs defaultValue="company" className="w-full">
           <TabsList className="grid w-full grid-cols-10 lg:w-auto">
+            <TabsTrigger value="company">Company</TabsTrigger>
             <TabsTrigger value="profile">Profile</TabsTrigger>
             <TabsTrigger value="password">Password</TabsTrigger>
             <TabsTrigger value="theme">Theme</TabsTrigger>
             <TabsTrigger value="roles">Roles</TabsTrigger>
-            <TabsTrigger value="company">Company</TabsTrigger>
             <TabsTrigger value="dictionaries">Dictionaries</TabsTrigger>
             <TabsTrigger value="vat">VAT</TabsTrigger>
             <TabsTrigger value="printouts">Printouts</TabsTrigger>
