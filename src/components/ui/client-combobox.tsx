@@ -9,7 +9,6 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-  CommandSeparator,
 } from "@/components/ui/command";
 import {
   Popover,
@@ -82,24 +81,22 @@ export function ClientCombobox({
                 </CommandItem>
               ))}
             </CommandGroup>
-            {onAddNew && (
-              <>
-                <CommandSeparator />
-                <CommandGroup>
-                  <CommandItem
-                    onSelect={() => {
-                      setOpen(false);
-                      onAddNew();
-                    }}
-                    className="text-primary"
-                  >
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add New Client
-                  </CommandItem>
-                </CommandGroup>
-              </>
-            )}
           </CommandList>
+          {onAddNew && (
+            <div className="border-t p-1">
+              <Button
+                variant="ghost"
+                className="w-full justify-start text-primary hover:text-primary hover:bg-primary/10"
+                onClick={() => {
+                  setOpen(false);
+                  onAddNew();
+                }}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Add New Client
+              </Button>
+            </div>
+          )}
         </Command>
       </PopoverContent>
     </Popover>
