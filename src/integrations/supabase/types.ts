@@ -397,6 +397,48 @@ export type Database = {
         }
         Relationships: []
       }
+      company_info: {
+        Row: {
+          company_name: string | null
+          created_at: string
+          id: string
+          krs: string | null
+          logo_path: string | null
+          main_email: string | null
+          main_phone: string | null
+          nip: string | null
+          regon: string | null
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          company_name?: string | null
+          created_at?: string
+          id?: string
+          krs?: string | null
+          logo_path?: string | null
+          main_email?: string | null
+          main_phone?: string | null
+          nip?: string | null
+          regon?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          company_name?: string | null
+          created_at?: string
+          id?: string
+          krs?: string | null
+          logo_path?: string | null
+          main_email?: string | null
+          main_phone?: string | null
+          nip?: string | null
+          regon?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
       contract_email_history: {
         Row: {
           contract_version_id: string
