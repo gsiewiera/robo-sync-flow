@@ -409,10 +409,6 @@ const Dashboard = () => {
   return (
     <Layout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">{t("dashboard.title")}</h1>
-          <p className="text-muted-foreground">{t("dashboard.description")}</p>
-        </div>
 
         {/* Date Filter Buttons */}
         <div className="flex flex-wrap gap-2">

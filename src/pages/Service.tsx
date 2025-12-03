@@ -144,11 +144,7 @@ const Service = () => {
   return (
     <Layout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Service Tickets</h1>
-            <p className="text-muted-foreground">Manage service requests and interventions</p>
-          </div>
+        <div className="flex items-center justify-end">
           <div className="flex items-center gap-2">
             <div className="relative w-80">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />

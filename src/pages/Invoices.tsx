@@ -183,14 +183,7 @@ const Invoices = () => {
   return (
     <Layout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
-              <FileText className="w-8 h-8" />
-              Invoices
-            </h1>
-            <p className="text-muted-foreground">Manage and track all invoices</p>
-          </div>
+        <div className="flex items-center justify-end">
         </div>
 
         <Card className="shadow-lg border-primary/20">

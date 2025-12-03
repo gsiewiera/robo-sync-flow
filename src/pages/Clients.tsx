@@ -231,11 +231,7 @@ const Clients = () => {
   return (
     <Layout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">{t("clients.title")}</h1>
-            <p className="text-muted-foreground">{t("clients.description")}</p>
-          </div>
+        <div className="flex items-center justify-end">
           <Button onClick={() => setIsClientDialogOpen(true)}>
             <Plus className="w-4 h-4 mr-2" />
             {t("clients.addClient")}
