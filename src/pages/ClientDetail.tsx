@@ -27,6 +27,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface Client {
   id: string;
@@ -206,6 +212,7 @@ const ClientDetail = () => {
   const [isAddressDialogOpen, setIsAddressDialogOpen] = useState(false);
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
   const [addressToDelete, setAddressToDelete] = useState<Address | null>(null);
+  const [isMapDialogOpen, setIsMapDialogOpen] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -625,6 +632,9 @@ const ClientDetail = () => {
                 </p>
               </div>
             )}
+            <Button variant="outline" size="icon" onClick={() => setIsMapDialogOpen(true)} title="View on map">
+              <MapPinned className="h-4 w-4" />
+            </Button>
             <Button onClick={() => setIsEditDialogOpen(true)}>
               <Edit className="h-4 w-4 mr-2" />
               Edit Client
@@ -1361,6 +1371,17 @@ const ClientDetail = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={isMapDialogOpen} onOpenChange={setIsMapDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh]">
+          <DialogHeader>
+            <DialogTitle>Client Locations</DialogTitle>
+          </DialogHeader>
+          <div className="h-[500px]">
+            <AddressMap addresses={addresses} />
+          </div>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 };
