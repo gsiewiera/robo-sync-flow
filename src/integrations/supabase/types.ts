@@ -399,43 +399,94 @@ export type Database = {
       }
       company_info: {
         Row: {
+          bank_account_eur: string | null
+          bank_account_pln: string | null
+          bank_account_usd: string | null
+          bank_iban_eur: string | null
+          bank_iban_pln: string | null
+          bank_iban_usd: string | null
+          bank_name_eur: string | null
+          bank_name_pln: string | null
+          bank_name_usd: string | null
+          bank_swift_eur: string | null
+          bank_swift_pln: string | null
+          bank_swift_usd: string | null
           company_name: string | null
           created_at: string
+          facebook_url: string | null
           id: string
+          instagram_url: string | null
           krs: string | null
+          linkedin_url: string | null
           logo_path: string | null
           main_email: string | null
           main_phone: string | null
           nip: string | null
           regon: string | null
+          twitter_url: string | null
           updated_at: string
           website: string | null
+          youtube_url: string | null
         }
         Insert: {
+          bank_account_eur?: string | null
+          bank_account_pln?: string | null
+          bank_account_usd?: string | null
+          bank_iban_eur?: string | null
+          bank_iban_pln?: string | null
+          bank_iban_usd?: string | null
+          bank_name_eur?: string | null
+          bank_name_pln?: string | null
+          bank_name_usd?: string | null
+          bank_swift_eur?: string | null
+          bank_swift_pln?: string | null
+          bank_swift_usd?: string | null
           company_name?: string | null
           created_at?: string
+          facebook_url?: string | null
           id?: string
+          instagram_url?: string | null
           krs?: string | null
+          linkedin_url?: string | null
           logo_path?: string | null
           main_email?: string | null
           main_phone?: string | null
           nip?: string | null
           regon?: string | null
+          twitter_url?: string | null
           updated_at?: string
           website?: string | null
+          youtube_url?: string | null
         }
         Update: {
+          bank_account_eur?: string | null
+          bank_account_pln?: string | null
+          bank_account_usd?: string | null
+          bank_iban_eur?: string | null
+          bank_iban_pln?: string | null
+          bank_iban_usd?: string | null
+          bank_name_eur?: string | null
+          bank_name_pln?: string | null
+          bank_name_usd?: string | null
+          bank_swift_eur?: string | null
+          bank_swift_pln?: string | null
+          bank_swift_usd?: string | null
           company_name?: string | null
           created_at?: string
+          facebook_url?: string | null
           id?: string
+          instagram_url?: string | null
           krs?: string | null
+          linkedin_url?: string | null
           logo_path?: string | null
           main_email?: string | null
           main_phone?: string | null
           nip?: string | null
           regon?: string | null
+          twitter_url?: string | null
           updated_at?: string
           website?: string | null
+          youtube_url?: string | null
         }
         Relationships: []
       }

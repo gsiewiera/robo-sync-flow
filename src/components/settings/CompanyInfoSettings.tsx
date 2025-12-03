@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Pencil, Trash2, Building2, MapPin, Phone, Mail, Globe, Upload, X } from "lucide-react";
+import { Plus, Pencil, Trash2, Building2, MapPin, Phone, Mail, Globe, Upload, X, Landmark, Facebook, Linkedin, Instagram, Twitter, Youtube } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -37,6 +37,23 @@ interface CompanyInfo {
   regon: string | null;
   krs: string | null;
   logo_path: string | null;
+  bank_name_pln: string | null;
+  bank_account_pln: string | null;
+  bank_swift_pln: string | null;
+  bank_iban_pln: string | null;
+  bank_name_eur: string | null;
+  bank_account_eur: string | null;
+  bank_swift_eur: string | null;
+  bank_iban_eur: string | null;
+  bank_name_usd: string | null;
+  bank_account_usd: string | null;
+  bank_swift_usd: string | null;
+  bank_iban_usd: string | null;
+  facebook_url: string | null;
+  linkedin_url: string | null;
+  instagram_url: string | null;
+  twitter_url: string | null;
+  youtube_url: string | null;
 }
 
 const ADDRESS_TYPES = [
@@ -79,6 +96,23 @@ export function CompanyInfoSettings() {
     nip: '',
     regon: '',
     krs: '',
+    bank_name_pln: '',
+    bank_account_pln: '',
+    bank_swift_pln: '',
+    bank_iban_pln: '',
+    bank_name_eur: '',
+    bank_account_eur: '',
+    bank_swift_eur: '',
+    bank_iban_eur: '',
+    bank_name_usd: '',
+    bank_account_usd: '',
+    bank_swift_usd: '',
+    bank_iban_usd: '',
+    facebook_url: '',
+    linkedin_url: '',
+    instagram_url: '',
+    twitter_url: '',
+    youtube_url: '',
   });
 
   useEffect(() => {
@@ -105,9 +139,9 @@ export function CompanyInfoSettings() {
         .from('company_info')
         .select('*')
         .limit(1)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') throw error;
+      if (error) throw error;
       
       if (data) {
         setCompanyInfo(data);
@@ -119,6 +153,23 @@ export function CompanyInfoSettings() {
           nip: data.nip || '',
           regon: data.regon || '',
           krs: data.krs || '',
+          bank_name_pln: data.bank_name_pln || '',
+          bank_account_pln: data.bank_account_pln || '',
+          bank_swift_pln: data.bank_swift_pln || '',
+          bank_iban_pln: data.bank_iban_pln || '',
+          bank_name_eur: data.bank_name_eur || '',
+          bank_account_eur: data.bank_account_eur || '',
+          bank_swift_eur: data.bank_swift_eur || '',
+          bank_iban_eur: data.bank_iban_eur || '',
+          bank_name_usd: data.bank_name_usd || '',
+          bank_account_usd: data.bank_account_usd || '',
+          bank_swift_usd: data.bank_swift_usd || '',
+          bank_iban_usd: data.bank_iban_usd || '',
+          facebook_url: data.facebook_url || '',
+          linkedin_url: data.linkedin_url || '',
+          instagram_url: data.instagram_url || '',
+          twitter_url: data.twitter_url || '',
+          youtube_url: data.youtube_url || '',
         });
       }
     } catch (error) {
@@ -147,33 +198,44 @@ export function CompanyInfoSettings() {
   const handleSaveCompanyInfo = async () => {
     setSavingInfo(true);
     try {
+      const updateData = {
+        company_name: infoForm.company_name || null,
+        main_phone: infoForm.main_phone || null,
+        main_email: infoForm.main_email || null,
+        website: infoForm.website || null,
+        nip: infoForm.nip || null,
+        regon: infoForm.regon || null,
+        krs: infoForm.krs || null,
+        bank_name_pln: infoForm.bank_name_pln || null,
+        bank_account_pln: infoForm.bank_account_pln || null,
+        bank_swift_pln: infoForm.bank_swift_pln || null,
+        bank_iban_pln: infoForm.bank_iban_pln || null,
+        bank_name_eur: infoForm.bank_name_eur || null,
+        bank_account_eur: infoForm.bank_account_eur || null,
+        bank_swift_eur: infoForm.bank_swift_eur || null,
+        bank_iban_eur: infoForm.bank_iban_eur || null,
+        bank_name_usd: infoForm.bank_name_usd || null,
+        bank_account_usd: infoForm.bank_account_usd || null,
+        bank_swift_usd: infoForm.bank_swift_usd || null,
+        bank_iban_usd: infoForm.bank_iban_usd || null,
+        facebook_url: infoForm.facebook_url || null,
+        linkedin_url: infoForm.linkedin_url || null,
+        instagram_url: infoForm.instagram_url || null,
+        twitter_url: infoForm.twitter_url || null,
+        youtube_url: infoForm.youtube_url || null,
+      };
+
       if (companyInfo) {
         const { error } = await supabase
           .from('company_info')
-          .update({
-            company_name: infoForm.company_name || null,
-            main_phone: infoForm.main_phone || null,
-            main_email: infoForm.main_email || null,
-            website: infoForm.website || null,
-            nip: infoForm.nip || null,
-            regon: infoForm.regon || null,
-            krs: infoForm.krs || null,
-          })
+          .update(updateData)
           .eq('id', companyInfo.id);
 
         if (error) throw error;
       } else {
         const { data, error } = await supabase
           .from('company_info')
-          .insert({
-            company_name: infoForm.company_name || null,
-            main_phone: infoForm.main_phone || null,
-            main_email: infoForm.main_email || null,
-            website: infoForm.website || null,
-            nip: infoForm.nip || null,
-            regon: infoForm.regon || null,
-            krs: infoForm.krs || null,
-          })
+          .insert(updateData)
           .select()
           .single();
 
@@ -573,6 +635,259 @@ export function CompanyInfoSettings() {
           {isAdmin && (
             <Button onClick={handleSaveCompanyInfo} disabled={savingInfo}>
               {savingInfo ? 'Saving...' : 'Save Company Information'}
+            </Button>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Bank Accounts */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Landmark className="h-5 w-5" />
+            Bank Accounts
+          </CardTitle>
+          <CardDescription>
+            Bank account details for invoicing in different currencies
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* PLN Account */}
+          <div className="space-y-4">
+            <h4 className="font-medium text-sm flex items-center gap-2">
+              <Badge variant="outline">PLN</Badge>
+              Polish Zloty Account
+            </h4>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="bank_name_pln">Bank Name</Label>
+                <Input
+                  id="bank_name_pln"
+                  value={infoForm.bank_name_pln}
+                  onChange={(e) => setInfoForm({ ...infoForm, bank_name_pln: e.target.value })}
+                  placeholder="Bank name"
+                  disabled={!isAdmin}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="bank_account_pln">Account Number</Label>
+                <Input
+                  id="bank_account_pln"
+                  value={infoForm.bank_account_pln}
+                  onChange={(e) => setInfoForm({ ...infoForm, bank_account_pln: e.target.value })}
+                  placeholder="00 0000 0000 0000 0000 0000 0000"
+                  disabled={!isAdmin}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="bank_swift_pln">SWIFT/BIC</Label>
+                <Input
+                  id="bank_swift_pln"
+                  value={infoForm.bank_swift_pln}
+                  onChange={(e) => setInfoForm({ ...infoForm, bank_swift_pln: e.target.value })}
+                  placeholder="XXXXXXXX"
+                  disabled={!isAdmin}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="bank_iban_pln">IBAN</Label>
+                <Input
+                  id="bank_iban_pln"
+                  value={infoForm.bank_iban_pln}
+                  onChange={(e) => setInfoForm({ ...infoForm, bank_iban_pln: e.target.value })}
+                  placeholder="PL00 0000 0000 0000 0000 0000 0000"
+                  disabled={!isAdmin}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* EUR Account */}
+          <div className="space-y-4 pt-4 border-t">
+            <h4 className="font-medium text-sm flex items-center gap-2">
+              <Badge variant="outline">EUR</Badge>
+              Euro Account
+            </h4>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="bank_name_eur">Bank Name</Label>
+                <Input
+                  id="bank_name_eur"
+                  value={infoForm.bank_name_eur}
+                  onChange={(e) => setInfoForm({ ...infoForm, bank_name_eur: e.target.value })}
+                  placeholder="Bank name"
+                  disabled={!isAdmin}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="bank_account_eur">Account Number</Label>
+                <Input
+                  id="bank_account_eur"
+                  value={infoForm.bank_account_eur}
+                  onChange={(e) => setInfoForm({ ...infoForm, bank_account_eur: e.target.value })}
+                  placeholder="Account number"
+                  disabled={!isAdmin}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="bank_swift_eur">SWIFT/BIC</Label>
+                <Input
+                  id="bank_swift_eur"
+                  value={infoForm.bank_swift_eur}
+                  onChange={(e) => setInfoForm({ ...infoForm, bank_swift_eur: e.target.value })}
+                  placeholder="XXXXXXXX"
+                  disabled={!isAdmin}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="bank_iban_eur">IBAN</Label>
+                <Input
+                  id="bank_iban_eur"
+                  value={infoForm.bank_iban_eur}
+                  onChange={(e) => setInfoForm({ ...infoForm, bank_iban_eur: e.target.value })}
+                  placeholder="XX00 0000 0000 0000 0000 0000"
+                  disabled={!isAdmin}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* USD Account */}
+          <div className="space-y-4 pt-4 border-t">
+            <h4 className="font-medium text-sm flex items-center gap-2">
+              <Badge variant="outline">USD</Badge>
+              US Dollar Account
+            </h4>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="bank_name_usd">Bank Name</Label>
+                <Input
+                  id="bank_name_usd"
+                  value={infoForm.bank_name_usd}
+                  onChange={(e) => setInfoForm({ ...infoForm, bank_name_usd: e.target.value })}
+                  placeholder="Bank name"
+                  disabled={!isAdmin}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="bank_account_usd">Account Number</Label>
+                <Input
+                  id="bank_account_usd"
+                  value={infoForm.bank_account_usd}
+                  onChange={(e) => setInfoForm({ ...infoForm, bank_account_usd: e.target.value })}
+                  placeholder="Account number"
+                  disabled={!isAdmin}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="bank_swift_usd">SWIFT/BIC</Label>
+                <Input
+                  id="bank_swift_usd"
+                  value={infoForm.bank_swift_usd}
+                  onChange={(e) => setInfoForm({ ...infoForm, bank_swift_usd: e.target.value })}
+                  placeholder="XXXXXXXX"
+                  disabled={!isAdmin}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="bank_iban_usd">IBAN</Label>
+                <Input
+                  id="bank_iban_usd"
+                  value={infoForm.bank_iban_usd}
+                  onChange={(e) => setInfoForm({ ...infoForm, bank_iban_usd: e.target.value })}
+                  placeholder="XX00 0000 0000 0000 0000 0000"
+                  disabled={!isAdmin}
+                />
+              </div>
+            </div>
+          </div>
+
+          {isAdmin && (
+            <Button onClick={handleSaveCompanyInfo} disabled={savingInfo}>
+              {savingInfo ? 'Saving...' : 'Save Bank Accounts'}
+            </Button>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Social Media Links */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Globe className="h-5 w-5" />
+            Social Media
+          </CardTitle>
+          <CardDescription>
+            Company social media profiles and links
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="facebook_url" className="flex items-center gap-1">
+                <Facebook className="h-3 w-3" /> Facebook
+              </Label>
+              <Input
+                id="facebook_url"
+                value={infoForm.facebook_url}
+                onChange={(e) => setInfoForm({ ...infoForm, facebook_url: e.target.value })}
+                placeholder="https://facebook.com/yourpage"
+                disabled={!isAdmin}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="linkedin_url" className="flex items-center gap-1">
+                <Linkedin className="h-3 w-3" /> LinkedIn
+              </Label>
+              <Input
+                id="linkedin_url"
+                value={infoForm.linkedin_url}
+                onChange={(e) => setInfoForm({ ...infoForm, linkedin_url: e.target.value })}
+                placeholder="https://linkedin.com/company/yourcompany"
+                disabled={!isAdmin}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="instagram_url" className="flex items-center gap-1">
+                <Instagram className="h-3 w-3" /> Instagram
+              </Label>
+              <Input
+                id="instagram_url"
+                value={infoForm.instagram_url}
+                onChange={(e) => setInfoForm({ ...infoForm, instagram_url: e.target.value })}
+                placeholder="https://instagram.com/yourprofile"
+                disabled={!isAdmin}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="twitter_url" className="flex items-center gap-1">
+                <Twitter className="h-3 w-3" /> X (Twitter)
+              </Label>
+              <Input
+                id="twitter_url"
+                value={infoForm.twitter_url}
+                onChange={(e) => setInfoForm({ ...infoForm, twitter_url: e.target.value })}
+                placeholder="https://x.com/yourprofile"
+                disabled={!isAdmin}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="youtube_url" className="flex items-center gap-1">
+                <Youtube className="h-3 w-3" /> YouTube
+              </Label>
+              <Input
+                id="youtube_url"
+                value={infoForm.youtube_url}
+                onChange={(e) => setInfoForm({ ...infoForm, youtube_url: e.target.value })}
+                placeholder="https://youtube.com/@yourchannel"
+                disabled={!isAdmin}
+              />
+            </div>
+          </div>
+
+          {isAdmin && (
+            <Button onClick={handleSaveCompanyInfo} disabled={savingInfo}>
+              {savingInfo ? 'Saving...' : 'Save Social Media'}
             </Button>
           )}
         </CardContent>
