@@ -47,6 +47,9 @@ interface Client {
   status: string | null;
   reseller_id: string | null;
   assigned_salesperson_id: string | null;
+  client_type: string | null;
+  market: string | null;
+  segment: string | null;
 }
 
 interface Contract {
@@ -616,6 +619,24 @@ const ClientDetail = () => {
                   >
                     {reseller.name}
                   </Button>
+                </div>
+              )}
+              {client.client_type && (
+                <div>
+                  <p className="text-sm text-muted-foreground">Client Type</p>
+                  <p className="font-medium">{client.client_type}</p>
+                </div>
+              )}
+              {client.market && (
+                <div>
+                  <p className="text-sm text-muted-foreground">Market</p>
+                  <p className="font-medium">{client.market}</p>
+                </div>
+              )}
+              {client.segment && (
+                <div>
+                  <p className="text-sm text-muted-foreground">Segment</p>
+                  <p className="font-medium">{client.segment}</p>
                 </div>
               )}
               {client.nip && (
