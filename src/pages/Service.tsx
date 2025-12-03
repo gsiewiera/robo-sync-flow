@@ -6,8 +6,9 @@ import { Input } from "@/components/ui/input";
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { ArrowUpDown, ArrowUp, ArrowDown, Eye, Search, X } from "lucide-react";
+import { ArrowUpDown, ArrowUp, ArrowDown, Eye, Search, X, Plus } from "lucide-react";
 import { ColumnVisibilityToggle, ColumnConfig } from "@/components/ui/column-visibility-toggle";
+import { TicketFormDialog } from "@/components/service/TicketFormDialog";
 import {
   Table,
   TableBody,
@@ -55,6 +56,7 @@ const Service = () => {
   const [sortField, setSortField] = useState<"ticket_number" | "created_at">("created_at");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [searchQuery, setSearchQuery] = useState("");
+  const [isTicketFormOpen, setIsTicketFormOpen] = useState(false);
   const navigate = useNavigate();
   const recordsPerPage = 30;
 
@@ -144,7 +146,11 @@ const Service = () => {
   return (
     <Layout>
       <div className="space-y-6">
-        <div className="flex items-center justify-end">
+        <div className="flex items-center justify-between">
+          <Button onClick={() => setIsTicketFormOpen(true)}>
+            <Plus className="w-4 h-4 mr-2" />
+            Add Ticket
+          </Button>
           <div className="flex items-center gap-2">
             <div className="relative w-80">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -312,6 +318,15 @@ const Service = () => {
             </PaginationContent>
           </Pagination>
         )}
+
+        <TicketFormDialog
+          open={isTicketFormOpen}
+          onOpenChange={setIsTicketFormOpen}
+          onSuccess={() => {
+            fetchTickets();
+            setIsTicketFormOpen(false);
+          }}
+        />
       </div>
     </Layout>
   );
