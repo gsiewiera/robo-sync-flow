@@ -2,11 +2,11 @@ import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,9 +18,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, ListTodo } from "lucide-react";
+import { ListTodo } from "lucide-react";
 
 interface Note {
   id: string;
@@ -207,251 +208,253 @@ export const NoteFormSheet = ({
   };
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
-        <SheetHeader>
-          <SheetTitle>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-4xl max-h-[90vh] p-0">
+        <DialogHeader className="px-6 pt-6">
+          <DialogTitle>
             {note ? t("notes.editNote", "Edit Note") : t("notes.addNote", "Add Note")}
-          </SheetTitle>
-        </SheetHeader>
+          </DialogTitle>
+        </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4 mt-6">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>{t("notes.client", "Client")}</Label>
-              <Select
-                value={formData.client_id}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, client_id: value, offer_id: "" })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={t("notes.selectClient", "Select client")} />
-                </SelectTrigger>
-                <SelectContent>
-                  {clients.map((client) => (
-                    <SelectItem key={client.id} value={client.id}>
-                      {client.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+        <ScrollArea className="max-h-[calc(90vh-120px)] px-6">
+          <form onSubmit={handleSubmit} className="space-y-4 pb-6">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{t("notes.client", "Client")}</Label>
+                <Select
+                  value={formData.client_id}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, client_id: value, offer_id: "" })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={t("notes.selectClient", "Select client")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {clients.map((client) => (
+                      <SelectItem key={client.id} value={client.id}>
+                        {client.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>{t("notes.contactPerson", "Contact Person")}</Label>
+                <Input
+                  value={formData.contact_person}
+                  onChange={(e) =>
+                    setFormData({ ...formData, contact_person: e.target.value })
+                  }
+                  placeholder={t("notes.contactPersonPlaceholder", "Enter contact person")}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{t("notes.offer", "Offer")}</Label>
+                <Select
+                  value={formData.offer_id}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, offer_id: value })
+                  }
+                  disabled={!formData.client_id}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={t("notes.selectOffer", "Select offer")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {offers.map((offer) => (
+                      <SelectItem key={offer.id} value={offer.id}>
+                        {offer.offer_number}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>{t("common.date")}</Label>
+                <Input
+                  type="date"
+                  value={formData.note_date}
+                  onChange={(e) =>
+                    setFormData({ ...formData, note_date: e.target.value })
+                  }
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label>{t("notes.salesperson", "Salesperson")}</Label>
+                <Select
+                  value={formData.salesperson_id}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, salesperson_id: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={t("notes.selectSalesperson", "Select")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {salespeople.map((sp) => (
+                      <SelectItem key={sp.id} value={sp.id}>
+                        {sp.full_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>{t("common.priority")}</Label>
+                <Select
+                  value={formData.priority}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, priority: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="normal">{t("notes.priorityNormal", "Normal")}</SelectItem>
+                    <SelectItem value="high">{t("notes.priorityHigh", "High")}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>{t("notes.contactType", "Contact Type")}</Label>
+                <Select
+                  value={formData.contact_type}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, contact_type: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="email">Email</SelectItem>
+                    <SelectItem value="call">Call</SelectItem>
+                    <SelectItem value="sms">SMS</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div className="space-y-2">
-              <Label>{t("notes.contactPerson", "Contact Person")}</Label>
-              <Input
-                value={formData.contact_person}
-                onChange={(e) =>
-                  setFormData({ ...formData, contact_person: e.target.value })
-                }
-                placeholder={t("notes.contactPersonPlaceholder", "Enter contact person")}
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>{t("notes.offer", "Offer")}</Label>
-              <Select
-                value={formData.offer_id}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, offer_id: value })
-                }
-                disabled={!formData.client_id}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={t("notes.selectOffer", "Select offer")} />
-                </SelectTrigger>
-                <SelectContent>
-                  {offers.map((offer) => (
-                    <SelectItem key={offer.id} value={offer.id}>
-                      {offer.offer_number}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>{t("common.date")}</Label>
-              <Input
-                type="date"
-                value={formData.note_date}
-                onChange={(e) =>
-                  setFormData({ ...formData, note_date: e.target.value })
-                }
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label>{t("notes.salesperson", "Salesperson")}</Label>
-              <Select
-                value={formData.salesperson_id}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, salesperson_id: value })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={t("notes.selectSalesperson", "Select")} />
-                </SelectTrigger>
-                <SelectContent>
-                  {salespeople.map((sp) => (
-                    <SelectItem key={sp.id} value={sp.id}>
-                      {sp.full_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>{t("common.priority")}</Label>
-              <Select
-                value={formData.priority}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, priority: value })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="normal">{t("notes.priorityNormal", "Normal")}</SelectItem>
-                  <SelectItem value="high">{t("notes.priorityHigh", "High")}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>{t("notes.contactType", "Contact Type")}</Label>
-              <Select
-                value={formData.contact_type}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, contact_type: value })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="email">Email</SelectItem>
-                  <SelectItem value="call">Call</SelectItem>
-                  <SelectItem value="sms">SMS</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label>{t("notes.note", "Note")}</Label>
-            <Textarea
-              value={formData.note}
-              onChange={(e) => setFormData({ ...formData, note: e.target.value })}
-              placeholder={t("notes.notePlaceholder", "Enter note details")}
-              rows={3}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>{t("notes.needs", "Needs")}</Label>
-            <Textarea
-              value={formData.needs}
-              onChange={(e) => setFormData({ ...formData, needs: e.target.value })}
-              placeholder={t("notes.needsPlaceholder", "Client needs and requirements")}
-              rows={2}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>{t("notes.keyPoints", "Key Points")}</Label>
-            <Textarea
-              value={formData.key_points}
-              onChange={(e) =>
-                setFormData({ ...formData, key_points: e.target.value })
-              }
-              placeholder={t("notes.keyPointsPlaceholder", "Key discussion points")}
-              rows={2}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>{t("notes.commitmentsUs", "Commitments (Us)")}</Label>
+              <Label>{t("notes.note", "Note")}</Label>
               <Textarea
-                value={formData.commitments_us}
-                onChange={(e) =>
-                  setFormData({ ...formData, commitments_us: e.target.value })
-                }
-                placeholder={t("notes.commitmentsUsPlaceholder", "Our commitments")}
+                value={formData.note}
+                onChange={(e) => setFormData({ ...formData, note: e.target.value })}
+                placeholder={t("notes.notePlaceholder", "Enter note details")}
+                rows={3}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>{t("notes.needs", "Needs")}</Label>
+              <Textarea
+                value={formData.needs}
+                onChange={(e) => setFormData({ ...formData, needs: e.target.value })}
+                placeholder={t("notes.needsPlaceholder", "Client needs and requirements")}
                 rows={2}
               />
             </div>
 
             <div className="space-y-2">
-              <Label>{t("notes.commitmentsClient", "Commitments (Client)")}</Label>
+              <Label>{t("notes.keyPoints", "Key Points")}</Label>
               <Textarea
-                value={formData.commitments_client}
+                value={formData.key_points}
                 onChange={(e) =>
-                  setFormData({ ...formData, commitments_client: e.target.value })
+                  setFormData({ ...formData, key_points: e.target.value })
                 }
-                placeholder={t("notes.commitmentsClientPlaceholder", "Client commitments")}
+                placeholder={t("notes.keyPointsPlaceholder", "Key discussion points")}
                 rows={2}
               />
             </div>
-          </div>
 
-          <div className="space-y-2">
-            <Label>{t("notes.risks", "Risks")}</Label>
-            <Textarea
-              value={formData.risks}
-              onChange={(e) => setFormData({ ...formData, risks: e.target.value })}
-              placeholder={t("notes.risksPlaceholder", "Potential risks or concerns")}
-              rows={2}
-            />
-          </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{t("notes.commitmentsUs", "Commitments (Us)")}</Label>
+                <Textarea
+                  value={formData.commitments_us}
+                  onChange={(e) =>
+                    setFormData({ ...formData, commitments_us: e.target.value })
+                  }
+                  placeholder={t("notes.commitmentsUsPlaceholder", "Our commitments")}
+                  rows={2}
+                />
+              </div>
 
-          <div className="space-y-2">
-            <Label>{t("notes.nextStep", "Next Step")}</Label>
-            <Textarea
-              value={formData.next_step}
-              onChange={(e) =>
-                setFormData({ ...formData, next_step: e.target.value })
-              }
-              placeholder={t("notes.nextStepPlaceholder", "Next action to take")}
-              rows={2}
-            />
-          </div>
+              <div className="space-y-2">
+                <Label>{t("notes.commitmentsClient", "Commitments (Client)")}</Label>
+                <Textarea
+                  value={formData.commitments_client}
+                  onChange={(e) =>
+                    setFormData({ ...formData, commitments_client: e.target.value })
+                  }
+                  placeholder={t("notes.commitmentsClientPlaceholder", "Client commitments")}
+                  rows={2}
+                />
+              </div>
+            </div>
 
-          <div className="flex justify-between pt-4 border-t">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleCreateTask}
-              disabled={!formData.next_step}
-            >
-              <ListTodo className="h-4 w-4 mr-2" />
-              {t("notes.createTask", "Create Task")}
-            </Button>
+            <div className="space-y-2">
+              <Label>{t("notes.risks", "Risks")}</Label>
+              <Textarea
+                value={formData.risks}
+                onChange={(e) => setFormData({ ...formData, risks: e.target.value })}
+                placeholder={t("notes.risksPlaceholder", "Potential risks or concerns")}
+                rows={2}
+              />
+            </div>
 
-            <div className="flex gap-2">
+            <div className="space-y-2">
+              <Label>{t("notes.nextStep", "Next Step")}</Label>
+              <Textarea
+                value={formData.next_step}
+                onChange={(e) =>
+                  setFormData({ ...formData, next_step: e.target.value })
+                }
+                placeholder={t("notes.nextStepPlaceholder", "Next action to take")}
+                rows={2}
+              />
+            </div>
+
+            <div className="flex justify-between pt-4 border-t">
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => onOpenChange(false)}
+                onClick={handleCreateTask}
+                disabled={!formData.next_step}
               >
-                {t("common.cancel")}
+                <ListTodo className="h-4 w-4 mr-2" />
+                {t("notes.createTask", "Create Task")}
               </Button>
-              <Button type="submit" disabled={loading}>
-                {loading ? t("common.saving", "Saving...") : t("common.save")}
-              </Button>
+
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => onOpenChange(false)}
+                >
+                  {t("common.cancel")}
+                </Button>
+                <Button type="submit" disabled={loading}>
+                  {loading ? t("common.saving", "Saving...") : t("common.save")}
+                </Button>
+              </div>
             </div>
-          </div>
-        </form>
-      </SheetContent>
-    </Sheet>
+          </form>
+        </ScrollArea>
+      </DialogContent>
+    </Dialog>
   );
 };
