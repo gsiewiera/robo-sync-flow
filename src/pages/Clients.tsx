@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "react-i18next";
 import { Plus, Search, ArrowUpDown, ArrowUp, ArrowDown, Eye, Edit, ChevronDown } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { ColumnVisibilityToggle, ColumnConfig } from "@/components/ui/column-visibility-toggle";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { ClientFormDialog } from "@/components/clients/ClientFormDialog";
@@ -67,6 +68,31 @@ const Clients = () => {
   const [salespersonMap, setSalespersonMap] = useState<Record<string, string>>({});
   const navigate = useNavigate();
   const recordsPerPage = 20;
+
+  const columns: ColumnConfig[] = useMemo(() => [
+    { key: "name", label: "Name", defaultVisible: true },
+    { key: "nip", label: "NIP", defaultVisible: true },
+    { key: "city", label: "City", defaultVisible: true },
+    { key: "tags", label: "Tags", defaultVisible: true },
+    { key: "salesperson", label: "Salesperson", defaultVisible: true },
+    { key: "contact", label: "Contact", defaultVisible: true },
+    { key: "created", label: "Created", defaultVisible: false },
+    { key: "actions", label: "Actions", defaultVisible: true },
+  ], []);
+
+  const [visibleColumns, setVisibleColumns] = useState<string[]>(() =>
+    columns.filter(c => c.defaultVisible !== false).map(c => c.key)
+  );
+
+  const toggleColumn = (columnKey: string) => {
+    setVisibleColumns(prev =>
+      prev.includes(columnKey)
+        ? prev.filter(k => k !== columnKey)
+        : [...prev, columnKey]
+    );
+  };
+
+  const isColumnVisible = (key: string) => visibleColumns.includes(key);
 
   useEffect(() => {
     fetchClients();
@@ -276,6 +302,12 @@ const Clients = () => {
                 Clear Filters
               </Button>
             )}
+
+            <ColumnVisibilityToggle
+              columns={columns}
+              visibleColumns={visibleColumns}
+              onToggleColumn={toggleColumn}
+            />
           </div>
         </Card>
 
@@ -283,50 +315,56 @@ const Clients = () => {
           <Table className="text-sm">
             <TableHeader>
               <TableRow className="h-9">
-                <TableHead className="py-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleSort("name")}
-                    className="h-7 px-2 -ml-2 font-medium hover:bg-transparent text-xs"
-                  >
-                    Name
-                    {getSortIcon("name")}
-                  </Button>
-                </TableHead>
-                <TableHead className="py-2 text-xs">NIP</TableHead>
-                <TableHead className="py-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleSort("city")}
-                    className="h-7 px-2 -ml-2 font-medium hover:bg-transparent text-xs"
-                  >
-                    City
-                    {getSortIcon("city")}
-                  </Button>
-                </TableHead>
-                <TableHead className="py-2 text-xs">Tags</TableHead>
-                <TableHead className="py-2 text-xs">Salesperson</TableHead>
-                <TableHead className="py-2 text-xs">Contact</TableHead>
-                <TableHead className="py-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleSort("created_at")}
-                    className="h-7 px-2 -ml-2 font-medium hover:bg-transparent text-xs"
-                  >
-                    Created
-                    {getSortIcon("created_at")}
-                  </Button>
-                </TableHead>
-                <TableHead className="w-24 py-2 text-xs">Actions</TableHead>
+                {isColumnVisible("name") && (
+                  <TableHead className="py-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleSort("name")}
+                      className="h-7 px-2 -ml-2 font-medium hover:bg-transparent text-xs"
+                    >
+                      Name
+                      {getSortIcon("name")}
+                    </Button>
+                  </TableHead>
+                )}
+                {isColumnVisible("nip") && <TableHead className="py-2 text-xs">NIP</TableHead>}
+                {isColumnVisible("city") && (
+                  <TableHead className="py-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleSort("city")}
+                      className="h-7 px-2 -ml-2 font-medium hover:bg-transparent text-xs"
+                    >
+                      City
+                      {getSortIcon("city")}
+                    </Button>
+                  </TableHead>
+                )}
+                {isColumnVisible("tags") && <TableHead className="py-2 text-xs">Tags</TableHead>}
+                {isColumnVisible("salesperson") && <TableHead className="py-2 text-xs">Salesperson</TableHead>}
+                {isColumnVisible("contact") && <TableHead className="py-2 text-xs">Contact</TableHead>}
+                {isColumnVisible("created") && (
+                  <TableHead className="py-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleSort("created_at")}
+                      className="h-7 px-2 -ml-2 font-medium hover:bg-transparent text-xs"
+                    >
+                      Created
+                      {getSortIcon("created_at")}
+                    </Button>
+                  </TableHead>
+                )}
+                {isColumnVisible("actions") && <TableHead className="w-24 py-2 text-xs">Actions</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
               {currentRecords.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-6 text-muted-foreground">
+                  <TableCell colSpan={visibleColumns.length} className="text-center py-6 text-muted-foreground">
                     No clients found
                   </TableCell>
                 </TableRow>
@@ -337,65 +375,75 @@ const Clients = () => {
                     className="h-9 cursor-pointer hover:bg-muted/50"
                     onClick={() => navigate(`/clients/${client.id}`)}
                   >
-                    <TableCell className="font-medium py-1.5">{client.name}</TableCell>
-                    <TableCell className="py-1.5">{client.nip || "-"}</TableCell>
-                    <TableCell className="py-1.5">{client.city || "-"}</TableCell>
-                    <TableCell className="py-1.5">
-                      <div className="flex flex-wrap gap-0.5">
-                        {clientTags[client.id]?.map((tag) => (
-                          <Badge
-                            key={tag.id}
-                            style={{ backgroundColor: tag.color }}
-                            className="text-white text-[10px] px-1.5 py-0"
+                    {isColumnVisible("name") && <TableCell className="font-medium py-1.5">{client.name}</TableCell>}
+                    {isColumnVisible("nip") && <TableCell className="py-1.5">{client.nip || "-"}</TableCell>}
+                    {isColumnVisible("city") && <TableCell className="py-1.5">{client.city || "-"}</TableCell>}
+                    {isColumnVisible("tags") && (
+                      <TableCell className="py-1.5">
+                        <div className="flex flex-wrap gap-0.5">
+                          {clientTags[client.id]?.map((tag) => (
+                            <Badge
+                              key={tag.id}
+                              style={{ backgroundColor: tag.color }}
+                              className="text-white text-[10px] px-1.5 py-0"
+                            >
+                              {tag.name}
+                            </Badge>
+                          ))}
+                        </div>
+                      </TableCell>
+                    )}
+                    {isColumnVisible("salesperson") && (
+                      <TableCell className="py-1.5">
+                        {client.assigned_salesperson_id && salespersonMap[client.assigned_salesperson_id]
+                          ? salespersonMap[client.assigned_salesperson_id]
+                          : "-"}
+                      </TableCell>
+                    )}
+                    {isColumnVisible("contact") && (
+                      <TableCell className="py-1.5">
+                        <div className="text-xs leading-tight">
+                          {client.primary_contact_name && (
+                            <div className="font-medium">{client.primary_contact_name}</div>
+                          )}
+                          {client.primary_contact_email && (
+                            <div className="text-muted-foreground truncate max-w-[180px]">{client.primary_contact_email}</div>
+                          )}
+                        </div>
+                      </TableCell>
+                    )}
+                    {isColumnVisible("created") && (
+                      <TableCell className="py-1.5">
+                        {client.created_at
+                          ? new Date(client.created_at).toLocaleDateString()
+                          : "-"}
+                      </TableCell>
+                    )}
+                    {isColumnVisible("actions") && (
+                      <TableCell onClick={(e) => e.stopPropagation()} className="py-1.5">
+                        <div className="flex gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 w-7 p-0"
+                            onClick={() => navigate(`/clients/${client.id}`)}
                           >
-                            {tag.name}
-                          </Badge>
-                        ))}
-                      </div>
-                    </TableCell>
-                    <TableCell className="py-1.5">
-                      {client.assigned_salesperson_id && salespersonMap[client.assigned_salesperson_id]
-                        ? salespersonMap[client.assigned_salesperson_id]
-                        : "-"}
-                    </TableCell>
-                    <TableCell className="py-1.5">
-                      <div className="text-xs leading-tight">
-                        {client.primary_contact_name && (
-                          <div className="font-medium">{client.primary_contact_name}</div>
-                        )}
-                        {client.primary_contact_email && (
-                          <div className="text-muted-foreground truncate max-w-[180px]">{client.primary_contact_email}</div>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="py-1.5">
-                      {client.created_at
-                        ? new Date(client.created_at).toLocaleDateString()
-                        : "-"}
-                    </TableCell>
-                    <TableCell onClick={(e) => e.stopPropagation()} className="py-1.5">
-                      <div className="flex gap-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 w-7 p-0"
-                          onClick={() => navigate(`/clients/${client.id}`)}
-                        >
-                          <Eye className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 w-7 p-0"
-                          onClick={() => {
-                            setEditingClient(client);
-                            setIsClientDialogOpen(true);
-                          }}
-                        >
-                          <Edit className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                    </TableCell>
+                            <Eye className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 w-7 p-0"
+                            onClick={() => {
+                              setEditingClient(client);
+                              setIsClientDialogOpen(true);
+                            }}
+                          >
+                            <Edit className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))
               )}
