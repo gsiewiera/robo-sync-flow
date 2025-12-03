@@ -252,6 +252,10 @@ const RobotDetail = () => {
                 <h2 className="text-xl font-semibold mb-4">Basic Information</h2>
                 <div className="space-y-4">
                   <div>
+                    <p className="text-sm text-muted-foreground">Serial Number</p>
+                    <p className="font-medium text-lg">{robot.serial_number}</p>
+                  </div>
+                  <div>
                     <p className="text-sm text-muted-foreground">Model</p>
                     <p className="font-medium text-lg">{robot.model}</p>
                   </div>
