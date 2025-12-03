@@ -38,6 +38,10 @@ interface UserProfile {
   email: string;
   full_name: string;
   phone: string | null;
+  address: string | null;
+  city: string | null;
+  postal_code: string | null;
+  country: string | null;
   roles: string[];
 }
 
@@ -477,6 +481,7 @@ export default function AdminUsers() {
                 <TableHead>Name</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Phone</TableHead>
+                <TableHead>Address</TableHead>
                 <TableHead>Roles</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -495,6 +500,18 @@ export default function AdminUsers() {
                   <TableCell className="font-medium">{user.full_name}</TableCell>
                   <TableCell>{user.email}</TableCell>
                   <TableCell>{user.phone || "-"}</TableCell>
+                  <TableCell>
+                    {user.address ? (
+                      <div className="text-sm">
+                        <div>{user.address}</div>
+                        <div className="text-muted-foreground">
+                          {[user.postal_code, user.city, user.country].filter(Boolean).join(", ")}
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground">-</span>
+                    )}
+                  </TableCell>
                   <TableCell>
                     <div className="flex gap-1 flex-wrap">
                       {user.roles.length > 0 ? (
