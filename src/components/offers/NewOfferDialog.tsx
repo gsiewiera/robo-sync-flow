@@ -134,9 +134,10 @@ interface NewOfferDialogProps {
   onSuccess?: () => void;
   offer?: OfferData | null;
   mode?: "lead" | "offer";
+  initialClientId?: string;
 }
 
-export function NewOfferDialog({ open, onOpenChange, onSuccess, offer, mode = "offer" }: NewOfferDialogProps) {
+export function NewOfferDialog({ open, onOpenChange, onSuccess, offer, mode = "offer", initialClientId }: NewOfferDialogProps) {
   const isEditMode = !!offer;
   const isLeadMode = mode === "lead" && !isEditMode;
   const { toast } = useToast();
@@ -202,6 +203,7 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer, mode = "o
         loadOfferData();
       } else {
         form.reset({
+          client_id: initialClientId || "",
           currency: "PLN",
           warranty_period: 12,
           initial_payment: 0,
@@ -212,7 +214,7 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer, mode = "o
         setItemSelections([]);
       }
     }
-  }, [open, offer]);
+  }, [open, offer, initialClientId]);
 
   const fetchSalespeople = async () => {
     const { data, error } = await supabase

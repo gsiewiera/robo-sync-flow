@@ -17,6 +17,9 @@ import { ContactFormDialog } from "@/components/clients/ContactFormDialog";
 import { AddressFormDialog } from "@/components/clients/AddressFormDialog";
 import { AddressMap } from "@/components/clients/AddressMap";
 import { NoteFormSheet } from "@/components/notes/NoteFormSheet";
+import { TaskFormSheet } from "@/components/tasks/TaskFormSheet";
+import { NewOfferDialog } from "@/components/offers/NewOfferDialog";
+import { NewContractDialog } from "@/components/contracts/NewContractDialog";
 import { formatMoney } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -229,6 +232,9 @@ const ClientDetail = () => {
   const [addressToDelete, setAddressToDelete] = useState<Address | null>(null);
   const [isMapDialogOpen, setIsMapDialogOpen] = useState(false);
   const [isNoteFormOpen, setIsNoteFormOpen] = useState(false);
+  const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
+  const [isOfferDialogOpen, setIsOfferDialogOpen] = useState(false);
+  const [isContractDialogOpen, setIsContractDialogOpen] = useState(false);
   const [salespeople, setSalespeople] = useState<{ id: string; full_name: string }[]>([]);
 
   useEffect(() => {
@@ -924,6 +930,12 @@ const ClientDetail = () => {
           </TabsContent>
 
           <TabsContent value="contracts" className="space-y-4">
+            <div className="flex justify-end">
+              <Button onClick={() => setIsContractDialogOpen(true)} size="sm">
+                <Plus className="w-4 h-4 mr-2" />
+                Add Contract
+              </Button>
+            </div>
             {contracts.map((contract) => (
               <Card
                 key={contract.id}
@@ -960,6 +972,12 @@ const ClientDetail = () => {
           </TabsContent>
 
           <TabsContent value="offers" className="space-y-4">
+            <div className="flex justify-end">
+              <Button onClick={() => setIsOfferDialogOpen(true)} size="sm">
+                <Plus className="w-4 h-4 mr-2" />
+                Add Offer
+              </Button>
+            </div>
             {offers.map((offer) => (
               <Card
                 key={offer.id}
@@ -1139,6 +1157,12 @@ const ClientDetail = () => {
           </TabsContent>
 
           <TabsContent value="tasks" className="space-y-4">
+            <div className="flex justify-end">
+              <Button onClick={() => setIsTaskFormOpen(true)} size="sm">
+                <Plus className="w-4 h-4 mr-2" />
+                Add Task
+              </Button>
+            </div>
             {tasks.map((task) => (
               <Card
                 key={task.id}
@@ -1495,6 +1519,42 @@ const ClientDetail = () => {
           }}
           clients={[{ id: client.id, name: client.name }]}
           salespeople={salespeople}
+          initialClientId={client.id}
+        />
+      )}
+
+      {client && (
+        <TaskFormSheet
+          open={isTaskFormOpen}
+          onOpenChange={setIsTaskFormOpen}
+          onSuccess={() => {
+            fetchClientData();
+            setIsTaskFormOpen(false);
+          }}
+          initialValues={{ client_id: client.id }}
+        />
+      )}
+
+      {client && (
+        <NewOfferDialog
+          open={isOfferDialogOpen}
+          onOpenChange={setIsOfferDialogOpen}
+          onSuccess={() => {
+            fetchClientData();
+            setIsOfferDialogOpen(false);
+          }}
+          initialClientId={client.id}
+        />
+      )}
+
+      {client && (
+        <NewContractDialog
+          open={isContractDialogOpen}
+          onOpenChange={setIsContractDialogOpen}
+          onSuccess={() => {
+            fetchClientData();
+            setIsContractDialogOpen(false);
+          }}
           initialClientId={client.id}
         />
       )}
