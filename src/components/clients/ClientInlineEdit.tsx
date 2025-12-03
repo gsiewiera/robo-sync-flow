@@ -551,36 +551,32 @@ export function ClientInlineEdit({ client, onSave, onCancel }: ClientInlineEditP
           </div>
         </div>
 
-        {/* Contact Person */}
+        {/* Primary Contact Info */}
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold border-b pb-2">Contact Person</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label>Name</Label>
-              <Input
-                value={formData.primary_contact_name}
-                onChange={(e) => setFormData({ ...formData, primary_contact_name: e.target.value })}
-                placeholder="Contact name"
-              />
+          <h3 className="text-lg font-semibold border-b pb-2">Primary Contact</h3>
+          <p className="text-sm text-muted-foreground">
+            Primary contact is managed in the Contacts tab. Mark a contact as "Primary" to set them as the main contact person.
+          </p>
+          {client.primary_contact_name && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-muted/50 rounded-lg">
+              <div>
+                <Label className="text-muted-foreground text-xs">Name</Label>
+                <p className="text-sm font-medium">{client.primary_contact_name}</p>
+              </div>
+              {client.primary_contact_email && (
+                <div>
+                  <Label className="text-muted-foreground text-xs">Email</Label>
+                  <p className="text-sm font-medium">{client.primary_contact_email}</p>
+                </div>
+              )}
+              {client.primary_contact_phone && (
+                <div>
+                  <Label className="text-muted-foreground text-xs">Phone</Label>
+                  <p className="text-sm font-medium">{client.primary_contact_phone}</p>
+                </div>
+              )}
             </div>
-            <div className="space-y-2">
-              <Label>Email</Label>
-              <Input
-                type="email"
-                value={formData.primary_contact_email}
-                onChange={(e) => setFormData({ ...formData, primary_contact_email: e.target.value })}
-                placeholder="Contact email"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Phone</Label>
-              <Input
-                value={formData.primary_contact_phone}
-                onChange={(e) => setFormData({ ...formData, primary_contact_phone: e.target.value })}
-                placeholder="Contact phone"
-              />
-            </div>
-          </div>
+          )}
         </div>
 
         {/* Billing Person */}
