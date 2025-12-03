@@ -792,7 +792,7 @@ const ClientDetail = () => {
             {/* Location Section */}
             <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
               <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground flex items-center gap-2">
-                {addresses.length > 0 ? (
+                {(addresses.length > 0 || client.address) ? (
                   <button
                     onClick={() => setIsMapDialogOpen(true)}
                     className="hover:text-primary transition-colors"
@@ -801,7 +801,7 @@ const ClientDetail = () => {
                     <MapPinned className="w-4 h-4" />
                   </button>
                 ) : (
-                  <MapPin className="w-4 h-4" />
+                  <MapPinned className="w-4 h-4" />
                 )}
                 Location
               </h3>
