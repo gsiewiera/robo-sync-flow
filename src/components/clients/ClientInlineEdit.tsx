@@ -334,8 +334,7 @@ export function ClientInlineEdit({ client, onSave, onCancel }: ClientInlineEditP
 
   return (
     <Card className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold">Edit Client</h2>
+      <div className="flex justify-end mb-6">
         <div className="flex gap-2">
           <Button variant="outline" onClick={onCancel} disabled={isSubmitting}>
             <X className="h-4 w-4 mr-2" />
@@ -350,9 +349,7 @@ export function ClientInlineEdit({ client, onSave, onCancel }: ClientInlineEditP
 
       <div className="space-y-6">
         {/* Assignment & Balance */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold border-b pb-2">Assignment</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label>Assigned Salesperson</Label>
               <Select
@@ -400,14 +397,11 @@ export function ClientInlineEdit({ client, onSave, onCancel }: ClientInlineEditP
               <div className="h-10 px-3 py-2 rounded-md border border-input bg-muted text-muted-foreground flex items-center">
                 {formData.balance.toLocaleString('pl-PL', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).replace(/,/g, ' ')}
               </div>
-            </div>
           </div>
         </div>
 
         {/* Company Information */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold border-b pb-2">Company Information</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label>Company Name *</Label>
               <Input
@@ -439,14 +433,11 @@ export function ClientInlineEdit({ client, onSave, onCancel }: ClientInlineEditP
                   <SelectItem value="blocked">Blocked</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
           </div>
         </div>
 
         {/* Classification */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold border-b pb-2">Classification</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <MultiSelectField
               label="Client Type"
               items={clientTypes}
@@ -486,14 +477,11 @@ export function ClientInlineEdit({ client, onSave, onCancel }: ClientInlineEditP
               selectedIds={selectedSegments}
               onToggle={toggleSegment}
               placeholder="Select segments"
-            />
-          </div>
+          />
         </div>
 
         {/* Tags */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold border-b pb-2">Tags</h3>
-          <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2">
             {availableTags.map((tag) => (
               <Badge
                 key={tag.id}
@@ -503,15 +491,12 @@ export function ClientInlineEdit({ client, onSave, onCancel }: ClientInlineEditP
                 onClick={() => toggleTag(tag.id)}
               >
                 {tag.name}
-              </Badge>
-            ))}
-          </div>
+            </Badge>
+          ))}
         </div>
 
         {/* Address */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold border-b pb-2">Address</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2 md:col-span-2">
               <Label>Street Address</Label>
               <Input
@@ -544,7 +529,6 @@ export function ClientInlineEdit({ client, onSave, onCancel }: ClientInlineEditP
                 placeholder="Country"
               />
             </div>
-          </div>
         </div>
 
         {/* Contact Information */}
