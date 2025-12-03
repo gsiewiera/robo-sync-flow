@@ -12,7 +12,7 @@
     "resellers": "Resellerzy",
     "contracts": "Kontrakty",
     "invoices": "Faktury",
-    "service": "Serwis",
+    "service": "Wsparcie",
     "robots": "Roboty",
     "items": "Produkty",
     "pricing": "Cennik",
@@ -187,8 +187,8 @@
     "amount": "Kwota"
   },
   "service": {
-    "title": "Serwis",
-    "description": "Zarządzaj zgłoszeniami serwisowymi",
+    "title": "Wsparcie",
+    "description": "Zarządzaj zgłoszeniami wsparcia",
     "addTicket": "Dodaj zgłoszenie",
     "ticketNumber": "Numer zgłoszenia",
     "noTickets": "Nie znaleziono zgłoszeń"

@@ -12,7 +12,7 @@
     "resellers": "经销商",
     "contracts": "合同",
     "invoices": "发票",
-    "service": "服务",
+    "service": "支持",
     "robots": "机器人",
     "items": "项目",
     "pricing": "价格",
@@ -140,8 +140,8 @@
     "amount": "金额"
   },
   "service": {
-    "title": "服务",
-    "description": "管理服务工单和维护",
+    "title": "支持",
+    "description": "管理支持工单和维护",
     "addTicket": "添加工单",
     "ticketNumber": "工单编号",
     "noTickets": "未找到工单"

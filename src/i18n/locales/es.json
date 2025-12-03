@@ -12,7 +12,7 @@
     "resellers": "Revendedores",
     "contracts": "Contratos",
     "invoices": "Facturas",
-    "service": "Servicio",
+    "service": "Soporte",
     "robots": "Robots",
     "items": "Artículos",
     "pricing": "Precios",
@@ -140,8 +140,8 @@
     "amount": "Monto"
   },
   "service": {
-    "title": "Servicio",
-    "description": "Gestionar tickets de servicio y mantenimiento",
+    "title": "Soporte",
+    "description": "Gestionar tickets de soporte y mantenimiento",
     "addTicket": "Agregar ticket",
     "ticketNumber": "Número de ticket",
     "noTickets": "No se encontraron tickets"
