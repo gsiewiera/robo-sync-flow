@@ -19,6 +19,7 @@ import { format, isAfter, isBefore, startOfDay, addDays } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { NewOfferDialog } from "@/components/offers/NewOfferDialog";
+import { ColumnVisibilityToggle, ColumnConfig } from "@/components/ui/column-visibility-toggle";
 
 interface Lead {
   id: string;
@@ -47,6 +48,18 @@ interface Salesperson {
   full_name: string;
 }
 
+const columns: ColumnConfig[] = [
+  { key: "offer_number", label: "Offer #", defaultVisible: true },
+  { key: "client", label: "Client", defaultVisible: true },
+  { key: "salesperson", label: "Salesperson", defaultVisible: true },
+  { key: "status", label: "Status", defaultVisible: true },
+  { key: "next_action", label: "Next Action", defaultVisible: true },
+  { key: "last_contact", label: "Last Contact", defaultVisible: false },
+  { key: "value", label: "Value", defaultVisible: true },
+  { key: "margin", label: "Margin", defaultVisible: true },
+  { key: "created", label: "Created", defaultVisible: false },
+];
+
 const Leads = () => {
   const { t } = useTranslation();
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -58,6 +71,9 @@ const Leads = () => {
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [salespeople, setSalespeople] = useState<Salesperson[]>([]);
   const [salespersonFilters, setSalespersonFilters] = useState<string[]>([]);
+  const [visibleColumns, setVisibleColumns] = useState<string[]>(
+    columns.filter(col => col.defaultVisible !== false).map(col => col.key)
+  );
   const [editForm, setEditForm] = useState({
     lead_status: "",
     next_action_date: undefined as Date | undefined,
@@ -440,9 +456,9 @@ const Leads = () => {
         </div>
 
         <Card className="shadow-lg">
-          <CardHeader>
+          <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
-              <CardTitle>Leads List</CardTitle>
+              <CardTitle className="text-lg">Leads List</CardTitle>
               <div className="flex items-center gap-2">
                 <SearchableFilterDropdown
                   options={salespeople.map((s) => ({ id: s.id, label: s.full_name }))}
@@ -452,7 +468,7 @@ const Leads = () => {
                   searchPlaceholder="Search salesperson..."
                 />
                 <Select value={filterStatus} onValueChange={setFilterStatus}>
-                  <SelectTrigger className="w-[180px] bg-background">
+                  <SelectTrigger className="w-[180px] bg-background h-10">
                     <SelectValue placeholder="Filter by status" />
                   </SelectTrigger>
                   <SelectContent className="z-50 bg-background">
@@ -465,27 +481,34 @@ const Leads = () => {
                     <SelectItem value="on_hold">On Hold</SelectItem>
                   </SelectContent>
                 </Select>
+                <ColumnVisibilityToggle
+                  columns={columns}
+                  visibleColumns={visibleColumns}
+                  onToggleColumn={(key) => setVisibleColumns(prev => 
+                    prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
+                  )}
+                />
                 {!isLoading && leads.length > 0 && (
-                  <Badge variant="outline" className="text-sm">
+                  <Badge variant="outline" className="text-xs">
                     {leads.length} lead{leads.length !== 1 ? "s" : ""}
                   </Badge>
                 )}
               </div>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-0">
             {isLoading ? (
-              <div className="text-center py-12">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>
-                <p className="text-muted-foreground">Loading leads...</p>
+              <div className="text-center py-8">
+                <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-primary mb-3"></div>
+                <p className="text-muted-foreground text-sm">Loading leads...</p>
               </div>
             ) : leads.length === 0 ? (
-              <div className="text-center py-12">
-                <UserPlus className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
-                <p className="text-lg font-medium text-muted-foreground mb-2">
+              <div className="text-center py-8">
+                <UserPlus className="w-10 h-10 mx-auto text-muted-foreground/50 mb-3" />
+                <p className="text-base font-medium text-muted-foreground mb-1">
                   No leads found
                 </p>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   Start by creating new offers in the leads stage
                 </p>
               </div>
@@ -493,97 +516,110 @@ const Leads = () => {
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow>
-                      <TableHead>Offer #</TableHead>
-                      <TableHead>Client</TableHead>
-                      <TableHead>Salesperson</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Next Action</TableHead>
-                      <TableHead>Last Contact</TableHead>
-                      <TableHead>Value</TableHead>
-                      <TableHead className="text-emerald-600">Margin</TableHead>
-                      <TableHead>Created</TableHead>
-                      <TableHead className="w-32">Actions</TableHead>
+                    <TableRow className="h-9">
+                      {visibleColumns.includes("offer_number") && <TableHead className="py-1.5 text-xs">Offer #</TableHead>}
+                      {visibleColumns.includes("client") && <TableHead className="py-1.5 text-xs">Client</TableHead>}
+                      {visibleColumns.includes("salesperson") && <TableHead className="py-1.5 text-xs">Salesperson</TableHead>}
+                      {visibleColumns.includes("status") && <TableHead className="py-1.5 text-xs">Status</TableHead>}
+                      {visibleColumns.includes("next_action") && <TableHead className="py-1.5 text-xs">Next Action</TableHead>}
+                      {visibleColumns.includes("last_contact") && <TableHead className="py-1.5 text-xs">Last Contact</TableHead>}
+                      {visibleColumns.includes("value") && <TableHead className="py-1.5 text-xs">Value</TableHead>}
+                      {visibleColumns.includes("margin") && <TableHead className="py-1.5 text-xs text-emerald-600">Margin</TableHead>}
+                      {visibleColumns.includes("created") && <TableHead className="py-1.5 text-xs">Created</TableHead>}
+                      <TableHead className="w-20 py-1.5 text-xs">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {leads.map((lead) => (
                       <TableRow 
                         key={lead.id} 
-                        className="hover:bg-muted/50 cursor-pointer"
+                        className="h-9 hover:bg-muted/50 cursor-pointer"
                         onClick={() => handleRowClick(lead.id)}
                       >
-                        <TableCell className="font-medium">
-                          {lead.offer_number}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex flex-col gap-1">
-                            <div className="flex items-center gap-2">
-                              <Building2 className="w-4 h-4 text-muted-foreground" />
-                              {lead.clients?.name || "N/A"}
+                        {visibleColumns.includes("offer_number") && (
+                          <TableCell className="py-1.5 text-sm font-medium">
+                            {lead.offer_number}
+                          </TableCell>
+                        )}
+                        {visibleColumns.includes("client") && (
+                          <TableCell className="py-1.5">
+                            <div className="flex items-center gap-1.5">
+                              <Building2 className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                              <span className="text-sm truncate max-w-[150px]">{lead.clients?.name || "N/A"}</span>
                             </div>
-                            {lead.person_contact && (
-                              <span className="text-xs text-muted-foreground">{lead.person_contact}</span>
+                          </TableCell>
+                        )}
+                        {visibleColumns.includes("salesperson") && (
+                          <TableCell className="py-1.5 text-sm text-muted-foreground">
+                            {lead.salesperson_name || "-"}
+                          </TableCell>
+                        )}
+                        {visibleColumns.includes("status") && (
+                          <TableCell className="py-1.5">
+                            {getLeadStatusBadge(lead.lead_status)}
+                          </TableCell>
+                        )}
+                        {visibleColumns.includes("next_action") && (
+                          <TableCell className="py-1.5">
+                            {lead.next_action_date ? (
+                              <div className="flex items-center gap-1">
+                                <span className="text-xs">{format(new Date(lead.next_action_date), "MMM dd")}</span>
+                                {getNextActionStatus(lead.next_action_date)}
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground text-xs">-</span>
                             )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          {lead.salesperson_name || "-"}
-                        </TableCell>
-                        <TableCell>
-                          {getLeadStatusBadge(lead.lead_status)}
-                        </TableCell>
-                        <TableCell>
-                          {lead.next_action_date ? (
-                            <div className="flex flex-col gap-1">
-                              <span className="text-sm">{format(new Date(lead.next_action_date), "MMM dd, yyyy")}</span>
-                              {getNextActionStatus(lead.next_action_date)}
-                            </div>
-                          ) : (
-                            <span className="text-muted-foreground text-sm">Not set</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {lead.last_contact_date 
-                            ? format(new Date(lead.last_contact_date), "MMM dd, yyyy")
-                            : "-"
-                          }
-                        </TableCell>
-                        <TableCell>
-                          {lead.total_price 
-                            ? `${lead.total_price.toLocaleString()} ${lead.currency}`
-                            : "-"
-                          }
-                        </TableCell>
-                        <TableCell className="text-emerald-500 font-medium">
-                          {leadMargins[lead.id] 
-                            ? `${leadMargins[lead.id].toLocaleString()} PLN`
-                            : "-"
-                          }
-                        </TableCell>
-                        <TableCell>
-                          {format(new Date(lead.created_at), "MMM dd, yyyy")}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-1">
+                          </TableCell>
+                        )}
+                        {visibleColumns.includes("last_contact") && (
+                          <TableCell className="py-1.5 text-xs text-muted-foreground">
+                            {lead.last_contact_date 
+                              ? format(new Date(lead.last_contact_date), "MMM dd")
+                              : "-"
+                            }
+                          </TableCell>
+                        )}
+                        {visibleColumns.includes("value") && (
+                          <TableCell className="py-1.5 text-xs">
+                            {lead.total_price 
+                              ? `${lead.total_price.toLocaleString()} ${lead.currency}`
+                              : "-"
+                            }
+                          </TableCell>
+                        )}
+                        {visibleColumns.includes("margin") && (
+                          <TableCell className="py-1.5 text-xs text-emerald-500 font-medium">
+                            {leadMargins[lead.id] 
+                              ? `${leadMargins[lead.id].toLocaleString()}`
+                              : "-"
+                            }
+                          </TableCell>
+                        )}
+                        {visibleColumns.includes("created") && (
+                          <TableCell className="py-1.5 text-xs text-muted-foreground">
+                            {format(new Date(lead.created_at), "MMM dd")}
+                          </TableCell>
+                        )}
+                        <TableCell className="py-1.5">
+                          <div className="flex gap-0.5">
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-8 w-8 p-0"
+                              className="h-6 w-6 p-0"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 navigate(`/offers/${lead.id}`);
                               }}
                             >
-                              <Eye className="w-4 h-4" />
+                              <Eye className="w-3.5 h-3.5" />
                             </Button>
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-8 w-8 p-0"
+                              className="h-6 w-6 p-0"
                               onClick={(e) => handleEditLead(lead, e)}
                             >
-                              <Edit className="w-4 h-4" />
+                              <Edit className="w-3.5 h-3.5" />
                             </Button>
                           </div>
                         </TableCell>
