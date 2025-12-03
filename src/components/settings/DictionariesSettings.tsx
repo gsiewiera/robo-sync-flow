@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { X } from "lucide-react";
+import { X, Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -26,26 +26,31 @@ type Dictionary = {
   manufacturers: string[];
 };
 
+type NumericSettings = {
+  km_rate: number;
+};
+
 const categories = [
-  { key: "robot_models", label: "Robot Models" },
-  { key: "robot_types", label: "Robot Types" },
-  { key: "manufacturers", label: "Manufacturers" },
-  { key: "client_types", label: "Client Types" },
-  { key: "markets", label: "Markets" },
-  { key: "segments", label: "Segments" },
-  { key: "contract_types", label: "Contract Types" },
-  { key: "service_types", label: "Service Types" },
-  { key: "payment_models", label: "Payment Models" },
-  { key: "billing_schedules", label: "Billing Schedules" },
-  { key: "priorities", label: "Priorities" },
-  { key: "countries", label: "Countries" },
-  { key: "lease_months", label: "Lease Months" },
+  { key: "km_rate", label: "Travel Cost (per km)", type: "numeric" },
+  { key: "robot_models", label: "Robot Models", type: "list" },
+  { key: "robot_types", label: "Robot Types", type: "list" },
+  { key: "manufacturers", label: "Manufacturers", type: "list" },
+  { key: "client_types", label: "Client Types", type: "list" },
+  { key: "markets", label: "Markets", type: "list" },
+  { key: "segments", label: "Segments", type: "list" },
+  { key: "contract_types", label: "Contract Types", type: "list" },
+  { key: "service_types", label: "Service Types", type: "list" },
+  { key: "payment_models", label: "Payment Models", type: "list" },
+  { key: "billing_schedules", label: "Billing Schedules", type: "list" },
+  { key: "priorities", label: "Priorities", type: "list" },
+  { key: "countries", label: "Countries", type: "list" },
+  { key: "lease_months", label: "Lease Months", type: "list" },
 ] as const;
 
 export const DictionariesSettings = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [activeCategory, setActiveCategory] = useState<keyof Dictionary>("robot_models");
+  const [activeCategory, setActiveCategory] = useState<string>("km_rate");
   const [dictionaries, setDictionaries] = useState<Dictionary>({
     robot_models: ["UR3", "UR5", "UR10", "UR16"],
     robot_types: ["Collaborative", "Industrial", "Mobile", "Delta"],
@@ -61,10 +66,14 @@ export const DictionariesSettings = () => {
     countries: ["Poland", "Germany", "Czech Republic", "Slovakia"],
     lease_months: ["6", "12", "24", "36", "48"],
   });
+  const [numericSettings, setNumericSettings] = useState<NumericSettings>({
+    km_rate: 1.50,
+  });
 
   useEffect(() => {
     checkAdminRole();
     fetchManufacturers();
+    fetchNumericSettings();
   }, []);
 
   const checkAdminRole = async () => {
@@ -93,6 +102,38 @@ export const DictionariesSettings = () => {
         manufacturers: data.map((m) => m.manufacturer_name),
       }));
     }
+  };
+
+  const fetchNumericSettings = async () => {
+    const { data, error } = await supabase
+      .from("system_numeric_settings")
+      .select("setting_key, setting_value");
+
+    if (!error && data) {
+      const settings: Partial<NumericSettings> = {};
+      data.forEach((row) => {
+        if (row.setting_key === "km_rate") {
+          settings.km_rate = Number(row.setting_value);
+        }
+      });
+      setNumericSettings((prev) => ({ ...prev, ...settings }));
+    }
+  };
+
+  const updateNumericSetting = async (key: keyof NumericSettings, value: number) => {
+    const { error } = await supabase
+      .from("system_numeric_settings")
+      .update({ setting_value: value, updated_at: new Date().toISOString() })
+      .eq("setting_key", key);
+
+    if (error) {
+      console.error("Error updating setting:", error);
+      toast.error("Failed to update setting");
+      return;
+    }
+    
+    setNumericSettings((prev) => ({ ...prev, [key]: value }));
+    toast.success("Setting updated successfully");
   };
 
   const addItem = async (category: keyof Dictionary, value: string) => {
@@ -147,9 +188,62 @@ export const DictionariesSettings = () => {
     }));
   };
 
+  const NumericSettingEditor = ({ settingKey }: { settingKey: keyof NumericSettings }) => {
+    const [value, setValue] = useState(numericSettings[settingKey].toString());
+    const currentCategory = categories.find(c => c.key === settingKey);
+
+    const handleSave = () => {
+      const numValue = parseFloat(value);
+      if (isNaN(numValue) || numValue < 0) {
+        toast.error("Please enter a valid positive number");
+        return;
+      }
+      updateNumericSetting(settingKey, numValue);
+    };
+
+    return (
+      <div className="space-y-6">
+        <div>
+          <Label className="text-lg font-semibold">{currentCategory?.label}</Label>
+          <p className="text-sm text-muted-foreground mt-1">
+            Set the cost per kilometer for travel calculations
+          </p>
+        </div>
+
+        <div className="flex gap-2 items-center max-w-md">
+          <Input
+            type="number"
+            step="0.01"
+            min="0"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            disabled={!isAdmin}
+            className="flex-1"
+            placeholder="Enter rate per km"
+          />
+          <span className="text-muted-foreground">PLN/km</span>
+          <Button onClick={handleSave} disabled={!isAdmin}>
+            <Save className="w-4 h-4 mr-2" />
+            Save
+          </Button>
+        </div>
+
+        <p className="text-sm text-muted-foreground">
+          Current rate: <span className="font-medium">{numericSettings[settingKey].toFixed(2)} PLN</span> per kilometer
+        </p>
+      </div>
+    );
+  };
+
   const DictionaryEditor = () => {
     const [newValue, setNewValue] = useState("");
     const currentCategory = categories.find(c => c.key === activeCategory);
+
+    if (currentCategory?.type === "numeric") {
+      return <NumericSettingEditor settingKey={activeCategory as keyof NumericSettings} />;
+    }
+
+    const dictionaryKey = activeCategory as keyof Dictionary;
 
     return (
       <div className="space-y-6">
@@ -167,7 +261,7 @@ export const DictionariesSettings = () => {
             onChange={(e) => setNewValue(e.target.value)}
             onKeyPress={(e) => {
               if (e.key === "Enter") {
-                addItem(activeCategory, newValue);
+                addItem(dictionaryKey, newValue);
                 setNewValue("");
               }
             }}
@@ -176,7 +270,7 @@ export const DictionariesSettings = () => {
           />
           <Button
             onClick={() => {
-              addItem(activeCategory, newValue);
+              addItem(dictionaryKey, newValue);
               setNewValue("");
             }}
             disabled={!isAdmin}
@@ -186,13 +280,13 @@ export const DictionariesSettings = () => {
         </div>
 
         <div className="flex gap-2 flex-wrap">
-          {dictionaries[activeCategory].map((item, index) => (
+          {dictionaries[dictionaryKey]?.map((item, index) => (
             <Badge key={index} variant="secondary" className="gap-2 py-2 px-3 text-sm">
               {item}
               {isAdmin && (
                 <X
                   className="h-3 w-3 cursor-pointer hover:text-destructive"
-                  onClick={() => removeItem(activeCategory, index)}
+                  onClick={() => removeItem(dictionaryKey, index)}
                 />
               )}
             </Badge>
