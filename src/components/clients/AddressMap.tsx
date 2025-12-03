@@ -2,7 +2,8 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Card } from '@/components/ui/card';
-import { MapPin, AlertCircle, Loader2, Navigation, Clock, Route, Home, Building2, Banknote, ArrowLeftRight } from 'lucide-react';
+import { MapPin, AlertCircle, Loader2, Navigation, Clock, Route, Home, Building2, Banknote, ArrowLeftRight, Maximize2, Minimize2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
@@ -58,11 +59,21 @@ export const AddressMap = ({ addresses }: AddressMapProps) => {
     const saved = localStorage.getItem('mapRoundTrip');
     return saved === 'true';
   });
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Save round-trip preference
   useEffect(() => {
     localStorage.setItem('mapRoundTrip', isRoundTrip.toString());
   }, [isRoundTrip]);
+
+  // Resize map when fullscreen changes
+  useEffect(() => {
+    if (map.current) {
+      setTimeout(() => {
+        map.current?.resize();
+      }, 100);
+    }
+  }, [isFullscreen]);
 
   // Fetch km rate from database
   useEffect(() => {
@@ -467,7 +478,25 @@ export const AddressMap = ({ addresses }: AddressMapProps) => {
   }
 
   return (
-    <Card className="overflow-hidden">
+    <Card className={`overflow-hidden relative ${isFullscreen ? 'fixed inset-4 z-50 flex flex-col' : ''}`}>
+      {/* Fullscreen backdrop */}
+      {isFullscreen && (
+        <div 
+          className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40" 
+          onClick={() => setIsFullscreen(false)}
+        />
+      )}
+      
+      {/* Fullscreen toggle button */}
+      <Button
+        variant="outline"
+        size="icon"
+        className={`absolute top-2 right-2 h-8 w-8 bg-background/90 backdrop-blur-sm ${isFullscreen ? 'z-[60]' : 'z-10'}`}
+        onClick={() => setIsFullscreen(!isFullscreen)}
+      >
+        {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+      </Button>
+      
       {/* Origin selector and route info - single row */}
       {originOptions.length > 0 && (
         <div className="p-3 border-b bg-muted/30">
@@ -543,7 +572,7 @@ export const AddressMap = ({ addresses }: AddressMapProps) => {
         </div>
       )}
       
-      <div ref={mapContainer} className="h-80 w-full" />
+      <div ref={mapContainer} className={`w-full ${isFullscreen ? 'flex-1' : 'h-80'}`} />
     </Card>
   );
 };
