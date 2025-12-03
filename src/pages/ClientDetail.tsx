@@ -632,9 +632,6 @@ const ClientDetail = () => {
                 </p>
               </div>
             )}
-            <Button variant="outline" size="icon" onClick={() => setIsMapDialogOpen(true)} title="View on map">
-              <MapPinned className="h-4 w-4" />
-            </Button>
             <Button onClick={() => setIsEditDialogOpen(true)}>
               <Edit className="h-4 w-4 mr-2" />
               Edit Client
@@ -1263,6 +1260,16 @@ const ClientDetail = () => {
                     </div>
                   </div>
                   <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        setIsMapDialogOpen(true);
+                      }}
+                      title="View on map"
+                    >
+                      <MapPinned className="w-4 h-4" />
+                    </Button>
                     <Button
                       variant="ghost"
                       size="icon"
