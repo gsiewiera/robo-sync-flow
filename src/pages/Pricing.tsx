@@ -219,12 +219,6 @@ const Pricing = () => {
               visibleColumns={visibleColumns}
               onToggleColumn={toggleColumn}
             />
-            {isAdmin && (
-              <Button size="sm" onClick={() => setSheetOpen(true)}>
-                <Plus className="h-3.5 w-3.5 mr-1.5" />
-                Add Pricing
-              </Button>
-            )}
         </div>
 
         <Card>
