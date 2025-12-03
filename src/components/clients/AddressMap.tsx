@@ -2,9 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { MapPin, AlertCircle } from 'lucide-react';
+import { MapPin, AlertCircle, Loader2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Address {
   id: string;
@@ -20,26 +19,47 @@ interface AddressMapProps {
   addresses: Address[];
 }
 
-const MAPBOX_TOKEN_KEY = 'mapbox_access_token';
-
 export const AddressMap = ({ addresses }: AddressMapProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
-  const [mapboxToken, setMapboxToken] = useState<string>(() => {
-    return localStorage.getItem(MAPBOX_TOKEN_KEY) || '';
-  });
-  const [tempToken, setTempToken] = useState('');
+  const [mapboxToken, setMapboxToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isMapReady, setIsMapReady] = useState(false);
   const markersRef = useRef<mapboxgl.Marker[]>([]);
 
-  const saveToken = () => {
-    if (tempToken.trim()) {
-      localStorage.setItem(MAPBOX_TOKEN_KEY, tempToken.trim());
-      setMapboxToken(tempToken.trim());
-    }
-  };
+  // Fetch Mapbox token from edge function
+  useEffect(() => {
+    const fetchToken = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        
+        const { data, error: fnError } = await supabase.functions.invoke('get-mapbox-token');
+        
+        if (fnError) {
+          throw new Error(fnError.message);
+        }
+        
+        if (data?.token) {
+          setMapboxToken(data.token);
+        } else if (data?.error) {
+          throw new Error(data.error);
+        }
+      } catch (err) {
+        console.error('Failed to fetch Mapbox token:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load map');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchToken();
+  }, []);
 
   const geocodeAddress = async (address: Address): Promise<[number, number] | null> => {
+    if (!mapboxToken) return null;
+    
     const query = `${address.address}, ${address.postal_code || ''} ${address.city || ''}, ${address.country || 'Poland'}`;
     try {
       const response = await fetch(
@@ -82,11 +102,12 @@ export const AddressMap = ({ addresses }: AddressMapProps) => {
       };
     } catch (error) {
       console.error('Map initialization error:', error);
+      setError('Failed to initialize map');
     }
   }, [mapboxToken]);
 
   useEffect(() => {
-    if (!isMapReady || !map.current || addresses.length === 0) return;
+    if (!isMapReady || !map.current || addresses.length === 0 || !mapboxToken) return;
 
     // Clear existing markers
     markersRef.current.forEach(marker => marker.remove());
@@ -133,30 +154,26 @@ export const AddressMap = ({ addresses }: AddressMapProps) => {
     addMarkers();
   }, [isMapReady, addresses, mapboxToken]);
 
-  if (!mapboxToken) {
+  if (isLoading) {
+    return (
+      <Card className="p-6 flex items-center justify-center h-64">
+        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        <span className="ml-2 text-muted-foreground">Loading map...</span>
+      </Card>
+    );
+  }
+
+  if (error) {
     return (
       <Card className="p-6 bg-muted/30">
-        <div className="flex items-start gap-3 mb-4">
+        <div className="flex items-start gap-3">
           <AlertCircle className="w-5 h-5 text-amber-500 mt-0.5" />
           <div>
-            <h4 className="font-semibold text-sm">Mapbox Token Required</h4>
+            <h4 className="font-semibold text-sm">Map Unavailable</h4>
             <p className="text-xs text-muted-foreground mt-1">
-              To view addresses on a map, please enter your Mapbox public token. 
-              Get one free at <a href="https://mapbox.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">mapbox.com</a>
+              {error}. Please ensure the Mapbox token is configured in Supabase secrets.
             </p>
           </div>
-        </div>
-        <div className="flex gap-2">
-          <Input
-            type="text"
-            placeholder="pk.eyJ1Ijoi..."
-            value={tempToken}
-            onChange={(e) => setTempToken(e.target.value)}
-            className="flex-1"
-          />
-          <Button onClick={saveToken} disabled={!tempToken.trim()}>
-            Save Token
-          </Button>
         </div>
       </Card>
     );
