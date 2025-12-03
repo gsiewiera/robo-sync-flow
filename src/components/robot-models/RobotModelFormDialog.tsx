@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -34,6 +34,7 @@ import { toast } from "sonner";
 
 const formSchema = z.object({
   model_name: z.string().min(1, "Model name is required").max(100, "Model name must be less than 100 characters"),
+  manufacturer: z.string().optional(),
   type: z.string().min(1, "Type is required"),
   description: z.string().max(500, "Description must be less than 500 characters").optional(),
   is_active: z.boolean(),
@@ -44,6 +45,7 @@ type FormValues = z.infer<typeof formSchema>;
 interface RobotModel {
   id: string;
   model_name: string;
+  manufacturer: string | null;
   type: string | null;
   description: string | null;
   is_active: boolean;
@@ -71,10 +73,13 @@ export const RobotModelFormDialog = ({
   model,
   onSuccess,
 }: RobotModelFormDialogProps) => {
+  const [manufacturers, setManufacturers] = useState<string[]>([]);
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       model_name: "",
+      manufacturer: "",
       type: "Delivery Robot",
       description: "",
       is_active: true,
@@ -82,9 +87,24 @@ export const RobotModelFormDialog = ({
   });
 
   useEffect(() => {
+    fetchManufacturers();
+  }, []);
+
+  const fetchManufacturers = async () => {
+    const { data } = await supabase
+      .from("manufacturer_dictionary")
+      .select("manufacturer_name")
+      .order("manufacturer_name");
+    if (data) {
+      setManufacturers(data.map((m) => m.manufacturer_name));
+    }
+  };
+
+  useEffect(() => {
     if (model) {
       form.reset({
         model_name: model.model_name,
+        manufacturer: model.manufacturer || "",
         type: model.type || "Delivery Robot",
         description: model.description || "",
         is_active: model.is_active,
@@ -92,6 +112,7 @@ export const RobotModelFormDialog = ({
     } else {
       form.reset({
         model_name: "",
+        manufacturer: "",
         type: "Delivery Robot",
         description: "",
         is_active: true,
@@ -102,6 +123,7 @@ export const RobotModelFormDialog = ({
   const onSubmit = async (values: FormValues) => {
     const data = {
       model_name: values.model_name.trim(),
+      manufacturer: values.manufacturer?.trim() || null,
       type: values.type,
       description: values.description?.trim() || null,
       is_active: values.is_active,
@@ -141,9 +163,7 @@ export const RobotModelFormDialog = ({
         <DialogHeader>
           <DialogTitle>{model ? "Edit" : "New"} Robot Model</DialogTitle>
           <DialogDescription>
-            {model
-              ? "Update the robot model details"
-              : "Add a new robot model to the catalog"}
+            {model ? "Update the robot model details" : "Add a new robot model"}
           </DialogDescription>
         </DialogHeader>
 
@@ -158,6 +178,31 @@ export const RobotModelFormDialog = ({
                   <FormControl>
                     <Input placeholder="e.g., BellaBot" {...field} />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="manufacturer"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Manufacturer</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select manufacturer" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {manufacturers.map((mfr) => (
+                        <SelectItem key={mfr} value={mfr}>
+                          {mfr}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
@@ -196,9 +241,9 @@ export const RobotModelFormDialog = ({
                   <FormLabel>Description</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Brief description of the robot model..."
+                      placeholder="Brief description..."
                       className="resize-none"
-                      rows={3}
+                      rows={2}
                       {...field}
                     />
                   </FormControl>
@@ -214,7 +259,7 @@ export const RobotModelFormDialog = ({
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
                   <div className="space-y-0.5">
                     <FormLabel>Active</FormLabel>
-                    <FormDescription>
+                    <FormDescription className="text-xs">
                       Inactive models won't appear in dropdowns
                     </FormDescription>
                   </div>
@@ -228,16 +273,17 @@ export const RobotModelFormDialog = ({
               )}
             />
 
-            <div className="flex justify-end gap-3 pt-4">
+            <div className="flex justify-end gap-2 pt-2">
               <Button
                 type="button"
                 variant="outline"
+                size="sm"
                 onClick={() => onOpenChange(false)}
               >
                 Cancel
               </Button>
-              <Button type="submit">
-                {model ? "Update" : "Create"} Model
+              <Button type="submit" size="sm">
+                {model ? "Update" : "Create"}
               </Button>
             </div>
           </form>
