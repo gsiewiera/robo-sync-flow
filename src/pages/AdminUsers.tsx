@@ -68,6 +68,10 @@ export default function AdminUsers() {
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
   const [bulkRoles, setBulkRoles] = useState<string[]>([]);
+  const [editAddress, setEditAddress] = useState("");
+  const [editCity, setEditCity] = useState("");
+  const [editPostalCode, setEditPostalCode] = useState("");
+  const [editCountry, setEditCountry] = useState("");
 
   useEffect(() => {
     checkAdminAccess();
@@ -178,6 +182,19 @@ export default function AdminUsers() {
     if (!editingUser) return;
 
     try {
+      // Update profile address fields
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({
+          address: editAddress || null,
+          city: editCity || null,
+          postal_code: editPostalCode || null,
+          country: editCountry || null,
+        })
+        .eq("id", editingUser.id);
+
+      if (profileError) throw profileError;
+
       // Delete existing roles
       await supabase
         .from("user_roles")
@@ -198,13 +215,17 @@ export default function AdminUsers() {
         if (rolesError) throw rolesError;
       }
 
-      toast.success("User roles updated successfully");
+      toast.success("User updated successfully");
       setDialogOpen(false);
       setEditingUser(null);
       setSelectedRoles([]);
+      setEditAddress("");
+      setEditCity("");
+      setEditPostalCode("");
+      setEditCountry("");
       fetchUsers();
     } catch (error: any) {
-      toast.error("Failed to update user roles");
+      toast.error("Failed to update user");
       console.error(error);
     }
   };
@@ -212,6 +233,10 @@ export default function AdminUsers() {
   const openEditDialog = (user: UserProfile) => {
     setEditingUser(user);
     setSelectedRoles(user.roles);
+    setEditAddress(user.address || "");
+    setEditCity(user.city || "");
+    setEditPostalCode(user.postal_code || "");
+    setEditCountry(user.country || "");
     setDialogOpen(true);
   };
 
@@ -550,14 +575,41 @@ export default function AdminUsers() {
                           <Pencil className="h-4 w-4" />
                         </Button>
                       </DialogTrigger>
-                      <DialogContent>
+                      <DialogContent className="max-w-md">
                         <DialogHeader>
-                          <DialogTitle>Edit User Roles</DialogTitle>
+                          <DialogTitle>Edit User</DialogTitle>
                           <DialogDescription>
-                            Manage roles for {user.full_name}
+                            Manage roles and address for {user.full_name}
                           </DialogDescription>
                         </DialogHeader>
-                        <div className="space-y-4 mt-4">
+                        <div className="space-y-4 mt-4 max-h-[60vh] overflow-y-auto pr-2">
+                          <div className="space-y-3">
+                            <Label className="text-sm font-medium">Address</Label>
+                            <div className="space-y-2">
+                              <Input
+                                placeholder="Street address"
+                                value={editAddress}
+                                onChange={(e) => setEditAddress(e.target.value)}
+                              />
+                              <div className="grid grid-cols-2 gap-2">
+                                <Input
+                                  placeholder="Postal code"
+                                  value={editPostalCode}
+                                  onChange={(e) => setEditPostalCode(e.target.value)}
+                                />
+                                <Input
+                                  placeholder="City"
+                                  value={editCity}
+                                  onChange={(e) => setEditCity(e.target.value)}
+                                />
+                              </div>
+                              <Input
+                                placeholder="Country"
+                                value={editCountry}
+                                onChange={(e) => setEditCountry(e.target.value)}
+                              />
+                            </div>
+                          </div>
                           <div>
                             <Label>Roles</Label>
                             <div className="space-y-2 mt-2">
@@ -581,7 +633,7 @@ export default function AdminUsers() {
                             </div>
                           </div>
                           <Button onClick={handleUpdateUserRoles} className="w-full">
-                            Update Roles
+                            Update User
                           </Button>
                         </div>
                       </DialogContent>
