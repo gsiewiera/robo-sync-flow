@@ -33,6 +33,7 @@ interface ServiceTicket {
   status: string;
   priority: string;
   created_at: string;
+  due_date: string | null;
   clients: { name: string } | null;
   robots: { serial_number: string } | null;
 }
@@ -67,7 +68,8 @@ const Service = () => {
     { key: "robot", label: "Robot", defaultVisible: true },
     { key: "status", label: "Status", defaultVisible: true },
     { key: "priority", label: "Priority", defaultVisible: true },
-    { key: "created_at", label: "Created", defaultVisible: false },
+    { key: "created_at", label: "Created", defaultVisible: true },
+    { key: "due_date", label: "Due Date", defaultVisible: true },
   ];
 
   const [visibleColumns, setVisibleColumns] = useState<string[]>(
@@ -224,6 +226,9 @@ const Service = () => {
                     </Button>
                   </TableHead>
                 )}
+                {visibleColumns.includes("due_date") && (
+                  <TableHead className="py-1.5 text-xs">Due Date</TableHead>
+                )}
                 <TableHead className="w-16 py-1.5 text-xs">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -270,6 +275,11 @@ const Service = () => {
                     {visibleColumns.includes("created_at") && (
                       <TableCell className="py-1.5 text-sm">
                         {new Date(ticket.created_at).toLocaleDateString()}
+                      </TableCell>
+                    )}
+                    {visibleColumns.includes("due_date") && (
+                      <TableCell className="py-1.5 text-sm">
+                        {ticket.due_date ? new Date(ticket.due_date).toLocaleDateString() : "-"}
                       </TableCell>
                     )}
                     <TableCell className="py-1.5" onClick={(e) => e.stopPropagation()}>

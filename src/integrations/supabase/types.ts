@@ -1839,6 +1839,7 @@ export type Database = {
           client_id: string
           created_at: string | null
           description: string | null
+          due_date: string | null
           id: string
           priority: string | null
           resolved_at: string | null
@@ -1853,6 +1854,7 @@ export type Database = {
           client_id: string
           created_at?: string | null
           description?: string | null
+          due_date?: string | null
           id?: string
           priority?: string | null
           resolved_at?: string | null
@@ -1867,6 +1869,7 @@ export type Database = {
           client_id?: string
           created_at?: string | null
           description?: string | null
+          due_date?: string | null
           id?: string
           priority?: string | null
           resolved_at?: string | null
