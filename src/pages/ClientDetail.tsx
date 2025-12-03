@@ -1391,9 +1391,6 @@ const ClientDetail = () => {
 
       <Dialog open={isMapDialogOpen} onOpenChange={setIsMapDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh]">
-          <DialogHeader>
-            <DialogTitle>Client Locations</DialogTitle>
-          </DialogHeader>
           <div className="h-[500px]">
             <AddressMap addresses={addresses} />
           </div>
