@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useTranslation } from "react-i18next";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,7 +12,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Search, Pencil, Trash2, Bot } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Plus, Search, Pencil, Trash2, Cpu } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { RobotModelFormDialog } from "@/components/robot-models/RobotModelFormDialog";
@@ -32,6 +38,7 @@ interface RobotModel {
   id: string;
   model_name: string;
   type: string | null;
+  manufacturer: string | null;
   description: string | null;
   is_active: boolean;
   created_at: string;
@@ -39,10 +46,11 @@ interface RobotModel {
 }
 
 const RobotModels = () => {
-  const { t } = useTranslation();
   const [models, setModels] = useState<RobotModel[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [manufacturerFilter, setManufacturerFilter] = useState<string>("all");
   const [isAdmin, setIsAdmin] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedModel, setSelectedModel] = useState<RobotModel | null>(null);
@@ -117,120 +125,145 @@ const RobotModels = () => {
     setModelToDelete(null);
   };
 
-  const filteredModels = models.filter((model) =>
-    model.model_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    model.type?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    model.description?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Get unique types and manufacturers for filters
+  const uniqueTypes = [...new Set(models.map((m) => m.type).filter(Boolean))] as string[];
+  const uniqueManufacturers = [...new Set(models.map((m) => m.manufacturer).filter(Boolean))] as string[];
+
+  const filteredModels = models.filter((model) => {
+    const matchesSearch =
+      model.model_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      model.type?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      model.manufacturer?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesType = typeFilter === "all" || model.type === typeFilter;
+    const matchesManufacturer = manufacturerFilter === "all" || model.manufacturer === manufacturerFilter;
+    return matchesSearch && matchesType && matchesManufacturer;
+  });
 
   return (
     <Layout>
-      <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Robot Models</h1>
-            <p className="text-muted-foreground mt-1">
-              Manage robot model catalog used across the system
-            </p>
-          </div>
-          {isAdmin && (
-            <Button onClick={handleAdd}>
-              <Plus className="w-4 h-4 mr-2" />
-              New Robot Model
-            </Button>
-          )}
-        </div>
-
-        <Card>
-          <CardHeader>
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <CardTitle className="flex items-center gap-2">
-                <Bot className="w-5 h-5" />
-                Model Catalog ({filteredModels.length})
-              </CardTitle>
-              <div className="relative w-full sm:w-64">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                <Input
-                  placeholder="Search models..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9"
-                />
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="space-y-3">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-12 bg-muted animate-pulse rounded" />
-                ))}
-              </div>
-            ) : filteredModels.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
-                <Bot className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>No robot models found</p>
-                {isAdmin && (
-                  <Button variant="outline" className="mt-4" onClick={handleAdd}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add First Model
-                  </Button>
-                )}
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Model Name</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Description</TableHead>
-                      <TableHead>Status</TableHead>
-                      {isAdmin && <TableHead className="text-right">Actions</TableHead>}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredModels.map((model) => (
-                      <TableRow key={model.id}>
-                        <TableCell className="font-medium">{model.model_name}</TableCell>
-                        <TableCell>{model.type || "-"}</TableCell>
-                        <TableCell className="max-w-xs truncate">
-                          {model.description || "-"}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={model.is_active ? "default" : "secondary"}>
-                            {model.is_active ? "Active" : "Inactive"}
-                          </Badge>
-                        </TableCell>
-                        {isAdmin && (
-                          <TableCell className="text-right">
-                            <div className="flex justify-end gap-2">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleEdit(model)}
-                              >
-                                <Pencil className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleDeleteClick(model)}
-                              >
-                                <Trash2 className="w-4 h-4 text-destructive" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        )}
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Cpu className="w-5 h-5" />
+              Robot Models ({filteredModels.length})
+            </CardTitle>
+            {isAdmin && (
+              <Button size="sm" onClick={handleAdd}>
+                <Plus className="w-4 h-4 mr-1" />
+                New Model
+              </Button>
             )}
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+          <div className="flex flex-wrap gap-2 mt-3">
+            <div className="relative flex-1 min-w-[150px] max-w-[200px]">
+              <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+              <Input
+                placeholder="Search..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-8 h-9"
+              />
+            </div>
+            <Select value={typeFilter} onValueChange={setTypeFilter}>
+              <SelectTrigger className="w-[140px] h-9">
+                <SelectValue placeholder="Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Types</SelectItem>
+                {uniqueTypes.map((type) => (
+                  <SelectItem key={type} value={type}>
+                    {type}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={manufacturerFilter} onValueChange={setManufacturerFilter}>
+              <SelectTrigger className="w-[160px] h-9">
+                <SelectValue placeholder="Manufacturer" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Manufacturers</SelectItem>
+                {uniqueManufacturers.map((mfr) => (
+                  <SelectItem key={mfr} value={mfr}>
+                    {mfr}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-0">
+          {loading ? (
+            <div className="space-y-2">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-10 bg-muted animate-pulse rounded" />
+              ))}
+            </div>
+          ) : filteredModels.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <Cpu className="w-10 h-10 mx-auto mb-3 opacity-50" />
+              <p className="text-sm">No robot models found</p>
+              {isAdmin && (
+                <Button variant="outline" size="sm" className="mt-3" onClick={handleAdd}>
+                  <Plus className="w-4 h-4 mr-1" />
+                  Add Model
+                </Button>
+              )}
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-xs">Model</TableHead>
+                    <TableHead className="text-xs">Manufacturer</TableHead>
+                    <TableHead className="text-xs">Type</TableHead>
+                    <TableHead className="text-xs">Status</TableHead>
+                    {isAdmin && <TableHead className="text-xs text-right">Actions</TableHead>}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredModels.map((model) => (
+                    <TableRow key={model.id} className="h-10">
+                      <TableCell className="font-medium py-2">{model.model_name}</TableCell>
+                      <TableCell className="py-2 text-sm">{model.manufacturer || "-"}</TableCell>
+                      <TableCell className="py-2 text-sm">{model.type || "-"}</TableCell>
+                      <TableCell className="py-2">
+                        <Badge variant={model.is_active ? "default" : "secondary"} className="text-xs">
+                          {model.is_active ? "Active" : "Inactive"}
+                        </Badge>
+                      </TableCell>
+                      {isAdmin && (
+                        <TableCell className="text-right py-2">
+                          <div className="flex justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7"
+                              onClick={() => handleEdit(model)}
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7"
+                              onClick={() => handleDeleteClick(model)}
+                            >
+                              <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <RobotModelFormDialog
         open={dialogOpen}
@@ -245,7 +278,6 @@ const RobotModels = () => {
             <AlertDialogTitle>Delete Robot Model</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to delete "{modelToDelete?.model_name}"? This action cannot be undone.
-              If the model is used in pricing or robots, the deletion may fail.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
