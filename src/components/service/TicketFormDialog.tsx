@@ -38,6 +38,7 @@ const formSchema = z.object({
   priority: z.enum(["low", "medium", "high"]),
   status: z.enum(["open", "in_progress", "resolved", "closed"]),
   assigned_to: z.string().optional(),
+  due_date: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -89,6 +90,7 @@ export function TicketFormDialog({
       priority: "medium",
       status: "open",
       assigned_to: "",
+      due_date: "",
     },
   });
 
@@ -106,6 +108,7 @@ export function TicketFormDialog({
         priority: "medium",
         status: "open",
         assigned_to: "",
+        due_date: "",
       });
     }
   }, [open, initialClientId, initialRobotId]);
@@ -175,6 +178,7 @@ export function TicketFormDialog({
         priority: values.priority,
         status: values.status,
         assigned_to: values.assigned_to || null,
+        due_date: values.due_date || null,
       });
 
       if (error) throw error;
@@ -336,6 +340,20 @@ export function TicketFormDialog({
                 )}
               />
             </div>
+
+            <FormField
+              control={form.control}
+              name="due_date"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Due Date</FormLabel>
+                  <FormControl>
+                    <Input type="date" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <FormField
               control={form.control}
