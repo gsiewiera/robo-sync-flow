@@ -565,7 +565,6 @@ const ClientDetail = () => {
                   </Badge>
                 )}
               </div>
-              <p className="text-muted-foreground">Client Details</p>
             </div>
           </div>
           <div className="flex items-center gap-4">
@@ -585,22 +584,20 @@ const ClientDetail = () => {
         </div>
 
         <Card className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold">Company Information</h2>
-            {clientTags.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {clientTags.map((tag: any) => (
-                  <Badge
-                    key={tag.id}
-                    style={{ backgroundColor: tag.color }}
-                    className="text-white"
-                  >
-                    {tag.name}
-                  </Badge>
-                ))}
-              </div>
-            )}
-          </div>
+          {/* Tags */}
+          {clientTags.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-6">
+              {clientTags.map((tag: any) => (
+                <Badge
+                  key={tag.id}
+                  style={{ backgroundColor: tag.color }}
+                  className="text-white"
+                >
+                  {tag.name}
+                </Badge>
+              ))}
+            </div>
+          )}
 
           {/* Classification Badges Row */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
