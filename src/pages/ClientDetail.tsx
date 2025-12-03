@@ -12,7 +12,7 @@ import {
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useParams, useNavigate } from "react-router-dom";
-import { ClientFormDialog } from "@/components/clients/ClientFormDialog";
+import { ClientInlineEdit } from "@/components/clients/ClientInlineEdit";
 import { ContactFormDialog } from "@/components/clients/ContactFormDialog";
 import { AddressFormDialog } from "@/components/clients/AddressFormDialog";
 import { AddressMap } from "@/components/clients/AddressMap";
@@ -224,7 +224,7 @@ const ClientDetail = () => {
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [offers, setOffers] = useState<Offer[]>([]);
   const [robots, setRobots] = useState<Robot[]>([]);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const [clientTags, setClientTags] = useState<any[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -755,12 +755,27 @@ const ClientDetail = () => {
                 </p>
               </div>
             )}
-            <Button onClick={() => setIsEditDialogOpen(true)}>
-              <Edit className="h-4 w-4 mr-2" />
-              Edit Client
-            </Button>
+            {!isEditing && (
+              <Button onClick={() => setIsEditing(true)}>
+                <Edit className="h-4 w-4 mr-2" />
+                Edit Client
+              </Button>
+            )}
           </div>
         </div>
+
+        {isEditing ? (
+          <ClientInlineEdit
+            client={client}
+            onSave={() => {
+              fetchClientData();
+              fetchClientClassifications();
+              setIsEditing(false);
+            }}
+            onCancel={() => setIsEditing(false)}
+          />
+        ) : (
+          <>
 
         <Card className="p-6">
           {/* Tags */}
@@ -1582,17 +1597,10 @@ const ClientDetail = () => {
             )}
           </TabsContent>
         </Tabs>
+        </>
+        )}
       </div>
 
-      <ClientFormDialog
-        open={isEditDialogOpen}
-        onOpenChange={setIsEditDialogOpen}
-        onSuccess={() => {
-          fetchClientData();
-          fetchClientClassifications();
-        }}
-        client={client}
-      />
 
       <ContactFormDialog
         open={isContactDialogOpen}
