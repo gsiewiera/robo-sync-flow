@@ -543,7 +543,7 @@ export const AddressMap = ({ addresses }: AddressMapProps) => {
         </div>
       )}
       
-      <div ref={mapContainer} className="h-64 w-full" />
+      <div ref={mapContainer} className="h-80 w-full" />
     </Card>
   );
 };
