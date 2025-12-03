@@ -94,6 +94,15 @@ export const ContactFormDialog = ({
     };
 
     try {
+      // If setting this contact as primary, unset other primary contacts first
+      if (formData.is_primary) {
+        await supabase
+          .from("client_contacts")
+          .update({ is_primary: false })
+          .eq("client_id", clientId)
+          .neq("id", contact?.id || "");
+      }
+
       if (contact) {
         const { error } = await supabase
           .from("client_contacts")
@@ -109,6 +118,18 @@ export const ContactFormDialog = ({
 
         if (error) throw error;
         toast({ title: "Contact added successfully" });
+      }
+
+      // Sync primary contact to clients table
+      if (formData.is_primary) {
+        await supabase
+          .from("clients")
+          .update({
+            primary_contact_name: payload.full_name,
+            primary_contact_email: payload.email,
+            primary_contact_phone: payload.phone,
+          })
+          .eq("id", clientId);
       }
 
       onSuccess();
