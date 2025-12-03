@@ -30,6 +30,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { SearchableFilterDropdown } from "@/components/ui/searchable-filter-dropdown";
+import { ColumnVisibilityToggle, ColumnConfig } from "@/components/ui/column-visibility-toggle";
 
 interface Task {
   id: string;
@@ -80,6 +81,15 @@ const priorityConfig: Record<string, { color: string; icon: string }> = {
   urgent: { color: "text-destructive", icon: "text-destructive" },
 };
 
+const columns: ColumnConfig[] = [
+  { key: "title", label: "Title", defaultVisible: true },
+  { key: "priority", label: "Priority", defaultVisible: true },
+  { key: "status", label: "Status", defaultVisible: true },
+  { key: "due_date", label: "Due Date", defaultVisible: true },
+  { key: "created_at", label: "Created", defaultVisible: false },
+  { key: "call_status", label: "Call Status", defaultVisible: true },
+];
+
 const Tasks = () => {
   const { t } = useTranslation();
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -100,7 +110,10 @@ const Tasks = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<string | undefined>();
   const [formMode, setFormMode] = useState<"create" | "view" | "edit">("create");
-  const recordsPerPage = 20;
+  const [visibleColumns, setVisibleColumns] = useState<string[]>(
+    columns.filter(col => col.defaultVisible !== false).map(col => col.key)
+  );
+  const recordsPerPage = 30;
 
   useEffect(() => {
     checkUserRole();
@@ -484,47 +497,61 @@ const Tasks = () => {
                 Clear Filters
               </Button>
             )}
+
+            <div className="ml-auto">
+              <ColumnVisibilityToggle
+                columns={columns}
+                visibleColumns={visibleColumns}
+                onToggleColumn={(key) => setVisibleColumns(prev => 
+                  prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
+                )}
+              />
+            </div>
           </div>
         </Card>
 
         <Card>
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead className="w-12"></TableHead>
-                <TableHead>Title</TableHead>
-                <TableHead>Priority</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleSort("due_date")}
-                    className="h-8 px-2 -ml-2 font-medium hover:bg-transparent"
-                  >
-                    Due Date
-                    {getSortIcon("due_date")}
-                  </Button>
-                </TableHead>
-                <TableHead>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleSort("created_at")}
-                    className="h-8 px-2 -ml-2 font-medium hover:bg-transparent"
-                  >
-                    Created
-                    {getSortIcon("created_at")}
-                  </Button>
-                </TableHead>
-                <TableHead>Call Status</TableHead>
-                <TableHead className="w-32">Actions</TableHead>
+              <TableRow className="h-9">
+                <TableHead className="w-8 py-1.5"></TableHead>
+                {visibleColumns.includes("title") && <TableHead className="py-1.5 text-xs">Title</TableHead>}
+                {visibleColumns.includes("priority") && <TableHead className="py-1.5 text-xs">Priority</TableHead>}
+                {visibleColumns.includes("status") && <TableHead className="py-1.5 text-xs">Status</TableHead>}
+                {visibleColumns.includes("due_date") && (
+                  <TableHead className="py-1.5 text-xs">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleSort("due_date")}
+                      className="h-6 px-1 -ml-1 text-xs font-medium hover:bg-transparent"
+                    >
+                      Due Date
+                      {getSortIcon("due_date")}
+                    </Button>
+                  </TableHead>
+                )}
+                {visibleColumns.includes("created_at") && (
+                  <TableHead className="py-1.5 text-xs">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleSort("created_at")}
+                      className="h-6 px-1 -ml-1 text-xs font-medium hover:bg-transparent"
+                    >
+                      Created
+                      {getSortIcon("created_at")}
+                    </Button>
+                  </TableHead>
+                )}
+                {visibleColumns.includes("call_status") && <TableHead className="py-1.5 text-xs">Call Status</TableHead>}
+                <TableHead className="w-20 py-1.5 text-xs">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {currentRecords.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={visibleColumns.length + 2} className="text-center py-6 text-muted-foreground text-sm">
                     No tasks found
                   </TableCell>
                 </TableRow>
@@ -532,85 +559,86 @@ const Tasks = () => {
                 currentRecords.map((task) => (
                   <TableRow 
                     key={task.id} 
-                    className="h-12 cursor-pointer hover:bg-muted/50"
+                    className="h-9 cursor-pointer hover:bg-muted/50"
                     onClick={() => handleViewTask(task.id)}
                   >
-                    <TableCell onClick={(e) => e.stopPropagation()}>
+                    <TableCell className="py-1.5" onClick={(e) => e.stopPropagation()}>
                       <button
                         onClick={() => handleMarkComplete(task.id)}
                         disabled={task.status === "completed"}
                       >
                         {task.status === "completed" ? (
-                          <CheckCircle className="w-4 h-4 text-success" />
+                          <CheckCircle className="w-3.5 h-3.5 text-success" />
                         ) : (
-                          <Circle className="w-4 h-4 text-muted-foreground hover:text-primary" />
+                          <Circle className="w-3.5 h-3.5 text-muted-foreground hover:text-primary" />
                         )}
                       </button>
                     </TableCell>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">{task.title}</div>
-                        {task.description && (
-                          <div className="text-sm text-muted-foreground line-clamp-1">
-                            {task.description}
+                    {visibleColumns.includes("title") && (
+                      <TableCell className="py-1.5">
+                        <span className="text-sm font-medium">{task.title}</span>
+                      </TableCell>
+                    )}
+                    {visibleColumns.includes("priority") && (
+                      <TableCell className="py-1.5">
+                        {task.priority && (
+                          <div className="flex items-center gap-1">
+                            <Flag className={`h-3 w-3 ${priorityConfig[task.priority]?.icon || 'text-muted-foreground'}`} />
+                            <span className={`text-xs capitalize ${priorityConfig[task.priority]?.color || ''}`}>
+                              {task.priority}
+                            </span>
                           </div>
                         )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {task.priority && (
-                        <div className="flex items-center gap-1">
-                          <Flag className={`h-4 w-4 ${priorityConfig[task.priority]?.icon || 'text-muted-foreground'}`} />
-                          <span className={`text-sm capitalize ${priorityConfig[task.priority]?.color || ''}`}>
-                            {task.priority}
-                          </span>
+                      </TableCell>
+                    )}
+                    {visibleColumns.includes("status") && (
+                      <TableCell className="py-1.5">
+                        <Badge className={`${statusColors[task.status]} text-xs px-1.5 py-0`}>
+                          {task.status.replace("_", " ")}
+                        </Badge>
+                      </TableCell>
+                    )}
+                    {visibleColumns.includes("due_date") && (
+                      <TableCell className="py-1.5 text-xs text-muted-foreground">
+                        {task.due_date ? new Date(task.due_date).toLocaleDateString() : "-"}
+                      </TableCell>
+                    )}
+                    {visibleColumns.includes("created_at") && (
+                      <TableCell className="py-1.5 text-xs text-muted-foreground">
+                        {task.created_at ? new Date(task.created_at).toLocaleDateString() : "-"}
+                      </TableCell>
+                    )}
+                    {visibleColumns.includes("call_status") && (
+                      <TableCell className="py-1.5">
+                        <div className="flex gap-1">
+                          {task.call_attempted && (
+                            <Badge variant="outline" className="text-[10px] px-1 py-0">Attempted</Badge>
+                          )}
+                          {task.call_successful && (
+                            <Badge variant="outline" className="text-[10px] px-1 py-0 bg-success/10 text-success border-success">
+                              Success
+                            </Badge>
+                          )}
                         </div>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={statusColors[task.status]}>
-                        {task.status.replace("_", " ")}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {task.due_date
-                        ? new Date(task.due_date).toLocaleDateString()
-                        : "-"}
-                    </TableCell>
-                    <TableCell>
-                      {task.created_at
-                        ? new Date(task.created_at).toLocaleDateString()
-                        : "-"}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-1">
-                        {task.call_attempted && (
-                          <Badge variant="outline" className="text-xs">Attempted</Badge>
-                        )}
-                        {task.call_successful && (
-                          <Badge variant="outline" className="text-xs bg-success/10 text-success border-success">
-                            Success
-                          </Badge>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell onClick={(e) => e.stopPropagation()}>
-                      <div className="flex gap-1">
+                      </TableCell>
+                    )}
+                    <TableCell className="py-1.5" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex gap-0.5">
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-8 w-8 p-0"
+                          className="h-6 w-6 p-0"
                           onClick={() => handleViewTask(task.id)}
                         >
-                          <Eye className="h-4 w-4" />
+                          <Eye className="h-3.5 w-3.5" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-8 w-8 p-0"
+                          className="h-6 w-6 p-0"
                           onClick={() => handleEditTask(task.id)}
                         >
-                          <Edit className="h-4 w-4" />
+                          <Edit className="h-3.5 w-3.5" />
                         </Button>
                       </div>
                     </TableCell>
