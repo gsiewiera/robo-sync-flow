@@ -130,10 +130,6 @@ const Robots = () => {
   return (
     <Layout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Robot Registry</h1>
-          <p className="text-muted-foreground">Track and manage all robots</p>
-        </div>
 
         <Card className="p-4">
           <div className="flex items-center gap-2">

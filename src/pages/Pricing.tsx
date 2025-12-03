@@ -213,15 +213,7 @@ const Pricing = () => {
   return (
     <Layout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
-              <DollarSign className="h-8 w-8" />
-              Pricing
-            </h1>
-            <p className="text-muted-foreground">Manage robot pricing and lease options</p>
-          </div>
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-end gap-2">
             <ColumnVisibilityToggle
               columns={columns}
               visibleColumns={visibleColumns}
@@ -233,7 +225,6 @@ const Pricing = () => {
                 Add Pricing
               </Button>
             )}
-          </div>
         </div>
 
         <Card>

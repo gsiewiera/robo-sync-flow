@@ -289,11 +289,7 @@ const Offers = () => {
   return (
     <Layout>
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">{t("offers.title")}</h1>
-            <p className="text-muted-foreground">{t("offers.description")}</p>
-          </div>
+        <div className="flex justify-end items-center">
           <Button onClick={() => setIsNewOfferOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
             {t("offers.addOffer")}

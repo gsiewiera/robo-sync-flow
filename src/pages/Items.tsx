@@ -216,12 +216,7 @@ const Items = () => {
   return (
     <Layout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Items</h1>
-            <p className="text-muted-foreground">Manage sale items and services</p>
-          </div>
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-end gap-2">
             <ColumnVisibilityToggle
               columns={columns}
               visibleColumns={visibleColumns}
@@ -349,7 +344,6 @@ const Items = () => {
               </form>
             </DialogContent>
           </Dialog>
-          </div>
         </div>
 
         <Card className="p-6">

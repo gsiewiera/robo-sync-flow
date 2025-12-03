@@ -242,11 +242,7 @@ const Contracts = () => {
   return (
     <Layout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">{t("contracts.title")}</h1>
-            <p className="text-muted-foreground">{t("contracts.description")}</p>
-          </div>
+        <div className="flex items-center justify-end">
           <Button onClick={() => setShowNewContractDialog(true)}>
             <Plus className="h-4 w-4 mr-2" />
             {t("contracts.newContract")}

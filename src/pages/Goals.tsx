@@ -257,16 +257,7 @@ const getProgressPercentage = (current: number, target: number) => {
   return (
     <Layout>
       <div className="container mx-auto py-8 px-4">
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Target className="h-8 w-8" />
-            Performance Goals
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Set and track team and individual goals
-          </p>
-        </div>
+      <div className="flex justify-end items-center mb-8">
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button>

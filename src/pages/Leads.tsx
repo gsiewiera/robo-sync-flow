@@ -349,14 +349,7 @@ const Leads = () => {
   return (
     <Layout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
-              <UserPlus className="w-8 h-8" />
-              {t("leads.title")}
-            </h1>
-            <p className="text-muted-foreground">{t("leads.description")}</p>
-          </div>
+        <div className="flex items-center justify-end">
           <Button onClick={() => setIsNewLeadOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
             {t("leads.addLead")}

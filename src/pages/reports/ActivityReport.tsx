@@ -104,11 +104,7 @@ const ActivityReport = () => {
   return (
     <Layout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Activity Report</h1>
-            <p className="text-muted-foreground">Track team activity and engagement metrics</p>
-          </div>
+        <div className="flex items-center justify-end">
 
           <div className="flex gap-2">
             <Button

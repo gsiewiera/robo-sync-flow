@@ -358,16 +358,7 @@ export default function AdminUsers() {
   return (
     <Layout>
       <div className="container mx-auto py-8 px-4">
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Shield className="h-8 w-8" />
-            User Management
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Manage users and their access privileges
-          </p>
-        </div>
+      <div className="flex justify-end items-center mb-8">
         <div className="flex gap-2">
           {selectedUsers.length > 0 && (
             <Dialog open={bulkDialogOpen} onOpenChange={(open) => {

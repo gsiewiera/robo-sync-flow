@@ -284,11 +284,7 @@ const SalespersonPanel = () => {
   return (
     <Layout>
       <div className="space-y-6">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Salesperson Panel</h1>
-            <p className="text-muted-foreground">Monitor salesperson performance and activities</p>
-          </div>
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-end">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <Popover>
               <PopoverTrigger asChild>
