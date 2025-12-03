@@ -475,7 +475,6 @@ export const NoteFormSheet = ({
                 type="button"
                 variant="outline"
                 onClick={handleCreateTask}
-                disabled={!formData.next_step}
                 className="h-[68px]"
               >
                 <ListTodo className="h-4 w-4 mr-2" />
