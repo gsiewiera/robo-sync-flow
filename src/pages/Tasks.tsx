@@ -75,6 +75,10 @@ const columns: ColumnConfig[] = [{
   label: "Title",
   defaultVisible: true
 }, {
+  key: "client",
+  label: "Client",
+  defaultVisible: true
+}, {
   key: "priority",
   label: "Priority",
   defaultVisible: true
@@ -415,6 +419,7 @@ const Tasks = () => {
               <TableRow className="h-9">
                 <TableHead className="w-8 py-1.5"></TableHead>
                 {visibleColumns.includes("title") && <TableHead className="py-1.5 text-xs">Title</TableHead>}
+                {visibleColumns.includes("client") && <TableHead className="py-1.5 text-xs">Client</TableHead>}
                 {visibleColumns.includes("priority") && <TableHead className="py-1.5 text-xs">Priority</TableHead>}
                 {visibleColumns.includes("status") && <TableHead className="py-1.5 text-xs">Status</TableHead>}
                 {visibleColumns.includes("due_date") && <TableHead className="py-1.5 text-xs">
@@ -446,6 +451,9 @@ const Tasks = () => {
                     </TableCell>
                     {visibleColumns.includes("title") && <TableCell className="py-1.5">
                         <span className="text-sm font-medium">{task.title}</span>
+                      </TableCell>}
+                    {visibleColumns.includes("client") && <TableCell className="py-1.5 text-xs">
+                        {task.client_id ? clients.find(c => c.id === task.client_id)?.name || "-" : "-"}
                       </TableCell>}
                     {visibleColumns.includes("priority") && <TableCell className="py-1.5">
                         {task.priority && <div className="flex items-center gap-1">
