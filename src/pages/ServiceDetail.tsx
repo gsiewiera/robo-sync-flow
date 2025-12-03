@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { ServiceTicketDocuments } from "@/components/service/ServiceTicketDocuments";
 
 interface ServiceTicket {
   id: string;
@@ -346,6 +347,8 @@ const ServiceDetail = () => {
             </div>
           )}
         </Card>
+
+        <ServiceTicketDocuments ticketId={ticket.id} />
       </div>
     </Layout>
   );
