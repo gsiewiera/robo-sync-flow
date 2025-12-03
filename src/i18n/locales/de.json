@@ -1,7 +1,6 @@
 {
   "app": {
-    "title": "RoboCRM",
-    "subtitle": "Roboterverwaltung"
+    "title": "RoboCRM"
   },
   "nav": {
     "dashboard": "Dashboard",
