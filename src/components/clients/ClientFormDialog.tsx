@@ -512,9 +512,18 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Client Type</FormLabel>
-                        <FormControl>
-                          <Input placeholder="e.g., Direct, Reseller" {...field} />
-                        </FormControl>
+                        <Select onValueChange={field.onChange} value={field.value || ""}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select client type" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {["Enterprise", "SME", "Startup", "Government"].map((type) => (
+                              <SelectItem key={type} value={type}>{type}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -526,9 +535,18 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Market</FormLabel>
-                        <FormControl>
-                          <Input placeholder="e.g., Healthcare, Retail" {...field} />
-                        </FormControl>
+                        <Select onValueChange={field.onChange} value={field.value || ""}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select market" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {["Manufacturing", "Logistics", "Healthcare", "Automotive"].map((market) => (
+                              <SelectItem key={market} value={market}>{market}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -540,9 +558,18 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Segment</FormLabel>
-                        <FormControl>
-                          <Input placeholder="e.g., Enterprise, SMB" {...field} />
-                        </FormControl>
+                        <Select onValueChange={field.onChange} value={field.value || ""}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select segment" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {["Welding", "Assembly", "Packaging", "Quality Control"].map((segment) => (
+                              <SelectItem key={segment} value={segment}>{segment}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}
