@@ -320,16 +320,24 @@ export const PricingDetailForm = ({
             <p className="text-sm text-muted-foreground">Pricing Details</p>
           </div>
         </div>
-        {isAdmin && isEditing && (
+        {isAdmin && (
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={handleCancel} disabled={saving}>
-              <X className="h-4 w-4 mr-2" />
-              Cancel
-            </Button>
-            <Button size="sm" onClick={handleSave} disabled={saving}>
-              <Save className="h-4 w-4 mr-2" />
-              {saving ? "Saving..." : "Save"}
-            </Button>
+            {isEditing ? (
+              <>
+                <Button variant="outline" size="sm" onClick={handleCancel} disabled={saving}>
+                  <X className="h-4 w-4 mr-2" />
+                  Cancel
+                </Button>
+                <Button size="sm" onClick={handleSave} disabled={saving}>
+                  <Save className="h-4 w-4 mr-2" />
+                  {saving ? "Saving..." : "Save"}
+                </Button>
+              </>
+            ) : (
+              <Button size="sm" onClick={() => setIsEditing(true)}>
+                Edit Pricing
+              </Button>
+            )}
           </div>
         )}
       </div>
