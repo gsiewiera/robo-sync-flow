@@ -211,21 +211,9 @@ export const NoteFormSheet = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] p-0">
         <DialogHeader className="px-6 pt-6">
-          <div className="flex items-center justify-between">
-            <DialogTitle>
-              {note ? t("notes.editNote", "Edit Note") : t("notes.addNote", "Add Note")}
-            </DialogTitle>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleCreateTask}
-              disabled={!formData.next_step}
-            >
-              <ListTodo className="h-4 w-4 mr-2" />
-              {t("notes.createTask", "Create Task")}
-            </Button>
-          </div>
+          <DialogTitle>
+            {note ? t("notes.editNote", "Edit Note") : t("notes.addNote", "Add Note")}
+          </DialogTitle>
         </DialogHeader>
 
         <ScrollArea className="max-h-[calc(90vh-120px)] px-6">
@@ -418,26 +406,39 @@ export const NoteFormSheet = ({
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label>{t("notes.risks", "Risks")}</Label>
-              <Textarea
-                value={formData.risks}
-                onChange={(e) => setFormData({ ...formData, risks: e.target.value })}
-                placeholder={t("notes.risksPlaceholder", "Potential risks or concerns")}
-                rows={2}
-              />
-            </div>
+            <div className="grid grid-cols-[1fr_1fr_auto] gap-4 items-end">
+              <div className="space-y-2">
+                <Label>{t("notes.risks", "Risks")}</Label>
+                <Textarea
+                  value={formData.risks}
+                  onChange={(e) => setFormData({ ...formData, risks: e.target.value })}
+                  placeholder={t("notes.risksPlaceholder", "Potential risks or concerns")}
+                  rows={2}
+                />
+              </div>
 
-            <div className="space-y-2">
-              <Label>{t("notes.nextStep", "Next Step")}</Label>
-              <Textarea
-                value={formData.next_step}
-                onChange={(e) =>
-                  setFormData({ ...formData, next_step: e.target.value })
-                }
-                placeholder={t("notes.nextStepPlaceholder", "Next action to take")}
-                rows={2}
-              />
+              <div className="space-y-2">
+                <Label>{t("notes.nextStep", "Next Step")}</Label>
+                <Textarea
+                  value={formData.next_step}
+                  onChange={(e) =>
+                    setFormData({ ...formData, next_step: e.target.value })
+                  }
+                  placeholder={t("notes.nextStepPlaceholder", "Next action to take")}
+                  rows={2}
+                />
+              </div>
+
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleCreateTask}
+                disabled={!formData.next_step}
+                className="h-[68px]"
+              >
+                <ListTodo className="h-4 w-4 mr-2" />
+                {t("notes.createTask", "Create Task")}
+              </Button>
             </div>
 
             <div className="flex justify-end gap-2 pt-4 border-t">
