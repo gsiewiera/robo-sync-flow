@@ -1131,6 +1131,88 @@ export type Database = {
           },
         ]
       }
+      notes: {
+        Row: {
+          client_id: string | null
+          commitments_client: string | null
+          commitments_us: string | null
+          contact_person: string | null
+          contact_type: string
+          created_at: string
+          id: string
+          key_points: string | null
+          needs: string | null
+          next_step: string | null
+          note: string | null
+          note_date: string
+          offer_id: string | null
+          priority: string
+          risks: string | null
+          salesperson_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          client_id?: string | null
+          commitments_client?: string | null
+          commitments_us?: string | null
+          contact_person?: string | null
+          contact_type?: string
+          created_at?: string
+          id?: string
+          key_points?: string | null
+          needs?: string | null
+          next_step?: string | null
+          note?: string | null
+          note_date?: string
+          offer_id?: string | null
+          priority?: string
+          risks?: string | null
+          salesperson_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string | null
+          commitments_client?: string | null
+          commitments_us?: string | null
+          contact_person?: string | null
+          contact_type?: string
+          created_at?: string
+          id?: string
+          key_points?: string | null
+          needs?: string | null
+          next_step?: string | null
+          note?: string | null
+          note_date?: string
+          offer_id?: string | null
+          priority?: string
+          risks?: string | null
+          salesperson_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notes_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notes_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "offers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notes_salesperson_id_fkey"
+            columns: ["salesperson_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       offer_items: {
         Row: {
           contract_type: string | null

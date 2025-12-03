@@ -25,6 +25,7 @@ import {
   Shield,
   Trophy,
   Target,
+  StickyNote,
   UserCog
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -61,6 +62,7 @@ interface NavItem {
 
 const allNavItems: NavItem[] = [
   { icon: LayoutDashboard, label: "Dashboard", translationKey: "nav.dashboard", path: "/dashboard", roles: ["admin", "manager", "salesperson", "technician"] },
+  { icon: StickyNote, label: "Notes", translationKey: "nav.notes", path: "/notes", roles: ["admin", "manager", "salesperson"] },
   { icon: CheckSquare, label: "Tasks", translationKey: "nav.tasks", path: "/tasks", roles: ["admin", "manager", "salesperson", "technician"] },
   { icon: UserPlus, label: "Leads", translationKey: "nav.leads", path: "/leads", roles: ["admin", "manager", "salesperson"] },
   { icon: ShoppingCart, label: "Offers", translationKey: "nav.offers", path: "/offers", roles: ["admin", "manager", "salesperson"] },
