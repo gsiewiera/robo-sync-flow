@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
 import {
   Dialog,
   DialogContent,
@@ -22,6 +21,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ListTodo } from "lucide-react";
+import { TaskFormSheet } from "@/components/tasks/TaskFormSheet";
 
 interface Note {
   id: string;
@@ -74,9 +74,9 @@ export const NoteFormSheet = ({
   salespeople,
 }: NoteFormSheetProps) => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [offers, setOffers] = useState<Offer[]>([]);
+  const [taskFormOpen, setTaskFormOpen] = useState(false);
   const [formData, setFormData] = useState({
     client_id: "",
     contact_person: "",
@@ -200,11 +200,7 @@ export const NoteFormSheet = ({
   };
 
   const handleCreateTask = () => {
-    // Navigate to tasks with pre-filled data
-    const params = new URLSearchParams();
-    if (formData.client_id) params.set("client_id", formData.client_id);
-    if (formData.next_step) params.set("title", formData.next_step);
-    navigate(`/tasks?${params.toString()}&new=true`);
+    setTaskFormOpen(true);
   };
 
   return (
@@ -456,6 +452,22 @@ export const NoteFormSheet = ({
           </form>
         </ScrollArea>
       </DialogContent>
+
+      <TaskFormSheet
+        open={taskFormOpen}
+        onOpenChange={setTaskFormOpen}
+        onSuccess={() => {
+          setTaskFormOpen(false);
+          toast.success(t("tasks.created", "Task created successfully"));
+        }}
+        initialValues={{
+          title: formData.next_step || "Follow-up call",
+          client_id: formData.client_id || undefined,
+          offer_id: formData.offer_id || undefined,
+          person_to_meet: formData.contact_person || undefined,
+          notes: formData.note || undefined,
+        }}
+      />
     </Dialog>
   );
 };
