@@ -1469,6 +1469,7 @@ export type Database = {
       profiles: {
         Row: {
           address: string | null
+          assigned_company_address_id: string | null
           city: string | null
           country: string | null
           created_at: string | null
@@ -1481,6 +1482,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          assigned_company_address_id?: string | null
           city?: string | null
           country?: string | null
           created_at?: string | null
@@ -1493,6 +1495,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          assigned_company_address_id?: string | null
           city?: string | null
           country?: string | null
           created_at?: string | null
@@ -1503,7 +1506,15 @@ export type Database = {
           postal_code?: string | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_assigned_company_address_id_fkey"
+            columns: ["assigned_company_address_id"]
+            isOneToOne: false
+            referencedRelation: "company_addresses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       report_subscriptions: {
         Row: {
