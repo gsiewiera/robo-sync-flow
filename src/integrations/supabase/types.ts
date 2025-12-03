@@ -14,6 +14,59 @@ export type Database = {
   }
   public: {
     Tables: {
+      client_addresses: {
+        Row: {
+          address: string
+          address_type: string
+          city: string | null
+          client_id: string
+          country: string | null
+          created_at: string
+          id: string
+          is_primary: boolean | null
+          label: string | null
+          notes: string | null
+          postal_code: string | null
+          updated_at: string
+        }
+        Insert: {
+          address: string
+          address_type?: string
+          city?: string | null
+          client_id: string
+          country?: string | null
+          created_at?: string
+          id?: string
+          is_primary?: boolean | null
+          label?: string | null
+          notes?: string | null
+          postal_code?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string
+          address_type?: string
+          city?: string | null
+          client_id?: string
+          country?: string | null
+          created_at?: string
+          id?: string
+          is_primary?: boolean | null
+          label?: string | null
+          notes?: string | null
+          postal_code?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_addresses_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_assigned_tags: {
         Row: {
           client_id: string
