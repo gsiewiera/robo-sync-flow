@@ -72,6 +72,7 @@ interface NoteFormSheetProps {
   onSuccess: () => void;
   clients: Client[];
   salespeople: Profile[];
+  initialClientId?: string;
 }
 
 export const NoteFormSheet = ({
@@ -81,6 +82,7 @@ export const NoteFormSheet = ({
   onSuccess,
   clients,
   salespeople,
+  initialClientId,
 }: NoteFormSheetProps) => {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
@@ -125,8 +127,11 @@ export const NoteFormSheet = ({
       });
     } else {
       resetForm();
+      if (initialClientId) {
+        setFormData(prev => ({ ...prev, client_id: initialClientId }));
+      }
     }
-  }, [note, open]);
+  }, [note, open, initialClientId]);
 
   useEffect(() => {
     if (formData.client_id) {
