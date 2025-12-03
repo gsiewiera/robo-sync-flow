@@ -168,7 +168,23 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
       if (taskId) {
         fetchTaskData();
       } else {
-        form.reset();
+        form.reset({
+          title: "Follow up call",
+          description: "",
+          status: "pending",
+          priority: "medium",
+          assigned_to: undefined,
+          client_id: undefined,
+          contract_id: undefined,
+          robot_ids: [],
+          offer_id: undefined,
+          meeting_type: undefined,
+          person_to_meet: "",
+          meeting_date_time: undefined,
+          place: "",
+          reminder_date_time: undefined,
+          notes: "",
+        });
         setTaskCreatedAt(null);
       }
     }
