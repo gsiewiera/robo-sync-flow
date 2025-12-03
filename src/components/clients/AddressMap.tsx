@@ -461,10 +461,7 @@ export const AddressMap = ({ addresses }: AddressMapProps) => {
                         ) : (
                           <Building2 className="w-4 h-4 text-blue-500" />
                         )}
-                        <div className="flex flex-col">
-                          <span className="font-medium">{option.label}</span>
-                          <span className="text-xs text-muted-foreground">{option.address}, {option.city}</span>
-                        </div>
+                        <span>{option.label}{option.city && ` - ${option.city}`}</span>
                       </div>
                     </SelectItem>
                   ))}
