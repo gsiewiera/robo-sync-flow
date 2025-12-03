@@ -511,7 +511,21 @@ const Notes = () => {
                 {t("notes.noNotesForDate", "No notes found for this date")}
               </div>
             ) : (
-              <div className="space-y-6">
+              <>
+                <div className="flex flex-wrap gap-3 p-4 rounded-lg bg-muted/50 border">
+                  <span className="text-sm font-medium text-muted-foreground mr-2">
+                    {t("notes.summary", "Summary")}:
+                  </span>
+                  {groupedNotes.map((group) => (
+                    <Badge key={group.salesperson} variant="outline" className="text-sm">
+                      {group.salesperson}: {group.notes.length}
+                    </Badge>
+                  ))}
+                  <Badge variant="default" className="ml-auto">
+                    {t("notes.total", "Total")}: {groupedNotes.reduce((sum, g) => sum + g.notes.length, 0)}
+                  </Badge>
+                </div>
+                <div className="space-y-6">
                 {groupedNotes.map((group) => (
                   <Card key={group.salesperson}>
                     <CardHeader className="pb-3">
@@ -541,7 +555,8 @@ const Notes = () => {
                     </CardContent>
                   </Card>
                 ))}
-              </div>
+                </div>
+              </>
             )}
           </>
         )}
