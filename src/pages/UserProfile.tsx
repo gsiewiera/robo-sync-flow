@@ -4,6 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -13,7 +16,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Mail, Phone, Shield, User, Building, FileText, CheckSquare, Calendar, TrendingUp, DollarSign, Target, Award } from "lucide-react";
+import { ArrowLeft, Mail, Phone, Shield, User, Building, FileText, CheckSquare, Calendar, TrendingUp, DollarSign, Target, Award, MapPin, Home, Pencil, Save, X } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -22,6 +25,11 @@ interface UserProfile {
   email: string;
   full_name: string;
   phone: string | null;
+  address: string | null;
+  city: string | null;
+  postal_code: string | null;
+  country: string | null;
+  assigned_company_address_id: string | null;
   created_at: string;
 }
 
@@ -65,6 +73,16 @@ interface Contract {
   clients: { name: string } | null;
 }
 
+interface CompanyAddress {
+  id: string;
+  address_type: string;
+  label: string | null;
+  address: string;
+  postal_code: string | null;
+  city: string | null;
+  country: string | null;
+}
+
 interface PerformanceMetrics {
   totalOffers: number;
   wonOffers: number;
@@ -88,6 +106,16 @@ export default function UserProfile() {
   const [offers, setOffers] = useState<Offer[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [contracts, setContracts] = useState<Contract[]>([]);
+  const [companyAddresses, setCompanyAddresses] = useState<CompanyAddress[]>([]);
+  const [editingAddress, setEditingAddress] = useState(false);
+  const [savingAddress, setSavingAddress] = useState(false);
+  const [addressForm, setAddressForm] = useState({
+    address: '',
+    city: '',
+    postal_code: '',
+    country: 'Poland',
+    assigned_company_address_id: '',
+  });
   const [metrics, setMetrics] = useState<PerformanceMetrics>({
     totalOffers: 0,
     wonOffers: 0,
@@ -104,8 +132,20 @@ export default function UserProfile() {
   useEffect(() => {
     if (id) {
       fetchUserData();
+      fetchCompanyAddresses();
     }
   }, [id]);
+
+  const fetchCompanyAddresses = async () => {
+    const { data, error } = await supabase
+      .from('company_addresses')
+      .select('id, address_type, label, address, postal_code, city, country')
+      .order('address_type');
+    
+    if (!error && data) {
+      setCompanyAddresses(data);
+    }
+  };
 
   const fetchUserData = async () => {
     try {
@@ -138,6 +178,13 @@ export default function UserProfile() {
 
       if (profileError) throw profileError;
       setProfile(profileData);
+      setAddressForm({
+        address: profileData.address || '',
+        city: profileData.city || '',
+        postal_code: profileData.postal_code || '',
+        country: profileData.country || 'Poland',
+        assigned_company_address_id: profileData.assigned_company_address_id || '',
+      });
 
       // Fetch user roles
       const { data: rolesData } = await supabase
@@ -277,6 +324,73 @@ export default function UserProfile() {
     });
   };
 
+  const handleSaveAddress = async () => {
+    if (!profile) return;
+    
+    setSavingAddress(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          address: addressForm.address || null,
+          city: addressForm.city || null,
+          postal_code: addressForm.postal_code || null,
+          country: addressForm.country || null,
+          assigned_company_address_id: addressForm.assigned_company_address_id || null,
+        })
+        .eq('id', profile.id);
+
+      if (error) throw error;
+
+      setProfile({
+        ...profile,
+        address: addressForm.address || null,
+        city: addressForm.city || null,
+        postal_code: addressForm.postal_code || null,
+        country: addressForm.country || null,
+        assigned_company_address_id: addressForm.assigned_company_address_id || null,
+      });
+      setEditingAddress(false);
+      toast.success('Address updated successfully');
+    } catch (error) {
+      console.error('Error saving address:', error);
+      toast.error('Failed to save address');
+    } finally {
+      setSavingAddress(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    if (profile) {
+      setAddressForm({
+        address: profile.address || '',
+        city: profile.city || '',
+        postal_code: profile.postal_code || '',
+        country: profile.country || 'Poland',
+        assigned_company_address_id: profile.assigned_company_address_id || '',
+      });
+    }
+    setEditingAddress(false);
+  };
+
+  const getAddressTypeLabel = (type: string) => {
+    const types: Record<string, string> = {
+      headquarters: 'Headquarters',
+      branch: 'Branch',
+      warehouse: 'Warehouse',
+      office: 'Office',
+      factory: 'Factory',
+      showroom: 'Showroom',
+      service_center: 'Service Center',
+    };
+    return types[type] || type;
+  };
+
+  const getAssignedCompanyAddress = () => {
+    if (!profile?.assigned_company_address_id) return null;
+    return companyAddresses.find(a => a.id === profile.assigned_company_address_id);
+  };
+
   const getStatusColor = (status: string | null) => {
     if (!status) return "secondary";
     const statusLower = status.toLowerCase();
@@ -307,6 +421,8 @@ export default function UserProfile() {
       </div>
     );
   }
+
+  const assignedCompanyAddress = getAssignedCompanyAddress();
 
   return (
     <div className="container mx-auto py-8 px-4">
@@ -368,6 +484,166 @@ export default function UserProfile() {
               <Calendar className="h-4 w-4" />
               Member since {format(new Date(profile.created_at), "MMM dd, yyyy")}
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Addresses Card */}
+      <Card className="mb-6">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <MapPin className="h-5 w-5" />
+                Addresses
+              </CardTitle>
+              <CardDescription>
+                Home address and assigned company address
+              </CardDescription>
+            </div>
+            {!editingAddress ? (
+              <Button variant="outline" size="sm" onClick={() => setEditingAddress(true)}>
+                <Pencil className="h-4 w-4 mr-2" />
+                Edit
+              </Button>
+            ) : (
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={handleCancelEdit}>
+                  <X className="h-4 w-4 mr-2" />
+                  Cancel
+                </Button>
+                <Button size="sm" onClick={handleSaveAddress} disabled={savingAddress}>
+                  <Save className="h-4 w-4 mr-2" />
+                  {savingAddress ? 'Saving...' : 'Save'}
+                </Button>
+              </div>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Home Address */}
+          <div className="space-y-4">
+            <h4 className="font-medium text-sm flex items-center gap-2">
+              <Home className="h-4 w-4" />
+              Home Address
+            </h4>
+            {editingAddress ? (
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="address">Street Address</Label>
+                  <Input
+                    id="address"
+                    value={addressForm.address}
+                    onChange={(e) => setAddressForm({ ...addressForm, address: e.target.value })}
+                    placeholder="Street address"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="postal_code">Postal Code</Label>
+                  <Input
+                    id="postal_code"
+                    value={addressForm.postal_code}
+                    onChange={(e) => setAddressForm({ ...addressForm, postal_code: e.target.value })}
+                    placeholder="00-000"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="city">City</Label>
+                  <Input
+                    id="city"
+                    value={addressForm.city}
+                    onChange={(e) => setAddressForm({ ...addressForm, city: e.target.value })}
+                    placeholder="City"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="country">Country</Label>
+                  <Input
+                    id="country"
+                    value={addressForm.country}
+                    onChange={(e) => setAddressForm({ ...addressForm, country: e.target.value })}
+                    placeholder="Country"
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="text-sm">
+                {profile.address ? (
+                  <div className="space-y-1">
+                    <p>{profile.address}</p>
+                    {(profile.postal_code || profile.city) && (
+                      <p className="text-muted-foreground">
+                        {profile.postal_code && <span>{profile.postal_code} </span>}
+                        {profile.city}
+                      </p>
+                    )}
+                    {profile.country && (
+                      <p className="text-muted-foreground">{profile.country}</p>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground">No home address set</p>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Assigned Company Address */}
+          <div className="space-y-4 pt-4 border-t">
+            <h4 className="font-medium text-sm flex items-center gap-2">
+              <Building className="h-4 w-4" />
+              Assigned Company Address
+            </h4>
+            {editingAddress ? (
+              <div className="space-y-2">
+                <Label htmlFor="company_address">Select Company Address</Label>
+                <Select
+                  value={addressForm.assigned_company_address_id}
+                  onValueChange={(value) => setAddressForm({ ...addressForm, assigned_company_address_id: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a company address" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">None</SelectItem>
+                    {companyAddresses.map((addr) => (
+                      <SelectItem key={addr.id} value={addr.id}>
+                        {getAddressTypeLabel(addr.address_type)}
+                        {addr.label && ` - ${addr.label}`}
+                        {addr.city && ` (${addr.city})`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : (
+              <div className="text-sm">
+                {assignedCompanyAddress ? (
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary">
+                        {getAddressTypeLabel(assignedCompanyAddress.address_type)}
+                      </Badge>
+                      {assignedCompanyAddress.label && (
+                        <span className="font-medium">{assignedCompanyAddress.label}</span>
+                      )}
+                    </div>
+                    <p>{assignedCompanyAddress.address}</p>
+                    {(assignedCompanyAddress.postal_code || assignedCompanyAddress.city) && (
+                      <p className="text-muted-foreground">
+                        {assignedCompanyAddress.postal_code && <span>{assignedCompanyAddress.postal_code} </span>}
+                        {assignedCompanyAddress.city}
+                      </p>
+                    )}
+                    {assignedCompanyAddress.country && (
+                      <p className="text-muted-foreground">{assignedCompanyAddress.country}</p>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground">No company address assigned</p>
+                )}
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
