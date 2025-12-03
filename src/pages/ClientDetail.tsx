@@ -609,24 +609,18 @@ const ClientDetail = () => {
                   <p className="font-medium">{salesperson.full_name}</p>
                 </div>
               )}
-              {client.client_type && (
-                <div>
-                  <p className="text-sm text-muted-foreground">Client Type</p>
-                  <p className="font-medium">{client.client_type}</p>
-                </div>
-              )}
-              {client.market && (
-                <div>
-                  <p className="text-sm text-muted-foreground">Market</p>
-                  <p className="font-medium">{client.market}</p>
-                </div>
-              )}
-              {client.segment && (
-                <div>
-                  <p className="text-sm text-muted-foreground">Segment</p>
-                  <p className="font-medium">{client.segment}</p>
-                </div>
-              )}
+              <div>
+                <p className="text-sm text-muted-foreground">Client Type</p>
+                <p className="font-medium">{client.client_type || <span className="text-muted-foreground italic">Not set</span>}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Market (Industry)</p>
+                <p className="font-medium">{client.market || <span className="text-muted-foreground italic">Not set</span>}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Segment</p>
+                <p className="font-medium">{client.segment || <span className="text-muted-foreground italic">Not set</span>}</p>
+              </div>
               {client.nip && (
                 <div>
                   <p className="text-sm text-muted-foreground">NIP</p>
@@ -666,11 +660,11 @@ const ClientDetail = () => {
                   </div>
                 </div>
               )}
-              {client.website_url && (
-                <div className="flex gap-2">
-                  <Globe className="w-4 h-4 text-muted-foreground mt-1" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Website</p>
+              <div className="flex gap-2">
+                <Globe className="w-4 h-4 text-muted-foreground mt-1" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Website</p>
+                  {client.website_url ? (
                     <a 
                       href={client.website_url} 
                       target="_blank" 
@@ -679,9 +673,11 @@ const ClientDetail = () => {
                     >
                       {client.website_url}
                     </a>
-                  </div>
+                  ) : (
+                    <p className="font-medium text-muted-foreground italic">Not set</p>
+                  )}
                 </div>
-              )}
+              </div>
               {reseller && (
                 <div>
                   <p className="text-sm text-muted-foreground">Reseller Partner</p>
