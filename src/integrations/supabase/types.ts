@@ -1756,6 +1756,60 @@ export type Database = {
         }
         Relationships: []
       }
+      robot_model_documents: {
+        Row: {
+          category: string | null
+          created_at: string
+          file_name: string
+          file_path: string
+          file_size: number | null
+          file_type: string | null
+          id: string
+          notes: string | null
+          robot_model_id: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          notes?: string | null
+          robot_model_id: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          notes?: string | null
+          robot_model_id?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "robot_model_documents_robot_model_id_fkey"
+            columns: ["robot_model_id"]
+            isOneToOne: false
+            referencedRelation: "robot_model_dictionary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "robot_model_documents_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       robot_pricing: {
         Row: {
           created_at: string | null
