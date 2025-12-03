@@ -32,6 +32,7 @@ import { Badge } from "@/components/ui/badge";
 import { Shield, UserPlus, Pencil, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { ColumnVisibilityToggle, ColumnConfig } from "@/components/ui/column-visibility-toggle";
 
 interface UserProfile {
   id: string;
@@ -54,6 +55,14 @@ const ROLE_DESCRIPTIONS = {
   technician: "Manage service tickets and robots",
 };
 
+const columns: ColumnConfig[] = [
+  { key: "name", label: "Name", defaultVisible: true },
+  { key: "email", label: "Email", defaultVisible: true },
+  { key: "phone", label: "Phone", defaultVisible: true },
+  { key: "address", label: "Address", defaultVisible: true },
+  { key: "roles", label: "Roles", defaultVisible: true },
+];
+
 export default function AdminUsers() {
   const navigate = useNavigate();
   const [users, setUsers] = useState<UserProfile[]>([]);
@@ -72,6 +81,17 @@ export default function AdminUsers() {
   const [editCity, setEditCity] = useState("");
   const [editPostalCode, setEditPostalCode] = useState("");
   const [editCountry, setEditCountry] = useState("");
+  const [visibleColumns, setVisibleColumns] = useState<string[]>(
+    columns.filter((col) => col.defaultVisible).map((col) => col.key)
+  );
+
+  const toggleColumn = (columnKey: string) => {
+    setVisibleColumns((prev) =>
+      prev.includes(columnKey)
+        ? prev.filter((key) => key !== columnKey)
+        : [...prev, columnKey]
+    );
+  };
 
   useEffect(() => {
     checkAdminAccess();
@@ -485,17 +505,24 @@ export default function AdminUsers() {
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle>System Users</CardTitle>
-          <CardDescription>
-            View and manage all users and their access levels
-          </CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle>System Users</CardTitle>
+            <CardDescription>
+              View and manage all users and their access levels
+            </CardDescription>
+          </div>
+          <ColumnVisibilityToggle
+            columns={columns}
+            visibleColumns={visibleColumns}
+            onToggleColumn={toggleColumn}
+          />
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead className="w-12">
+              <TableRow className="h-9">
+                <TableHead className="w-10 py-1.5">
                   <input
                     type="checkbox"
                     checked={selectedUsers.length === users.length && users.length > 0}
@@ -503,22 +530,22 @@ export default function AdminUsers() {
                     className="cursor-pointer"
                   />
                 </TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Phone</TableHead>
-                <TableHead>Address</TableHead>
-                <TableHead>Roles</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                {visibleColumns.includes("name") && <TableHead className="py-1.5 text-xs">Name</TableHead>}
+                {visibleColumns.includes("email") && <TableHead className="py-1.5 text-xs">Email</TableHead>}
+                {visibleColumns.includes("phone") && <TableHead className="py-1.5 text-xs">Phone</TableHead>}
+                {visibleColumns.includes("address") && <TableHead className="py-1.5 text-xs">Address</TableHead>}
+                {visibleColumns.includes("roles") && <TableHead className="py-1.5 text-xs">Roles</TableHead>}
+                <TableHead className="text-right py-1.5 text-xs">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {users.map((user) => (
                 <TableRow 
                   key={user.id} 
-                  className="cursor-pointer hover:bg-muted/50"
+                  className="cursor-pointer hover:bg-muted/50 h-9"
                   onClick={() => navigate(`/admin/users/${user.id}`)}
                 >
-                  <TableCell onClick={(e) => e.stopPropagation()}>
+                  <TableCell className="py-1.5" onClick={(e) => e.stopPropagation()}>
                     <input
                       type="checkbox"
                       checked={selectedUsers.includes(user.id)}
@@ -526,42 +553,53 @@ export default function AdminUsers() {
                       className="cursor-pointer"
                     />
                   </TableCell>
-                  <TableCell className="font-medium">{user.full_name}</TableCell>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell>{user.phone || "-"}</TableCell>
-                  <TableCell>
-                    {user.address ? (
-                      <div className="text-sm">
-                        <div>{user.address}</div>
-                        <div className="text-muted-foreground">
-                          {[user.postal_code, user.city, user.country].filter(Boolean).join(", ")}
+                  {visibleColumns.includes("name") && (
+                    <TableCell className="font-medium text-sm py-1.5">{user.full_name}</TableCell>
+                  )}
+                  {visibleColumns.includes("email") && (
+                    <TableCell className="text-sm py-1.5">{user.email}</TableCell>
+                  )}
+                  {visibleColumns.includes("phone") && (
+                    <TableCell className="text-sm py-1.5">{user.phone || "-"}</TableCell>
+                  )}
+                  {visibleColumns.includes("address") && (
+                    <TableCell className="py-1.5">
+                      {user.address ? (
+                        <div className="text-xs">
+                          <div>{user.address}</div>
+                          <div className="text-muted-foreground">
+                            {[user.postal_code, user.city, user.country].filter(Boolean).join(", ")}
+                          </div>
                         </div>
-                      </div>
-                    ) : (
-                      <span className="text-muted-foreground">-</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-1 flex-wrap">
-                      {user.roles.length > 0 ? (
-                        user.roles.map((role) => (
-                          <Badge key={role} variant="secondary" className="capitalize">
-                            {role}
-                          </Badge>
-                        ))
                       ) : (
-                        <span className="text-muted-foreground text-sm">No roles</span>
+                        <span className="text-muted-foreground text-xs">-</span>
                       )}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                    <div className="flex gap-2 justify-end">
+                    </TableCell>
+                  )}
+                  {visibleColumns.includes("roles") && (
+                    <TableCell className="py-1.5">
+                      <div className="flex gap-1 flex-wrap">
+                        {user.roles.length > 0 ? (
+                          user.roles.map((role) => (
+                            <Badge key={role} variant="secondary" className="capitalize text-xs px-1.5 py-0">
+                              {role}
+                            </Badge>
+                          ))
+                        ) : (
+                          <span className="text-muted-foreground text-xs">No roles</span>
+                        )}
+                      </div>
+                    </TableCell>
+                  )}
+                  <TableCell className="text-right py-1.5" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex gap-1 justify-end">
                       <Button
                         variant="ghost"
-                        size="sm"
+                        size="icon"
+                        className="h-6 w-6"
                         onClick={() => navigate(`/admin/users/${user.id}`)}
                       >
-                        <Eye className="h-4 w-4" />
+                        <Eye className="h-3.5 w-3.5" />
                       </Button>
                       <Dialog open={dialogOpen && editingUser?.id === user.id} onOpenChange={(open) => {
                       setDialogOpen(open);
@@ -573,10 +611,11 @@ export default function AdminUsers() {
                       <DialogTrigger asChild>
                         <Button
                           variant="ghost"
-                          size="sm"
+                          size="icon"
+                          className="h-6 w-6"
                           onClick={() => openEditDialog(user)}
                         >
-                          <Pencil className="h-4 w-4" />
+                          <Pencil className="h-3.5 w-3.5" />
                         </Button>
                       </DialogTrigger>
                       <DialogContent className="max-w-md">
