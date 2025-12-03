@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   ArrowLeft, Mail, Phone, MapPin, FileText, ShoppingCart, Bot, 
   Globe, Edit, DollarSign, Receipt, CreditCard, CheckSquare, Calendar,
-  Users, Plus, Trash2, Pencil, Upload, File, Download, FolderOpen
+  Users, Plus, Trash2, Pencil, Upload, File, Download, FolderOpen, User
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -585,7 +585,7 @@ const ClientDetail = () => {
         </div>
 
         <Card className="p-6">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-semibold">Company Information</h2>
             {clientTags.length > 0 && (
               <div className="flex flex-wrap gap-2">
@@ -601,95 +601,108 @@ const ClientDetail = () => {
               </div>
             )}
           </div>
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              {salesperson && (
-                <div>
-                  <p className="text-sm text-muted-foreground">Assigned Salesperson</p>
-                  <p className="font-medium">{salesperson.full_name}</p>
-                </div>
-              )}
-              <div>
-                <p className="text-sm text-muted-foreground">Client Type</p>
-                <p className="font-medium">{client.client_type || <span className="text-muted-foreground italic">Not set</span>}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Market (Industry)</p>
-                <p className="font-medium">{client.market || <span className="text-muted-foreground italic">Not set</span>}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Segment</p>
-                <p className="font-medium">{client.segment || <span className="text-muted-foreground italic">Not set</span>}</p>
-              </div>
-              {client.nip && (
-                <div>
-                  <p className="text-sm text-muted-foreground">NIP</p>
-                  <p className="font-medium">{client.nip}</p>
-                </div>
-              )}
-              {client.address && (
-                <div className="flex gap-2">
-                  <MapPin className="w-4 h-4 text-muted-foreground mt-1" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Address</p>
-                    <p className="font-medium">{client.address}</p>
-                    <p className="font-medium">
-                      {client.postal_code} {client.city}
-                    </p>
-                    <p className="font-medium">{client.country}</p>
-                  </div>
-                </div>
-              )}
+
+          {/* Classification Badges Row */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+            <div className="bg-primary/5 rounded-lg p-3 border border-primary/10">
+              <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Client Type</p>
+              <p className="font-semibold text-sm">{client.client_type || <span className="text-muted-foreground italic font-normal">Not set</span>}</p>
             </div>
-            <div className="space-y-4">
-              {client.general_email && (
-                <div className="flex gap-2">
-                  <Mail className="w-4 h-4 text-muted-foreground mt-1" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Company Email</p>
-                    <p className="font-medium">{client.general_email}</p>
-                  </div>
-                </div>
-              )}
-              {client.general_phone && (
-                <div className="flex gap-2">
-                  <Phone className="w-4 h-4 text-muted-foreground mt-1" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Company Phone</p>
-                    <p className="font-medium">{client.general_phone}</p>
-                  </div>
-                </div>
-              )}
-              <div className="flex gap-2">
-                <Globe className="w-4 h-4 text-muted-foreground mt-1" />
+            <div className="bg-blue-500/5 rounded-lg p-3 border border-blue-500/10">
+              <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Market</p>
+              <p className="font-semibold text-sm">{client.market || <span className="text-muted-foreground italic font-normal">Not set</span>}</p>
+            </div>
+            <div className="bg-emerald-500/5 rounded-lg p-3 border border-emerald-500/10">
+              <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Segment</p>
+              <p className="font-semibold text-sm">{client.segment || <span className="text-muted-foreground italic font-normal">Not set</span>}</p>
+            </div>
+            {client.nip && (
+              <div className="bg-amber-500/5 rounded-lg p-3 border border-amber-500/10">
+                <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">NIP</p>
+                <p className="font-semibold text-sm font-mono">{client.nip}</p>
+              </div>
+            )}
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {/* Contact Section */}
+            <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
+              <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground flex items-center gap-2">
+                <Mail className="w-4 h-4" />
+                Contact
+              </h3>
+              <div className="space-y-3">
                 <div>
-                  <p className="text-sm text-muted-foreground">Website</p>
+                  <p className="text-xs text-muted-foreground">Email</p>
+                  <p className="font-medium text-sm">{client.general_email || <span className="text-muted-foreground italic">Not set</span>}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Phone</p>
+                  <p className="font-medium text-sm">{client.general_phone || <span className="text-muted-foreground italic">Not set</span>}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Website</p>
                   {client.website_url ? (
                     <a 
                       href={client.website_url} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="font-medium text-primary hover:underline"
+                      className="font-medium text-sm text-primary hover:underline break-all"
                     >
                       {client.website_url}
                     </a>
                   ) : (
-                    <p className="font-medium text-muted-foreground italic">Not set</p>
+                    <p className="font-medium text-sm text-muted-foreground italic">Not set</p>
                   )}
                 </div>
               </div>
-              {reseller && (
+            </div>
+
+            {/* Location Section */}
+            <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
+              <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground flex items-center gap-2">
+                <MapPin className="w-4 h-4" />
+                Location
+              </h3>
+              <div className="space-y-1">
+                {client.address ? (
+                  <>
+                    <p className="font-medium text-sm">{client.address}</p>
+                    <p className="font-medium text-sm">
+                      {client.postal_code} {client.city}
+                    </p>
+                    <p className="font-medium text-sm">{client.country}</p>
+                  </>
+                ) : (
+                  <p className="text-muted-foreground italic text-sm">No address set</p>
+                )}
+              </div>
+            </div>
+
+            {/* Assignment Section */}
+            <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
+              <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground flex items-center gap-2">
+                <User className="w-4 h-4" />
+                Assignment
+              </h3>
+              <div className="space-y-3">
                 <div>
-                  <p className="text-sm text-muted-foreground">Reseller Partner</p>
-                  <Button
-                    variant="link"
-                    className="p-0 h-auto font-medium"
-                    onClick={() => navigate(`/resellers/${reseller.id}`)}
-                  >
-                    {reseller.name}
-                  </Button>
+                  <p className="text-xs text-muted-foreground">Salesperson</p>
+                  <p className="font-medium text-sm">{salesperson?.full_name || <span className="text-muted-foreground italic">Unassigned</span>}</p>
                 </div>
-              )}
+                {reseller && (
+                  <div>
+                    <p className="text-xs text-muted-foreground">Reseller Partner</p>
+                    <Button
+                      variant="link"
+                      className="p-0 h-auto font-medium text-sm"
+                      onClick={() => navigate(`/resellers/${reseller.id}`)}
+                    >
+                      {reseller.name}
+                    </Button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </Card>
