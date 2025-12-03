@@ -72,9 +72,10 @@ interface NewContractDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
+  initialClientId?: string;
 }
 
-export function NewContractDialog({ open, onOpenChange, onSuccess }: NewContractDialogProps) {
+export function NewContractDialog({ open, onOpenChange, onSuccess, initialClientId }: NewContractDialogProps) {
   const { t } = useTranslation();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -112,10 +113,10 @@ export function NewContractDialog({ open, onOpenChange, onSuccess }: NewContract
       // Reset form
       setContractRobots([]);
       setContractItems([]);
-      setSelectedClientId("all");
+      setSelectedClientId(initialClientId || "all");
       setCurrency("PLN");
     }
-  }, [open]);
+  }, [open, initialClientId]);
 
   const fetchClients = async () => {
     const { data } = await supabase.from("clients").select("id, name").order("name");
