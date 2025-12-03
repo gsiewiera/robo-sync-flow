@@ -713,23 +713,20 @@ const ClientDetail = () => {
 
             {/* Location Section */}
             <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
-              <div className="flex items-center justify-between">
-                <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground flex items-center gap-2">
-                  <MapPin className="w-4 h-4" />
-                  Location
-                </h3>
-                {addresses.length > 0 && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6"
+              <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground flex items-center gap-2">
+                {addresses.length > 0 ? (
+                  <button
                     onClick={() => setIsMapDialogOpen(true)}
+                    className="hover:text-primary transition-colors"
                     title="View on map"
                   >
                     <MapPinned className="w-4 h-4" />
-                  </Button>
+                  </button>
+                ) : (
+                  <MapPin className="w-4 h-4" />
                 )}
-              </div>
+                Location
+              </h3>
               <div className="space-y-1">
                 {(() => {
                   const primaryAddress = addresses.find(a => a.is_primary) || addresses[0];
