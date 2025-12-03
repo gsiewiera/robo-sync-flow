@@ -280,53 +280,53 @@ const Clients = () => {
         </Card>
 
         <Card>
-          <Table>
+          <Table className="text-sm">
             <TableHeader>
-              <TableRow>
-                <TableHead>
+              <TableRow className="h-9">
+                <TableHead className="py-2">
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => handleSort("name")}
-                    className="h-8 px-2 -ml-2 font-medium hover:bg-transparent"
+                    className="h-7 px-2 -ml-2 font-medium hover:bg-transparent text-xs"
                   >
                     Name
                     {getSortIcon("name")}
                   </Button>
                 </TableHead>
-                <TableHead>NIP</TableHead>
-                <TableHead>
+                <TableHead className="py-2 text-xs">NIP</TableHead>
+                <TableHead className="py-2">
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => handleSort("city")}
-                    className="h-8 px-2 -ml-2 font-medium hover:bg-transparent"
+                    className="h-7 px-2 -ml-2 font-medium hover:bg-transparent text-xs"
                   >
                     City
                     {getSortIcon("city")}
                   </Button>
                 </TableHead>
-                <TableHead>Tags</TableHead>
-                <TableHead>Salesperson</TableHead>
-                <TableHead>Contact</TableHead>
-                <TableHead>
+                <TableHead className="py-2 text-xs">Tags</TableHead>
+                <TableHead className="py-2 text-xs">Salesperson</TableHead>
+                <TableHead className="py-2 text-xs">Contact</TableHead>
+                <TableHead className="py-2">
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => handleSort("created_at")}
-                    className="h-8 px-2 -ml-2 font-medium hover:bg-transparent"
+                    className="h-7 px-2 -ml-2 font-medium hover:bg-transparent text-xs"
                   >
                     Created
                     {getSortIcon("created_at")}
                   </Button>
                 </TableHead>
-                <TableHead className="w-32">Actions</TableHead>
+                <TableHead className="w-24 py-2 text-xs">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {currentRecords.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={8} className="text-center py-6 text-muted-foreground">
                     No clients found
                   </TableCell>
                 </TableRow>
@@ -334,68 +334,65 @@ const Clients = () => {
                 currentRecords.map((client) => (
                   <TableRow 
                     key={client.id} 
-                    className="h-12 cursor-pointer hover:bg-muted/50"
+                    className="h-9 cursor-pointer hover:bg-muted/50"
                     onClick={() => navigate(`/clients/${client.id}`)}
                   >
-                    <TableCell className="font-medium">{client.name}</TableCell>
-                    <TableCell>{client.nip || "-"}</TableCell>
-                    <TableCell>{client.city || "-"}</TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-1">
+                    <TableCell className="font-medium py-1.5">{client.name}</TableCell>
+                    <TableCell className="py-1.5">{client.nip || "-"}</TableCell>
+                    <TableCell className="py-1.5">{client.city || "-"}</TableCell>
+                    <TableCell className="py-1.5">
+                      <div className="flex flex-wrap gap-0.5">
                         {clientTags[client.id]?.map((tag) => (
                           <Badge
                             key={tag.id}
                             style={{ backgroundColor: tag.color }}
-                            className="text-white text-xs"
+                            className="text-white text-[10px] px-1.5 py-0"
                           >
                             {tag.name}
                           </Badge>
                         ))}
                       </div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="py-1.5">
                       {client.assigned_salesperson_id && salespersonMap[client.assigned_salesperson_id]
                         ? salespersonMap[client.assigned_salesperson_id]
                         : "-"}
                     </TableCell>
-                    <TableCell>
-                      <div className="text-sm">
+                    <TableCell className="py-1.5">
+                      <div className="text-xs leading-tight">
                         {client.primary_contact_name && (
                           <div className="font-medium">{client.primary_contact_name}</div>
                         )}
                         {client.primary_contact_email && (
-                          <div className="text-muted-foreground">{client.primary_contact_email}</div>
-                        )}
-                        {client.primary_contact_phone && (
-                          <div className="text-muted-foreground">{client.primary_contact_phone}</div>
+                          <div className="text-muted-foreground truncate max-w-[180px]">{client.primary_contact_email}</div>
                         )}
                       </div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="py-1.5">
                       {client.created_at
                         ? new Date(client.created_at).toLocaleDateString()
                         : "-"}
                     </TableCell>
-                    <TableCell onClick={(e) => e.stopPropagation()}>
-                      <div className="flex gap-2">
+                    <TableCell onClick={(e) => e.stopPropagation()} className="py-1.5">
+                      <div className="flex gap-1">
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-8 w-8 p-0"
+                          className="h-7 w-7 p-0"
                           onClick={() => navigate(`/clients/${client.id}`)}
                         >
-                          <Eye className="h-4 w-4" />
+                          <Eye className="h-3.5 w-3.5" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-8 w-8 p-0"
+                          className="h-7 w-7 p-0"
                           onClick={() => {
                             setEditingClient(client);
                             setIsClientDialogOpen(true);
                           }}
                         >
-                          <Edit className="h-4 w-4" />
+                          <Edit className="h-3.5 w-3.5" />
                         </Button>
                       </div>
                     </TableCell>
