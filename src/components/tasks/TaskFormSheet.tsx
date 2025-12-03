@@ -98,15 +98,25 @@ const taskFormSchema = z.object({
 
 type TaskFormValues = z.infer<typeof taskFormSchema>;
 
+interface TaskFormSheetInitialValues {
+  title?: string;
+  description?: string;
+  client_id?: string;
+  offer_id?: string;
+  notes?: string;
+  person_to_meet?: string;
+}
+
 interface TaskFormSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
   taskId?: string;
   mode?: "create" | "view" | "edit";
+  initialValues?: TaskFormSheetInitialValues;
 }
 
-export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "create" }: TaskFormSheetProps) => {
+export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "create", initialValues }: TaskFormSheetProps) => {
   const [taskTitles, setTaskTitles] = useState<TaskTitleDictionary[]>([]);
   const [meetingTypes, setMeetingTypes] = useState<MeetingTypeDictionary[]>([]);
   const [employees, setEmployees] = useState<Profile[]>([]);
@@ -169,26 +179,26 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
         fetchTaskData();
       } else {
         form.reset({
-          title: "Follow-up call",
-          description: "",
+          title: initialValues?.title || "Follow-up call",
+          description: initialValues?.description || "",
           status: "pending",
           priority: "medium",
           assigned_to: undefined,
-          client_id: undefined,
+          client_id: initialValues?.client_id || undefined,
           contract_id: undefined,
           robot_ids: [],
-          offer_id: undefined,
+          offer_id: initialValues?.offer_id || undefined,
           meeting_type: undefined,
-          person_to_meet: "",
+          person_to_meet: initialValues?.person_to_meet || "",
           meeting_date_time: undefined,
           place: "",
           reminder_date_time: undefined,
-          notes: "",
+          notes: initialValues?.notes || "",
         });
         setTaskCreatedAt(null);
       }
     }
-  }, [taskId, open, mode]);
+  }, [taskId, open, mode, initialValues]);
 
   // Filter contracts, offers, and robots when client changes
   const selectedClientId = form.watch("client_id");
