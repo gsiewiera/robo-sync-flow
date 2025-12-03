@@ -42,6 +42,7 @@ interface RobotModel {
   manufacturer: string | null;
   description: string | null;
   is_active: boolean;
+  stock: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -221,6 +222,7 @@ const RobotModels = () => {
                     <TableHead className="text-xs">Model</TableHead>
                     <TableHead className="text-xs">Manufacturer</TableHead>
                     <TableHead className="text-xs">Type</TableHead>
+                    <TableHead className="text-xs">Stock</TableHead>
                     <TableHead className="text-xs">Status</TableHead>
                     {isAdmin && <TableHead className="text-xs text-right">Actions</TableHead>}
                   </TableRow>
@@ -235,6 +237,7 @@ const RobotModels = () => {
                       <TableCell className="font-medium py-2">{model.model_name}</TableCell>
                       <TableCell className="py-2 text-sm">{model.manufacturer || "-"}</TableCell>
                       <TableCell className="py-2 text-sm">{model.type || "-"}</TableCell>
+                      <TableCell className="py-2 text-sm">{model.stock ?? 0}</TableCell>
                       <TableCell className="py-2">
                         <Badge variant={model.is_active ? "default" : "secondary"} className="text-xs">
                           {model.is_active ? "Active" : "Inactive"}
