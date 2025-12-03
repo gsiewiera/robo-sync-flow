@@ -163,6 +163,12 @@ function AppSidebar() {
             <div className="h-8 bg-muted animate-pulse rounded" />
             <div className="h-8 bg-muted animate-pulse rounded" />
           </div>
+        ) : userRoles.length === 0 ? (
+          <div className="p-4 text-center">
+            <p className="text-sm text-sidebar-foreground/60">
+              {t("common.noRolesAssigned", "No roles assigned. Contact an administrator.")}
+            </p>
+          </div>
         ) : (
           <>
             {navItems.length > 0 && (
