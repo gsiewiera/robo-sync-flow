@@ -2018,6 +2018,7 @@ export type Database = {
           id: string
           meeting_date_time: string | null
           meeting_type: string | null
+          note_id: string | null
           notes: string | null
           offer_id: string | null
           person_to_meet: string | null
@@ -2040,6 +2041,7 @@ export type Database = {
           id?: string
           meeting_date_time?: string | null
           meeting_type?: string | null
+          note_id?: string | null
           notes?: string | null
           offer_id?: string | null
           person_to_meet?: string | null
@@ -2062,6 +2064,7 @@ export type Database = {
           id?: string
           meeting_date_time?: string | null
           meeting_type?: string | null
+          note_id?: string | null
           notes?: string | null
           offer_id?: string | null
           person_to_meet?: string | null
@@ -2092,6 +2095,13 @@ export type Database = {
             columns: ["contract_id"]
             isOneToOne: false
             referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_note_id_fkey"
+            columns: ["note_id"]
+            isOneToOne: false
+            referencedRelation: "notes"
             referencedColumns: ["id"]
           },
           {

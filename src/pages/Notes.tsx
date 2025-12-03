@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Filter } from "lucide-react";
+import { Plus, Search, Filter, ListTodo } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -45,6 +46,7 @@ interface Note {
   clients?: { name: string } | null;
   offers?: { offer_number: string } | null;
   profiles?: { full_name: string } | null;
+  tasks?: { id: string; title: string; status: string }[] | null;
 }
 
 interface Client {
@@ -59,6 +61,7 @@ interface Profile {
 
 const Notes = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [notes, setNotes] = useState<Note[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [salespeople, setSalespeople] = useState<Profile[]>([]);
@@ -85,7 +88,8 @@ const Notes = () => {
           *,
           clients(name),
           offers(offer_number),
-          profiles:salesperson_id(full_name)
+          profiles:salesperson_id(full_name),
+          tasks(id, title, status)
         `)
         .order("note_date", { ascending: false });
 
@@ -267,19 +271,20 @@ const Notes = () => {
                 <TableHead>{t("notes.salesperson", "Salesperson")}</TableHead>
                 <TableHead>{t("common.priority")}</TableHead>
                 <TableHead>{t("notes.contactType", "Contact Type")}</TableHead>
+                <TableHead>{t("tasks.task", "Task")}</TableHead>
                 <TableHead>{t("common.actions")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8">
+                  <TableCell colSpan={9} className="text-center py-8">
                     {t("common.loading")}
                   </TableCell>
                 </TableRow>
               ) : filteredNotes.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                     {t("notes.noNotes", "No notes found")}
                   </TableCell>
                 </TableRow>
@@ -301,6 +306,24 @@ const Notes = () => {
                     <TableCell>{note.profiles?.full_name || "-"}</TableCell>
                     <TableCell>{getPriorityBadge(note.priority)}</TableCell>
                     <TableCell>{getContactTypeBadge(note.contact_type)}</TableCell>
+                    <TableCell>
+                      {note.tasks && note.tasks.length > 0 ? (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-primary"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/tasks?taskId=${note.tasks![0].id}`);
+                          }}
+                        >
+                          <ListTodo className="h-4 w-4 mr-1" />
+                          {note.tasks[0].title}
+                        </Button>
+                      ) : (
+                        <span className="text-muted-foreground">-</span>
+                      )}
+                    </TableCell>
                     <TableCell>
                       <Button variant="ghost" size="sm">
                         {t("common.view")}

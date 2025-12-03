@@ -105,6 +105,7 @@ interface TaskFormSheetInitialValues {
   offer_id?: string;
   notes?: string;
   person_to_meet?: string;
+  note_id?: string;
 }
 
 interface TaskFormSheetProps {
@@ -458,6 +459,7 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
             place: values.place || null,
             reminder_date_time: values.reminder_date_time ? values.reminder_date_time.toISOString() : null,
             notes: values.notes || null,
+            note_id: initialValues?.note_id || null,
           })
           .select()
           .single();
