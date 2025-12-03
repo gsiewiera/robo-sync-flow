@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -46,6 +47,7 @@ interface RobotModel {
 }
 
 const RobotModels = () => {
+  const navigate = useNavigate();
   const [models, setModels] = useState<RobotModel[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -225,7 +227,11 @@ const RobotModels = () => {
                 </TableHeader>
                 <TableBody>
                   {filteredModels.map((model) => (
-                    <TableRow key={model.id} className="h-10">
+                    <TableRow 
+                      key={model.id} 
+                      className="h-10 cursor-pointer hover:bg-muted/50"
+                      onClick={() => navigate(`/robot-models/${model.id}`)}
+                    >
                       <TableCell className="font-medium py-2">{model.model_name}</TableCell>
                       <TableCell className="py-2 text-sm">{model.manufacturer || "-"}</TableCell>
                       <TableCell className="py-2 text-sm">{model.type || "-"}</TableCell>
@@ -241,7 +247,10 @@ const RobotModels = () => {
                               variant="ghost"
                               size="icon"
                               className="h-7 w-7"
-                              onClick={() => handleEdit(model)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEdit(model);
+                              }}
                             >
                               <Pencil className="w-3.5 h-3.5" />
                             </Button>
@@ -249,7 +258,10 @@ const RobotModels = () => {
                               variant="ghost"
                               size="icon"
                               className="h-7 w-7"
-                              onClick={() => handleDeleteClick(model)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteClick(model);
+                              }}
                             >
                               <Trash2 className="w-3.5 h-3.5 text-destructive" />
                             </Button>
