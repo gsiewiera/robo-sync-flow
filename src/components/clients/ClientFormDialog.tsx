@@ -94,11 +94,13 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
   const [clientTypes, setClientTypes] = useState<DictionaryItem[]>([]);
   const [markets, setMarkets] = useState<DictionaryItem[]>([]);
   const [segments, setSegments] = useState<DictionaryItem[]>([]);
+  const [clientSizes, setClientSizes] = useState<DictionaryItem[]>([]);
   
   // Selected values for multi-select
   const [selectedClientTypes, setSelectedClientTypes] = useState<string[]>([]);
   const [selectedMarkets, setSelectedMarkets] = useState<string[]>([]);
   const [selectedSegments, setSelectedSegments] = useState<string[]>([]);
+  const [selectedClientSizes, setSelectedClientSizes] = useState<string[]>([]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -158,6 +160,7 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
       setSelectedClientTypes([]);
       setSelectedMarkets([]);
       setSelectedSegments([]);
+      setSelectedClientSizes([]);
       form.reset({
         name: "",
         nip: "",
@@ -184,29 +187,33 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
   }, [open, client]);
 
   const fetchDictionaries = async () => {
-    const [typesRes, marketsRes, segmentsRes] = await Promise.all([
+    const [typesRes, marketsRes, segmentsRes, sizesRes] = await Promise.all([
       supabase.from("client_type_dictionary").select("id, name").order("name"),
       supabase.from("market_dictionary").select("id, name").order("name"),
       supabase.from("segment_dictionary").select("id, name").order("name"),
+      supabase.from("client_size_dictionary").select("id, name").order("name"),
     ]);
     
     if (typesRes.data) setClientTypes(typesRes.data);
     if (marketsRes.data) setMarkets(marketsRes.data);
     if (segmentsRes.data) setSegments(segmentsRes.data);
+    if (sizesRes.data) setClientSizes(sizesRes.data);
   };
 
   const fetchClientClassifications = async () => {
     if (!client?.id) return;
     
-    const [typesRes, marketsRes, segmentsRes] = await Promise.all([
+    const [typesRes, marketsRes, segmentsRes, sizesRes] = await Promise.all([
       supabase.from("client_client_types").select("client_type_id").eq("client_id", client.id),
       supabase.from("client_markets").select("market_id").eq("client_id", client.id),
       supabase.from("client_segments").select("segment_id").eq("client_id", client.id),
+      supabase.from("client_sizes").select("size_id").eq("client_id", client.id),
     ]);
     
     if (typesRes.data) setSelectedClientTypes(typesRes.data.map(t => t.client_type_id));
     if (marketsRes.data) setSelectedMarkets(marketsRes.data.map(m => m.market_id));
     if (segmentsRes.data) setSelectedSegments(segmentsRes.data.map(s => s.segment_id));
+    if (sizesRes.data) setSelectedClientSizes(sizesRes.data.map(s => s.size_id));
   };
 
   const fetchSalespeople = async () => {
@@ -288,12 +295,21 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
     );
   };
 
+  const toggleClientSize = (sizeId: string) => {
+    setSelectedClientSizes(prev =>
+      prev.includes(sizeId)
+        ? prev.filter(id => id !== sizeId)
+        : [...prev, sizeId]
+    );
+  };
+
   const saveClientClassifications = async (clientId: string) => {
-    // Delete existing and insert new for all three classification types
+    // Delete existing and insert new for all classification types
     await Promise.all([
       supabase.from("client_client_types").delete().eq("client_id", clientId),
       supabase.from("client_markets").delete().eq("client_id", clientId),
       supabase.from("client_segments").delete().eq("client_id", clientId),
+      supabase.from("client_sizes").delete().eq("client_id", clientId),
     ]);
 
     const insertPromises = [];
@@ -318,6 +334,14 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
       insertPromises.push(
         supabase.from("client_segments").insert(
           selectedSegments.map(segmentId => ({ client_id: clientId, segment_id: segmentId }))
+        )
+      );
+    }
+    
+    if (selectedClientSizes.length > 0) {
+      insertPromises.push(
+        supabase.from("client_sizes").insert(
+          selectedClientSizes.map(sizeId => ({ client_id: clientId, size_id: sizeId }))
         )
       );
     }
@@ -387,6 +411,7 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
         setSelectedClientTypes([]);
         setSelectedMarkets([]);
         setSelectedSegments([]);
+        setSelectedClientSizes([]);
         onSuccess?.(client.id);
         onOpenChange(false);
       } else {
@@ -428,6 +453,7 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
         setSelectedClientTypes([]);
         setSelectedMarkets([]);
         setSelectedSegments([]);
+        setSelectedClientSizes([]);
         onSuccess?.(newClient?.id);
         onOpenChange(false);
       }
@@ -695,6 +721,14 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
                     selectedIds={selectedSegments}
                     onToggle={toggleSegment}
                     placeholder="Select segments"
+                  />
+
+                  <MultiSelectField
+                    label="Client Size"
+                    items={clientSizes}
+                    selectedIds={selectedClientSizes}
+                    onToggle={toggleClientSize}
+                    placeholder="Select client sizes"
                   />
                 </div>
               </div>

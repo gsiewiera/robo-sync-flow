@@ -262,6 +262,7 @@ const ClientDetail = () => {
   const [clientTypeNames, setClientTypeNames] = useState<string[]>([]);
   const [marketNames, setMarketNames] = useState<string[]>([]);
   const [segmentNames, setSegmentNames] = useState<string[]>([]);
+  const [clientSizeNames, setClientSizeNames] = useState<string[]>([]);
 
   useEffect(() => {
     if (id) {
@@ -278,7 +279,7 @@ const ClientDetail = () => {
   const fetchClientClassifications = async () => {
     if (!id) return;
     
-    const [typesRes, marketsRes, segmentsRes] = await Promise.all([
+    const [typesRes, marketsRes, segmentsRes, sizesRes] = await Promise.all([
       supabase
         .from("client_client_types")
         .select("client_type_id, client_type_dictionary(name)")
@@ -291,6 +292,10 @@ const ClientDetail = () => {
         .from("client_segments")
         .select("segment_id, segment_dictionary(name)")
         .eq("client_id", id),
+      supabase
+        .from("client_sizes")
+        .select("size_id, client_size_dictionary(name)")
+        .eq("client_id", id),
     ]);
     
     if (typesRes.data) {
@@ -301,6 +306,9 @@ const ClientDetail = () => {
     }
     if (segmentsRes.data) {
       setSegmentNames(segmentsRes.data.map((s: any) => s.segment_dictionary?.name).filter(Boolean));
+    }
+    if (sizesRes.data) {
+      setClientSizeNames(sizesRes.data.map((s: any) => s.client_size_dictionary?.name).filter(Boolean));
     }
   };
 
@@ -771,13 +779,25 @@ const ClientDetail = () => {
           {/* Classification Section */}
           <div className="space-y-4 mb-6">
             <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">Classification</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="bg-primary/5 rounded-lg p-4 border border-primary/10">
                 <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">Client Type</p>
                 <div className="flex flex-wrap gap-1.5">
                   {clientTypeNames.length > 0 ? (
                     clientTypeNames.map((name, i) => (
                       <Badge key={i} className="bg-primary/20 text-primary hover:bg-primary/30 border-0">{name}</Badge>
+                    ))
+                  ) : (
+                    <span className="text-muted-foreground italic text-sm">Not set</span>
+                  )}
+                </div>
+              </div>
+              <div className="bg-amber-500/5 rounded-lg p-4 border border-amber-500/10">
+                <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">Client Size</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {clientSizeNames.length > 0 ? (
+                    clientSizeNames.map((name, i) => (
+                      <Badge key={i} className="bg-amber-500/20 text-amber-700 dark:text-amber-300 hover:bg-amber-500/30 border-0">{name}</Badge>
                     ))
                   ) : (
                     <span className="text-muted-foreground italic text-sm">Not set</span>

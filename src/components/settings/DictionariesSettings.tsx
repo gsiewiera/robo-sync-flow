@@ -15,6 +15,7 @@ type Dictionary = {
   client_types: string[];
   markets: string[];
   segments: string[];
+  client_sizes: string[];
   contract_types: string[];
   service_types: string[];
   payment_models: string[];
@@ -29,6 +30,7 @@ type DictionaryIds = {
   client_types: { id: string; name: string }[];
   markets: { id: string; name: string }[];
   segments: { id: string; name: string }[];
+  client_sizes: { id: string; name: string }[];
 };
 
 type NumericSettings = {
@@ -40,6 +42,7 @@ const categories = [
   { key: "robot_types", label: "Robot Types", type: "list" },
   { key: "manufacturers", label: "Manufacturers", type: "list" },
   { key: "client_types", label: "Client Types", type: "list" },
+  { key: "client_sizes", label: "Client Sizes", type: "list" },
   { key: "markets", label: "Markets", type: "list" },
   { key: "segments", label: "Segments", type: "list" },
   { key: "contract_types", label: "Contract Types", type: "list" },
@@ -61,6 +64,7 @@ export const DictionariesSettings = () => {
     client_types: [],
     markets: [],
     segments: [],
+    client_sizes: [],
     contract_types: ["Service Agreement", "Maintenance Contract", "Full Support", "On-Demand"],
     service_types: ["Preventive Maintenance", "Repair", "Upgrade", "Training", "Consultation"],
     payment_models: ["Lease", "Purchase", "Subscription", "Pay-per-use"],
@@ -73,6 +77,7 @@ export const DictionariesSettings = () => {
     client_types: [],
     markets: [],
     segments: [],
+    client_sizes: [],
   });
   const [numericSettings, setNumericSettings] = useState<NumericSettings>({
     km_rate: 1.50,
@@ -86,6 +91,7 @@ export const DictionariesSettings = () => {
     fetchClientTypes();
     fetchMarkets();
     fetchSegments();
+    fetchClientSizes();
   }, []);
 
   const checkAdminRole = async () => {
@@ -180,6 +186,24 @@ export const DictionariesSettings = () => {
       setDictionaryIds((prev) => ({
         ...prev,
         segments: data,
+      }));
+    }
+  };
+
+  const fetchClientSizes = async () => {
+    const { data, error } = await supabase
+      .from("client_size_dictionary")
+      .select("id, name")
+      .order("name");
+
+    if (!error && data) {
+      setDictionaries((prev) => ({
+        ...prev,
+        client_sizes: data.map((s) => s.name),
+      }));
+      setDictionaryIds((prev) => ({
+        ...prev,
+        client_sizes: data,
       }));
     }
   };
@@ -299,6 +323,22 @@ export const DictionariesSettings = () => {
       return;
     }
 
+    // Handle client sizes with database
+    if (category === "client_sizes") {
+      const { error } = await supabase
+        .from("client_size_dictionary")
+        .insert({ name: value.trim() });
+
+      if (error) {
+        console.error("Error adding client size:", error);
+        toast.error("Failed to add client size");
+        return;
+      }
+      await fetchClientSizes();
+      toast.success("Client size added successfully");
+      return;
+    }
+
     // Handle other categories (client-side only for now)
     setDictionaries((prev) => ({
       ...prev,
@@ -397,6 +437,25 @@ export const DictionariesSettings = () => {
       }
       await fetchSegments();
       toast.success("Segment removed successfully");
+      return;
+    }
+
+    // Handle client sizes with database
+    if (category === "client_sizes") {
+      const item = dictionaryIds.client_sizes[index];
+      if (!item) return;
+      const { error } = await supabase
+        .from("client_size_dictionary")
+        .delete()
+        .eq("id", item.id);
+
+      if (error) {
+        console.error("Error removing client size:", error);
+        toast.error("Failed to remove client size");
+        return;
+      }
+      await fetchClientSizes();
+      toast.success("Client size removed successfully");
       return;
     }
 
