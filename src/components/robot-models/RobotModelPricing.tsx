@@ -294,6 +294,12 @@ export const RobotModelPricing = ({ modelName, isAdmin }: RobotModelPricingProps
             <DollarSign className="h-4 w-4" />
             Pricing
           </CardTitle>
+          {isAdmin && !isEditing && (
+            <Button size="sm" onClick={() => setIsEditing(true)}>
+              <Pencil className="h-4 w-4 mr-1" />
+              Edit Pricing
+            </Button>
+          )}
           {isEditing && (
             <div className="flex gap-2">
               <Button size="sm" variant="outline" onClick={handleCancel}>
