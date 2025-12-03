@@ -1693,6 +1693,7 @@ export type Database = {
           offer_id: string | null
           person_to_meet: string | null
           place: string | null
+          priority: string | null
           reminder_date_time: string | null
           status: Database["public"]["Enums"]["task_status"] | null
           title: string
@@ -1714,6 +1715,7 @@ export type Database = {
           offer_id?: string | null
           person_to_meet?: string | null
           place?: string | null
+          priority?: string | null
           reminder_date_time?: string | null
           status?: Database["public"]["Enums"]["task_status"] | null
           title: string
@@ -1735,6 +1737,7 @@ export type Database = {
           offer_id?: string | null
           person_to_meet?: string | null
           place?: string | null
+          priority?: string | null
           reminder_date_time?: string | null
           status?: Database["public"]["Enums"]["task_status"] | null
           title?: string

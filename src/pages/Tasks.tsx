@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useTranslation } from "react-i18next";
-import { CheckCircle, Circle, Eye, Edit, Filter, X, ChevronDown, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { CheckCircle, Circle, Eye, Edit, Filter, X, ChevronDown, ArrowUpDown, ArrowUp, ArrowDown, Flag } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { TaskFormSheet } from "@/components/tasks/TaskFormSheet";
@@ -36,6 +36,7 @@ interface Task {
   title: string;
   description: string | null;
   status: "pending" | "in_progress" | "completed" | "overdue";
+  priority: string | null;
   due_date: string | null;
   call_attempted: boolean;
   call_successful: boolean;
@@ -70,6 +71,13 @@ const statusColors: Record<string, string> = {
   in_progress: "bg-primary text-primary-foreground",
   completed: "bg-success text-success-foreground",
   overdue: "bg-destructive text-destructive-foreground",
+};
+
+const priorityConfig: Record<string, { color: string; icon: string }> = {
+  low: { color: "text-muted-foreground", icon: "text-muted-foreground" },
+  medium: { color: "text-yellow-500", icon: "text-yellow-500" },
+  high: { color: "text-orange-500", icon: "text-orange-500" },
+  urgent: { color: "text-destructive", icon: "text-destructive" },
 };
 
 const Tasks = () => {
@@ -485,6 +493,7 @@ const Tasks = () => {
               <TableRow>
                 <TableHead className="w-12"></TableHead>
                 <TableHead>Title</TableHead>
+                <TableHead>Priority</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>
                   <Button
@@ -515,7 +524,7 @@ const Tasks = () => {
             <TableBody>
               {currentRecords.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                     No tasks found
                   </TableCell>
                 </TableRow>
@@ -547,6 +556,16 @@ const Tasks = () => {
                           </div>
                         )}
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      {task.priority && (
+                        <div className="flex items-center gap-1">
+                          <Flag className={`h-4 w-4 ${priorityConfig[task.priority]?.icon || 'text-muted-foreground'}`} />
+                          <span className={`text-sm capitalize ${priorityConfig[task.priority]?.color || ''}`}>
+                            {task.priority}
+                          </span>
+                        </div>
+                      )}
                     </TableCell>
                     <TableCell>
                       <Badge className={statusColors[task.status]}>
