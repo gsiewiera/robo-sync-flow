@@ -16,6 +16,7 @@ import { ClientFormDialog } from "@/components/clients/ClientFormDialog";
 import { ContactFormDialog } from "@/components/clients/ContactFormDialog";
 import { AddressFormDialog } from "@/components/clients/AddressFormDialog";
 import { AddressMap } from "@/components/clients/AddressMap";
+import { NoteFormSheet } from "@/components/notes/NoteFormSheet";
 import { formatMoney } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -227,6 +228,8 @@ const ClientDetail = () => {
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
   const [addressToDelete, setAddressToDelete] = useState<Address | null>(null);
   const [isMapDialogOpen, setIsMapDialogOpen] = useState(false);
+  const [isNoteFormOpen, setIsNoteFormOpen] = useState(false);
+  const [salespeople, setSalespeople] = useState<{ id: string; full_name: string }[]>([]);
 
   useEffect(() => {
     if (id) {
@@ -234,6 +237,7 @@ const ClientDetail = () => {
       fetchDocumentCategories();
       checkAdminRole();
       fetchAddresses();
+      fetchSalespeople();
     }
   }, [id]);
 
@@ -249,6 +253,16 @@ const ClientDetail = () => {
       .maybeSingle();
     
     setIsAdmin(!!data);
+  };
+
+  const fetchSalespeople = async () => {
+    const { data } = await supabase
+      .from("profiles")
+      .select("id, full_name")
+      .order("full_name");
+    if (data) {
+      setSalespeople(data);
+    }
   };
 
   const fetchDocumentCategories = async () => {
@@ -858,6 +872,12 @@ const ClientDetail = () => {
           </TabsList>
 
           <TabsContent value="notes" className="space-y-4">
+            <div className="flex justify-end">
+              <Button onClick={() => setIsNoteFormOpen(true)} size="sm">
+                <Plus className="w-4 h-4 mr-2" />
+                Add Note
+              </Button>
+            </div>
             {notes.map((note) => (
               <Card
                 key={note.id}
@@ -1463,6 +1483,21 @@ const ClientDetail = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {client && (
+        <NoteFormSheet
+          open={isNoteFormOpen}
+          onOpenChange={setIsNoteFormOpen}
+          note={null}
+          onSuccess={() => {
+            fetchClientData();
+            setIsNoteFormOpen(false);
+          }}
+          clients={[{ id: client.id, name: client.name }]}
+          salespeople={salespeople}
+          initialClientId={client.id}
+        />
+      )}
     </Layout>
   );
 };
