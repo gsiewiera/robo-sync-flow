@@ -20,8 +20,9 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ListTodo } from "lucide-react";
+import { ListTodo, Plus } from "lucide-react";
 import { TaskFormSheet } from "@/components/tasks/TaskFormSheet";
+import { ContactFormDialog } from "@/components/clients/ContactFormDialog";
 
 interface Note {
   id: string;
@@ -56,6 +57,14 @@ interface Offer {
   offer_number: string;
 }
 
+interface Contact {
+  id: string;
+  full_name: string;
+  email: string | null;
+  phone: string | null;
+  role: string;
+}
+
 interface NoteFormSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -76,7 +85,9 @@ export const NoteFormSheet = ({
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [offers, setOffers] = useState<Offer[]>([]);
+  const [contacts, setContacts] = useState<Contact[]>([]);
   const [taskFormOpen, setTaskFormOpen] = useState(false);
+  const [addContactOpen, setAddContactOpen] = useState(false);
   const [formData, setFormData] = useState({
     client_id: "",
     contact_person: "",
@@ -120,8 +131,10 @@ export const NoteFormSheet = ({
   useEffect(() => {
     if (formData.client_id) {
       fetchOffers(formData.client_id);
+      fetchContacts(formData.client_id);
     } else {
       setOffers([]);
+      setContacts([]);
     }
   }, [formData.client_id]);
 
@@ -132,6 +145,15 @@ export const NoteFormSheet = ({
       .eq("client_id", clientId)
       .order("created_at", { ascending: false });
     setOffers(data || []);
+  };
+
+  const fetchContacts = async (clientId: string) => {
+    const { data } = await supabase
+      .from("client_contacts")
+      .select("id, full_name, email, phone, role")
+      .eq("client_id", clientId)
+      .order("full_name", { ascending: true });
+    setContacts(data || []);
   };
 
   const resetForm = () => {
@@ -238,13 +260,36 @@ export const NoteFormSheet = ({
 
               <div className="space-y-2">
                 <Label>{t("notes.contactPerson", "Contact Person")}</Label>
-                <Input
-                  value={formData.contact_person}
-                  onChange={(e) =>
-                    setFormData({ ...formData, contact_person: e.target.value })
-                  }
-                  placeholder={t("notes.contactPersonPlaceholder", "Enter contact person")}
-                />
+                <div className="flex gap-2">
+                  <Select
+                    value={formData.contact_person}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, contact_person: value })
+                    }
+                    disabled={!formData.client_id}
+                  >
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder={t("notes.selectContact", "Select contact")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {contacts.map((contact) => (
+                        <SelectItem key={contact.id} value={contact.full_name}>
+                          {contact.full_name} {contact.role && `(${contact.role})`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setAddContactOpen(true)}
+                    disabled={!formData.client_id}
+                    title={t("notes.addContact", "Add new contact")}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -468,6 +513,18 @@ export const NoteFormSheet = ({
           notes: formData.note || undefined,
         }}
       />
+
+      {formData.client_id && (
+        <ContactFormDialog
+          open={addContactOpen}
+          onOpenChange={setAddContactOpen}
+          clientId={formData.client_id}
+          onSuccess={() => {
+            fetchContacts(formData.client_id);
+          }}
+          roleOptions={["contact", "decision_maker", "technical", "billing", "other"]}
+        />
+      )}
     </Dialog>
   );
 };
