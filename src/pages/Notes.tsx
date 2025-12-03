@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, ListTodo, TableIcon, Users } from "lucide-react";
+import { Plus, Search, ListTodo, TableIcon, Users, CalendarIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -23,10 +23,29 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { format } from "date-fns";
+import { format, subDays, subWeeks, subMonths, startOfDay, endOfDay } from "date-fns";
 import { NoteFormSheet } from "@/components/notes/NoteFormSheet";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
+
+type DatePreset = "today" | "yesterday" | "lastWeek" | "lastMonth";
+
+const getDateRangeForPreset = (preset: DatePreset): { from: Date; to: Date } => {
+  const today = startOfDay(new Date());
+  switch (preset) {
+    case "today":
+      return { from: today, to: endOfDay(new Date()) };
+    case "yesterday":
+      return { from: subDays(today, 1), to: endOfDay(subDays(new Date(), 1)) };
+    case "lastWeek":
+      return { from: subWeeks(today, 1), to: endOfDay(new Date()) };
+    case "lastMonth":
+      return { from: subMonths(today, 1), to: endOfDay(new Date()) };
+  }
+};
 
 interface Note {
   id: string;
@@ -72,7 +91,9 @@ const Notes = () => {
   const [clientFilter, setClientFilter] = useState<string>("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [salespersonFilter, setSalespersonFilter] = useState<string>("all");
-  const [dateFilter, setDateFilter] = useState<string>(format(new Date(), "yyyy-MM-dd"));
+  const [dateFrom, setDateFrom] = useState<Date>(startOfDay(new Date()));
+  const [dateTo, setDateTo] = useState<Date>(endOfDay(new Date()));
+  const [datePreset, setDatePreset] = useState<DatePreset>("today");
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editingNote, setEditingNote] = useState<Note | null>(null);
   const [viewMode, setViewMode] = useState<"table" | "grouped">("table");
@@ -154,18 +175,35 @@ const Notes = () => {
     const matchesSalesperson =
       salespersonFilter === "all" || note.salesperson_id === salespersonFilter;
 
-    const matchesDate =
-      !dateFilter || note.note_date === dateFilter;
+    const noteDate = new Date(note.note_date);
+    const matchesDate = noteDate >= startOfDay(dateFrom) && noteDate <= endOfDay(dateTo);
 
     return matchesSearch && matchesClient && matchesType && matchesSalesperson && matchesDate;
   });
 
+  const handlePresetChange = (preset: DatePreset) => {
+    setDatePreset(preset);
+    const range = getDateRangeForPreset(preset);
+    setDateFrom(range.from);
+    setDateTo(range.to);
+  };
+
+  const presetLabels: Record<DatePreset, string> = {
+    today: t("notes.today", "Today"),
+    yesterday: t("notes.yesterday", "Yesterday"),
+    lastWeek: t("notes.lastWeek", "Last Week"),
+    lastMonth: t("notes.lastMonth", "Last Month"),
+  };
+
   // Group notes by salesperson for the grouped view
   const groupedNotes = useMemo(() => {
-    const notesForDate = notes.filter(note => note.note_date === dateFilter);
+    const notesForRange = notes.filter(note => {
+      const noteDate = new Date(note.note_date);
+      return noteDate >= startOfDay(dateFrom) && noteDate <= endOfDay(dateTo);
+    });
     const grouped: Record<string, { salesperson: string; notes: Note[] }> = {};
     
-    notesForDate.forEach(note => {
+    notesForRange.forEach(note => {
       const salespersonId = note.salesperson_id || 'unassigned';
       const salespersonName = note.profiles?.full_name || t("notes.unassigned", "Unassigned");
       
@@ -176,7 +214,7 @@ const Notes = () => {
     });
     
     return Object.values(grouped).sort((a, b) => a.salesperson.localeCompare(b.salesperson));
-  }, [notes, dateFilter, t]);
+  }, [notes, dateFrom, dateTo, t]);
 
   const getPriorityBadge = (priority: string) => {
     return priority === "high" ? (
@@ -272,14 +310,54 @@ const Notes = () => {
                 </SelectContent>
               </Select>
 
-              <Input
-                type="date"
-                value={dateFilter}
-                onChange={(e) => setDateFilter(e.target.value)}
-                className="w-[150px]"
-              />
+              <div className="flex items-center gap-2">
+                <Select value={datePreset} onValueChange={(v) => handlePresetChange(v as DatePreset)}>
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="today">{presetLabels.today}</SelectItem>
+                    <SelectItem value="yesterday">{presetLabels.yesterday}</SelectItem>
+                    <SelectItem value="lastWeek">{presetLabels.lastWeek}</SelectItem>
+                    <SelectItem value="lastMonth">{presetLabels.lastMonth}</SelectItem>
+                  </SelectContent>
+                </Select>
 
-              {(clientFilter !== "all" || typeFilter !== "all" || salespersonFilter !== "all" || dateFilter) && (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-[240px] justify-start text-left font-normal",
+                        !dateFrom && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {dateFrom && dateTo ? (
+                        <>
+                          {format(dateFrom, "MMM d, yyyy")} - {format(dateTo, "MMM d, yyyy")}
+                        </>
+                      ) : (
+                        <span>{t("notes.selectDateRange", "Select date range")}</span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="range"
+                      selected={{ from: dateFrom, to: dateTo }}
+                      onSelect={(range) => {
+                        if (range?.from) setDateFrom(range.from);
+                        if (range?.to) setDateTo(range.to);
+                      }}
+                      numberOfMonths={2}
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              {(clientFilter !== "all" || typeFilter !== "all" || salespersonFilter !== "all") && (
                 <Button
                   variant="ghost"
                   size="sm"
@@ -287,7 +365,7 @@ const Notes = () => {
                     setClientFilter("all");
                     setTypeFilter("all");
                     setSalespersonFilter("all");
-                    setDateFilter(format(new Date(), "yyyy-MM-dd"));
+                    handlePresetChange("today");
                   }}
                 >
                   {t("common.clear")}
@@ -373,15 +451,54 @@ const Notes = () => {
           </>
         ) : (
           <>
-            <div className="flex items-center gap-4">
-              <Input
-                type="date"
-                value={dateFilter}
-                onChange={(e) => setDateFilter(e.target.value)}
-                className="w-[180px]"
-              />
+            <div className="flex flex-wrap items-center gap-4">
+              <Select value={datePreset} onValueChange={(v) => handlePresetChange(v as DatePreset)}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="today">{presetLabels.today}</SelectItem>
+                  <SelectItem value="yesterday">{presetLabels.yesterday}</SelectItem>
+                  <SelectItem value="lastWeek">{presetLabels.lastWeek}</SelectItem>
+                  <SelectItem value="lastMonth">{presetLabels.lastMonth}</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-[240px] justify-start text-left font-normal",
+                      !dateFrom && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {dateFrom && dateTo ? (
+                      <>
+                        {format(dateFrom, "MMM d, yyyy")} - {format(dateTo, "MMM d, yyyy")}
+                      </>
+                    ) : (
+                      <span>{t("notes.selectDateRange", "Select date range")}</span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="range"
+                    selected={{ from: dateFrom, to: dateTo }}
+                    onSelect={(range) => {
+                      if (range?.from) setDateFrom(range.from);
+                      if (range?.to) setDateTo(range.to);
+                    }}
+                    numberOfMonths={2}
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+
               <span className="text-muted-foreground">
-                {t("notes.showingNotesFor", "Showing notes for")} {dateFilter ? format(new Date(dateFilter), "MMMM d, yyyy") : "-"}
+                {t("notes.showingNotesFor", "Showing notes for")} {format(dateFrom, "MMM d")} - {format(dateTo, "MMM d, yyyy")}
               </span>
             </div>
 
