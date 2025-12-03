@@ -1810,6 +1810,24 @@ export type Database = {
         }
         Relationships: []
       }
+      robot_type_dictionary: {
+        Row: {
+          created_at: string | null
+          id: string
+          type_name: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          type_name: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          type_name?: string
+        }
+        Relationships: []
+      }
       robots: {
         Row: {
           client_id: string | null

@@ -60,15 +60,6 @@ interface RobotModelFormDialogProps {
   onSuccess: () => void;
 }
 
-const robotTypes = [
-  "Delivery Robot",
-  "Service Robot",
-  "Cleaning Robot",
-  "Hospitality Robot",
-  "Industrial Robot",
-  "Collaborative Robot",
-];
-
 export const RobotModelFormDialog = ({
   open,
   onOpenChange,
@@ -76,6 +67,7 @@ export const RobotModelFormDialog = ({
   onSuccess,
 }: RobotModelFormDialogProps) => {
   const [manufacturers, setManufacturers] = useState<string[]>([]);
+  const [robotTypes, setRobotTypes] = useState<string[]>([]);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -86,7 +78,7 @@ export const RobotModelFormDialog = ({
     defaultValues: {
       model_name: "",
       manufacturer: "",
-      type: "Delivery Robot",
+      type: "",
       description: "",
       is_active: true,
     },
@@ -94,6 +86,7 @@ export const RobotModelFormDialog = ({
 
   useEffect(() => {
     fetchManufacturers();
+    fetchRobotTypes();
   }, []);
 
   useEffect(() => {
@@ -115,6 +108,16 @@ export const RobotModelFormDialog = ({
       .order("manufacturer_name");
     if (data) {
       setManufacturers(data.map((m) => m.manufacturer_name));
+    }
+  };
+
+  const fetchRobotTypes = async () => {
+    const { data } = await supabase
+      .from("robot_type_dictionary")
+      .select("type_name")
+      .order("type_name");
+    if (data) {
+      setRobotTypes(data.map((t) => t.type_name));
     }
   };
 
