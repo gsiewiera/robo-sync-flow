@@ -131,7 +131,7 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskFormSchema),
     defaultValues: {
-      title: "Follow up call",
+      title: "Follow-up call",
       description: "",
       status: "pending",
       priority: "medium",
@@ -169,7 +169,7 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
         fetchTaskData();
       } else {
         form.reset({
-          title: "Follow up call",
+          title: "Follow-up call",
           description: "",
           status: "pending",
           priority: "medium",
@@ -492,16 +492,16 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
   const isViewMode = mode === "view" && !isEditing;
 
   // Field visibility logic based on task type
-  const showClientField = ["Client meeting", "Contract review", "Demo presentation", "Follow up call", "Price negotiation", "Offer (proposal) preparation", "Site Visit", "Technical support"].includes(selectedTaskTitle);
-  const showOfferField = ["Client meeting", "Demo presentation", "Follow up call", "Price negotiation", "Site Visit"].includes(selectedTaskTitle);
-  const showMeetingTypeField = ["Client meeting", "Site Visit"].includes(selectedTaskTitle);
-  const showPersonToMeetField = ["Client meeting", "Demo presentation", "Follow up call", "Price negotiation", "Offer (proposal) preparation", "Site Visit"].includes(selectedTaskTitle);
-  const showMeetingDateTimeField = ["Client meeting", "Site Visit"].includes(selectedTaskTitle);
-  const showPlaceField = ["Client meeting", "Site Visit"].includes(selectedTaskTitle);
-  const showReminderField = ["Client meeting", "Site Visit"].includes(selectedTaskTitle);
+  const showClientField = ["Client meeting", "Contract review", "Demo presentation", "Follow-up call", "Price negotiation", "Proposal preparation", "Site visit", "Technical support"].includes(selectedTaskTitle);
+  const showOfferField = ["Client meeting", "Demo presentation", "Follow-up call", "Price negotiation", "Site visit"].includes(selectedTaskTitle);
+  const showMeetingTypeField = ["Client meeting", "Site visit"].includes(selectedTaskTitle);
+  const showPersonToMeetField = ["Client meeting", "Demo presentation", "Follow-up call", "Price negotiation", "Proposal preparation", "Site visit"].includes(selectedTaskTitle);
+  const showMeetingDateTimeField = ["Client meeting", "Site visit"].includes(selectedTaskTitle);
+  const showPlaceField = ["Client meeting", "Site visit"].includes(selectedTaskTitle);
+  const showReminderField = ["Client meeting", "Site visit"].includes(selectedTaskTitle);
   const showContractField = ["Contract review", "Technical support"].includes(selectedTaskTitle);
   const showRobotsField = ["Demo presentation"].includes(selectedTaskTitle);
-  const showDueDateField = ["Contract review", "Documentation update", "Follow up call", "Price negotiation", "Offer (proposal) preparation", "Training session"].includes(selectedTaskTitle);
+  const showDueDateField = ["Contract review", "Documentation update", "Follow-up call", "Price negotiation", "Proposal preparation", "Training session"].includes(selectedTaskTitle);
   const showNotesField = true; // All task types can have notes
   const clientIsOptional = selectedTaskTitle === "Documentation update";
 
