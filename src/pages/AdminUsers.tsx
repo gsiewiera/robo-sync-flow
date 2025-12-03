@@ -422,8 +422,8 @@ export default function AdminUsers() {
           }
         }}>
           <DialogTrigger asChild>
-            <Button onClick={() => setEditingUser(null)}>
-              <UserPlus className="h-4 w-4 mr-2" />
+            <Button size="sm" onClick={() => setEditingUser(null)}>
+              <UserPlus className="h-3.5 w-3.5 mr-1.5" />
               Create User
             </Button>
           </DialogTrigger>
