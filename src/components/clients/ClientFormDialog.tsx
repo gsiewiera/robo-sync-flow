@@ -893,14 +893,17 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Reseller</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value || ""}>
+                        <Select 
+                          onValueChange={(value) => field.onChange(value === "__none__" ? "" : value)} 
+                          value={field.value || "__none__"}
+                        >
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select reseller" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="">None</SelectItem>
+                            <SelectItem value="__none__">None</SelectItem>
                             {resellers.map((reseller) => (
                               <SelectItem key={reseller.id} value={reseller.id}>
                                 {reseller.name}
@@ -919,14 +922,17 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Assigned Salesperson</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value || ""}>
+                        <Select 
+                          onValueChange={(value) => field.onChange(value === "__none__" ? "" : value)} 
+                          value={field.value || "__none__"}
+                        >
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select salesperson" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="">None</SelectItem>
+                            <SelectItem value="__none__">None</SelectItem>
                             {salespeople.map((person) => (
                               <SelectItem key={person.id} value={person.id}>
                                 {person.full_name}
