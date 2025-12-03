@@ -99,6 +99,7 @@ function AppSidebar() {
   const [userRoles, setUserRoles] = useState<string[]>([]);
   const [rolesLoading, setRolesLoading] = useState(true);
   const reportsRef = useRef<HTMLDivElement>(null);
+  const [companyLogo, setCompanyLogo] = useState<string | null>(null);
 
   const handleReportsToggle = (open: boolean) => {
     setReportsOpen(open);
@@ -111,7 +112,23 @@ function AppSidebar() {
 
   useEffect(() => {
     fetchUserRoles();
+    fetchCompanyLogo();
   }, []);
+
+  const fetchCompanyLogo = async () => {
+    const { data } = await supabase
+      .from("company_info")
+      .select("logo_path")
+      .limit(1)
+      .maybeSingle();
+    
+    if (data?.logo_path) {
+      const { data: urlData } = supabase.storage
+        .from("company-logos")
+        .getPublicUrl(data.logo_path);
+      setCompanyLogo(urlData.publicUrl);
+    }
+  };
 
   const fetchUserRoles = async () => {
     try {
@@ -156,6 +173,13 @@ function AppSidebar() {
           <h1 className="text-lg font-bold text-sidebar-foreground">
             {open ? t("app.title") : "RC"}
           </h1>
+          {open && companyLogo && (
+            <img 
+              src={companyLogo} 
+              alt="Company Logo" 
+              className="mt-2 max-h-10 object-contain"
+            />
+          )}
         </div>
 
         {rolesLoading ? (
