@@ -609,18 +609,6 @@ const ClientDetail = () => {
                   <p className="font-medium">{salesperson.full_name}</p>
                 </div>
               )}
-              {reseller && (
-                <div>
-                  <p className="text-sm text-muted-foreground">Reseller Partner</p>
-                  <Button
-                    variant="link"
-                    className="p-0 h-auto font-medium"
-                    onClick={() => navigate(`/resellers/${reseller.id}`)}
-                  >
-                    {reseller.name}
-                  </Button>
-                </div>
-              )}
               {client.client_type && (
                 <div>
                   <p className="text-sm text-muted-foreground">Client Type</p>
@@ -692,6 +680,18 @@ const ClientDetail = () => {
                       {client.website_url}
                     </a>
                   </div>
+                </div>
+              )}
+              {reseller && (
+                <div>
+                  <p className="text-sm text-muted-foreground">Reseller Partner</p>
+                  <Button
+                    variant="link"
+                    className="p-0 h-auto font-medium"
+                    onClick={() => navigate(`/resellers/${reseller.id}`)}
+                  >
+                    {reseller.name}
+                  </Button>
                 </div>
               )}
             </div>
