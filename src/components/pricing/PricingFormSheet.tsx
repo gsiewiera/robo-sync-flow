@@ -110,9 +110,20 @@ export const PricingFormSheet = ({
   });
 
   useEffect(() => {
-    setRobotModels(["UR3", "UR5", "UR10", "UR16", "Dobot MG400", "Fanuc CRX-10iA"]);
+    fetchRobotModels();
     fetchLeaseMonths();
   }, []);
+
+  const fetchRobotModels = async () => {
+    const { data, error } = await supabase
+      .from("robot_model_dictionary")
+      .select("model_name")
+      .order("model_name");
+
+    if (!error && data) {
+      setRobotModels(data.map((item) => item.model_name));
+    }
+  };
 
   const fetchLeaseMonths = async () => {
     const { data, error } = await supabase
