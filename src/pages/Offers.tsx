@@ -90,7 +90,7 @@ const Offers = () => {
   const [isNewOfferOpen, setIsNewOfferOpen] = useState(false);
   const [editingOffer, setEditingOffer] = useState<any>(null);
   const navigate = useNavigate();
-  const recordsPerPage = 20;
+  const recordsPerPage = 30;
 
   // Column visibility state with localStorage
   const [visibleColumns, setVisibleColumns] = useState<string[]>(() => {
@@ -386,30 +386,30 @@ const Offers = () => {
         <Card>
           <Table>
             <TableHeader>
-              <TableRow>
+              <TableRow className="h-9">
                 {visibleColumns.includes("offer_number") && (
-                  <TableHead>
+                  <TableHead className="py-1.5 text-xs">
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => handleSort("offer_number")}
-                      className="h-8 px-2 -ml-2 font-medium hover:bg-transparent"
+                      className="h-6 px-1 -ml-1 text-xs font-medium hover:bg-transparent"
                     >
                       Offer Number
                       {getSortIcon("offer_number")}
                     </Button>
                   </TableHead>
                 )}
-                {visibleColumns.includes("client") && <TableHead>Client</TableHead>}
-                {visibleColumns.includes("salesperson") && <TableHead>Salesperson</TableHead>}
-                {visibleColumns.includes("status") && <TableHead>Status</TableHead>}
+                {visibleColumns.includes("client") && <TableHead className="py-1.5 text-xs">Client</TableHead>}
+                {visibleColumns.includes("salesperson") && <TableHead className="py-1.5 text-xs">Salesperson</TableHead>}
+                {visibleColumns.includes("status") && <TableHead className="py-1.5 text-xs">Status</TableHead>}
                 {visibleColumns.includes("total_price") && (
-                  <TableHead>
+                  <TableHead className="py-1.5 text-xs">
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => handleSort("total_price")}
-                      className="h-8 px-2 -ml-2 font-medium hover:bg-transparent"
+                      className="h-6 px-1 -ml-1 text-xs font-medium hover:bg-transparent"
                     >
                       Total Price
                       {getSortIcon("total_price")}
@@ -417,25 +417,25 @@ const Offers = () => {
                   </TableHead>
                 )}
                 {visibleColumns.includes("created_at") && (
-                  <TableHead>
+                  <TableHead className="py-1.5 text-xs">
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => handleSort("created_at")}
-                      className="h-8 px-2 -ml-2 font-medium hover:bg-transparent"
+                      className="h-6 px-1 -ml-1 text-xs font-medium hover:bg-transparent"
                     >
                       Created
                       {getSortIcon("created_at")}
                     </Button>
                   </TableHead>
                 )}
-                <TableHead className="w-20">Actions</TableHead>
+                <TableHead className="w-20 py-1.5 text-xs">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {currentRecords.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={visibleColumns.length + 1} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={visibleColumns.length + 1} className="text-center py-6 text-muted-foreground text-sm">
                     No offers found
                   </TableCell>
                 </TableRow>
@@ -443,54 +443,54 @@ const Offers = () => {
                 currentRecords.map((offer) => (
                   <TableRow 
                     key={offer.id} 
-                    className="h-12 cursor-pointer hover:bg-muted/50"
+                    className="h-9 cursor-pointer hover:bg-muted/50"
                     onClick={() => navigate(`/offers/${offer.id}`)}
                   >
                     {visibleColumns.includes("offer_number") && (
-                      <TableCell className="font-medium">{offer.offer_number}</TableCell>
+                      <TableCell className="py-1.5 text-sm font-medium">{offer.offer_number}</TableCell>
                     )}
                     {visibleColumns.includes("client") && (
-                      <TableCell>{offer.clients?.name || "-"}</TableCell>
+                      <TableCell className="py-1.5 text-sm">{offer.clients?.name || "-"}</TableCell>
                     )}
                     {visibleColumns.includes("salesperson") && (
-                      <TableCell>{offer.profiles?.full_name || "-"}</TableCell>
+                      <TableCell className="py-1.5 text-sm text-muted-foreground">{offer.profiles?.full_name || "-"}</TableCell>
                     )}
                     {visibleColumns.includes("status") && (
-                      <TableCell>
-                        <Badge className={statusColors[offer.stage]}>
+                      <TableCell className="py-1.5">
+                        <Badge className={`${statusColors[offer.stage]} text-xs px-1.5 py-0`}>
                           {offer.stage.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
                         </Badge>
                       </TableCell>
                     )}
                     {visibleColumns.includes("total_price") && (
-                      <TableCell>
+                      <TableCell className="py-1.5 text-xs text-muted-foreground">
                         {offer.total_price
                           ? `${formatMoney(offer.total_price)} PLN`
                           : "-"}
                       </TableCell>
                     )}
                     {visibleColumns.includes("created_at") && (
-                      <TableCell>
+                      <TableCell className="py-1.5 text-xs text-muted-foreground">
                         {new Date(offer.created_at).toLocaleDateString()}
                       </TableCell>
                     )}
-                    <TableCell onClick={(e) => e.stopPropagation()}>
-                      <div className="flex gap-2">
+                    <TableCell className="py-1.5" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex gap-0.5">
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-8 w-8 p-0"
+                          className="h-6 w-6 p-0"
                           onClick={() => navigate(`/offers/${offer.id}`)}
                         >
-                          <Eye className="h-4 w-4" />
+                          <Eye className="h-3.5 w-3.5" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-8 w-8 p-0"
+                          className="h-6 w-6 p-0"
                           onClick={() => handleEditOffer(offer.id)}
                         >
-                          <Edit className="h-4 w-4" />
+                          <Edit className="h-3.5 w-3.5" />
                         </Button>
                       </div>
                     </TableCell>
