@@ -83,6 +83,7 @@ const taskFormSchema = z.object({
   description: z.string().optional(),
   due_date: z.date().optional(),
   status: z.enum(["pending", "in_progress", "completed", "overdue"]),
+  priority: z.enum(["low", "medium", "high", "urgent"]).optional(),
   assigned_to: z.string().optional(),
   client_id: z.string().optional(),
   contract_id: z.string().optional(),
@@ -134,6 +135,7 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
       title: "",
       description: "",
       status: "pending",
+      priority: "medium",
       assigned_to: undefined,
       client_id: undefined,
       contract_id: undefined,
@@ -328,6 +330,7 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
         description: task.description || "",
         due_date: task.due_date ? new Date(task.due_date) : undefined,
         status: task.status as TaskFormValues["status"],
+        priority: (task.priority as TaskFormValues["priority"]) || "medium",
         assigned_to: task.assigned_to || undefined,
         client_id: task.client_id || undefined,
         contract_id: task.contract_id || undefined,
@@ -368,6 +371,7 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
             description: values.description || null,
             due_date: values.due_date ? values.due_date.toISOString() : null,
             status: values.status,
+            priority: values.priority || "medium",
             assigned_to: values.assigned_to || null,
             client_id: values.client_id || null,
             contract_id: values.contract_id || null,
@@ -418,6 +422,7 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
             description: values.description || null,
             due_date: values.due_date ? values.due_date.toISOString() : null,
             status: values.status,
+            priority: values.priority || "medium",
             assigned_to: values.assigned_to || null,
             client_id: values.client_id || null,
             contract_id: values.contract_id || null,
@@ -1062,6 +1067,36 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
                             <SelectItem value="in_progress">In Progress</SelectItem>
                             <SelectItem value="completed">Completed</SelectItem>
                             <SelectItem value="overdue">Overdue</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="priority"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Priority</FormLabel>
+                      {isViewMode ? (
+                        <div className="text-sm py-2 px-3 border rounded-md bg-muted capitalize">
+                          {field.value || "-"}
+                        </div>
+                      ) : (
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select priority" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="low">Low</SelectItem>
+                            <SelectItem value="medium">Medium</SelectItem>
+                            <SelectItem value="high">High</SelectItem>
+                            <SelectItem value="urgent">Urgent</SelectItem>
                           </SelectContent>
                         </Select>
                       )}
