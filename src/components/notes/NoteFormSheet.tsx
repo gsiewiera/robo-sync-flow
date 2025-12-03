@@ -509,6 +509,7 @@ export const NoteFormSheet = ({
           offer_id: formData.offer_id || undefined,
           person_to_meet: formData.contact_person || undefined,
           notes: formData.note || undefined,
+          note_id: note?.id || undefined,
         }}
       />
 
