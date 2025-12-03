@@ -394,17 +394,17 @@ export const NoteFormSheet = ({
                 value={formData.note}
                 onChange={(e) => setFormData({ ...formData, note: e.target.value })}
                 placeholder={t("notes.notePlaceholder", "Enter note details")}
-                rows={3}
+                rows={2}
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-4 gap-4">
               <div className="space-y-2">
                 <Label>{t("notes.needs", "Needs")}</Label>
                 <Textarea
                   value={formData.needs}
                   onChange={(e) => setFormData({ ...formData, needs: e.target.value })}
-                  placeholder={t("notes.needsPlaceholder", "Client needs and requirements")}
+                  placeholder={t("notes.needsPlaceholder", "Client needs")}
                   rows={2}
                 />
               </div>
@@ -416,13 +416,11 @@ export const NoteFormSheet = ({
                   onChange={(e) =>
                     setFormData({ ...formData, key_points: e.target.value })
                   }
-                  placeholder={t("notes.keyPointsPlaceholder", "Key discussion points")}
+                  placeholder={t("notes.keyPointsPlaceholder", "Key points")}
                   rows={2}
                 />
               </div>
-            </div>
 
-            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>{t("notes.commitmentsUs", "Commitments (Us)")}</Label>
                 <Textarea
@@ -454,7 +452,7 @@ export const NoteFormSheet = ({
                 <Textarea
                   value={formData.risks}
                   onChange={(e) => setFormData({ ...formData, risks: e.target.value })}
-                  placeholder={t("notes.risksPlaceholder", "Potential risks or concerns")}
+                  placeholder={t("notes.risksPlaceholder", "Potential risks")}
                   rows={2}
                 />
               </div>
@@ -466,14 +464,13 @@ export const NoteFormSheet = ({
                   onChange={(e) =>
                     setFormData({ ...formData, next_step: e.target.value })
                   }
-                  placeholder={t("notes.nextStepPlaceholder", "Next action to take")}
+                  placeholder={t("notes.nextStepPlaceholder", "Next action")}
                   rows={2}
                 />
               </div>
 
               <Button
                 type="button"
-                variant="outline"
                 onClick={handleCreateTask}
                 className="h-[68px]"
               >
