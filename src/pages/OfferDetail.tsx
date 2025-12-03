@@ -42,6 +42,8 @@ interface Offer {
 interface Client {
   id: string;
   name: string;
+  general_email?: string;
+  primary_contact_email?: string;
 }
 
 interface OfferItem {
@@ -103,7 +105,7 @@ const OfferDetail = () => {
 
       const { data: clientData } = await supabase
         .from("clients")
-        .select("id, name")
+        .select("id, name, general_email, primary_contact_email")
         .eq("id", offerData.client_id)
         .single();
 
