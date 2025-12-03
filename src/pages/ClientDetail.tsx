@@ -6,7 +6,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   ArrowLeft, Mail, Phone, MapPin, FileText, ShoppingCart, Bot, 
   Globe, Edit, DollarSign, Receipt, CreditCard, CheckSquare, Calendar,
-  Users, Plus, Trash2, Pencil, Upload, File, Download, FolderOpen, User, MapPinned
+  Users, Plus, Trash2, Pencil, Upload, File, Download, FolderOpen, User, MapPinned,
+  StickyNote
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -116,6 +117,18 @@ interface Task {
   profiles?: { full_name: string } | null;
 }
 
+interface Note {
+  id: string;
+  note_date: string;
+  contact_type: string;
+  contact_person: string | null;
+  note: string | null;
+  key_points: string | null;
+  priority: string;
+  salesperson_id: string | null;
+  profiles?: { full_name: string } | null;
+}
+
 interface Contact {
   id: string;
   full_name: string;
@@ -194,6 +207,7 @@ const ClientDetail = () => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [notes, setNotes] = useState<Note[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [reseller, setReseller] = useState<{ id: string; name: string } | null>(null);
   const [isContactDialogOpen, setIsContactDialogOpen] = useState(false);
@@ -385,6 +399,17 @@ const ClientDetail = () => {
 
     if (tasksData) {
       setTasks(tasksData);
+    }
+
+    // Fetch notes
+    const { data: notesData } = await supabase
+      .from("notes")
+      .select("*, profiles(full_name)")
+      .eq("client_id", id)
+      .order("note_date", { ascending: false });
+
+    if (notesData) {
+      setNotes(notesData);
     }
 
     // Fetch contacts
@@ -788,8 +813,12 @@ const ClientDetail = () => {
           </div>
         </Card>
 
-        <Tabs defaultValue="tasks" className="w-full">
+        <Tabs defaultValue="notes" className="w-full">
           <TabsList className="flex-wrap">
+            <TabsTrigger value="notes">
+              <StickyNote className="w-4 h-4 mr-2" />
+              Notes ({notes.length})
+            </TabsTrigger>
             <TabsTrigger value="tasks">
               <CheckSquare className="w-4 h-4 mr-2" />
               Tasks ({tasks.length})
@@ -827,6 +856,52 @@ const ClientDetail = () => {
               Addresses ({addresses.length})
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="notes" className="space-y-4">
+            {notes.map((note) => (
+              <Card
+                key={note.id}
+                className="p-4 hover:shadow-lg transition-shadow cursor-pointer"
+                onClick={() => navigate(`/notes?noteId=${note.id}`)}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-medium">
+                        {new Date(note.note_date).toLocaleDateString()}
+                      </span>
+                      <Badge variant="outline" className="capitalize">
+                        {note.contact_type.replace("_", " ")}
+                      </Badge>
+                      {note.priority !== "normal" && (
+                        <Badge variant={note.priority === "high" ? "destructive" : "secondary"}>
+                          {note.priority}
+                        </Badge>
+                      )}
+                    </div>
+                    {note.contact_person && (
+                      <p className="text-sm text-muted-foreground">
+                        Contact: {note.contact_person}
+                      </p>
+                    )}
+                    {note.key_points && (
+                      <p className="text-sm line-clamp-2">{note.key_points}</p>
+                    )}
+                  </div>
+                  {note.profiles?.full_name && (
+                    <span className="text-xs text-muted-foreground">
+                      by {note.profiles.full_name}
+                    </span>
+                  )}
+                </div>
+              </Card>
+            ))}
+            {notes.length === 0 && (
+              <Card className="p-8 text-center">
+                <p className="text-muted-foreground">No notes found</p>
+              </Card>
+            )}
+          </TabsContent>
 
           <TabsContent value="contracts" className="space-y-4">
             {contracts.map((contract) => (
