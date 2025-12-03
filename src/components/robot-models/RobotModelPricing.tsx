@@ -271,18 +271,12 @@ export const RobotModelPricing = ({ modelName, isAdmin }: RobotModelPricingProps
   if (!pricing && !isEditing) {
     return (
       <Card>
-        <CardHeader className="pb-3">
+      <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-base flex items-center gap-2">
               <DollarSign className="h-4 w-4" />
               Pricing
             </CardTitle>
-            {isAdmin && (
-              <Button size="sm" onClick={handleCreatePricing}>
-                <Plus className="h-4 w-4 mr-1" />
-                Add Pricing
-              </Button>
-            )}
           </div>
         </CardHeader>
         <CardContent>
@@ -300,12 +294,6 @@ export const RobotModelPricing = ({ modelName, isAdmin }: RobotModelPricingProps
             <DollarSign className="h-4 w-4" />
             Pricing
           </CardTitle>
-          {isAdmin && !isEditing && (
-            <Button size="sm" variant="outline" onClick={() => setIsEditing(true)}>
-              <Pencil className="h-4 w-4 mr-1" />
-              Edit
-            </Button>
-          )}
           {isEditing && (
             <div className="flex gap-2">
               <Button size="sm" variant="outline" onClick={handleCancel}>
