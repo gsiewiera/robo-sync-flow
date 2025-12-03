@@ -440,51 +440,62 @@ export const AddressMap = ({ addresses }: AddressMapProps) => {
 
   return (
     <Card className="overflow-hidden">
-      {/* Origin selector and route info */}
+      {/* Origin selector and route info - single row */}
       {originOptions.length > 0 && (
-        <div className="p-3 border-b bg-muted/30 space-y-3">
-          <div className="flex items-center gap-2">
-            <Navigation className="w-4 h-4 text-muted-foreground" />
-            <span className="text-sm font-medium">{t('addressMap.routeFrom', 'Route from')}:</span>
-            <Select value={selectedOrigin} onValueChange={setSelectedOrigin}>
-              <SelectTrigger className="flex-1 h-8">
-                <SelectValue placeholder={t('addressMap.selectOrigin', 'Select starting point')} />
-              </SelectTrigger>
-              <SelectContent>
-                {originOptions.map(option => (
-                  <SelectItem key={option.id} value={option.id}>
-                    <div className="flex items-center gap-2">
-                      {option.type === 'home' ? (
-                        <Home className="w-4 h-4 text-green-500" />
-                      ) : (
-                        <Building2 className="w-4 h-4 text-blue-500" />
-                      )}
-                      <span>{option.label}</span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+        <div className="p-3 border-b bg-muted/30">
+          <div className="flex items-center gap-4 flex-wrap">
+            {/* Origin selector */}
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <Navigation className="w-4 h-4 text-muted-foreground shrink-0" />
+              <span className="text-sm font-medium shrink-0">{t('addressMap.routeFrom', 'Route from')}:</span>
+              <Select value={selectedOrigin} onValueChange={setSelectedOrigin}>
+                <SelectTrigger className="h-8 min-w-[200px] max-w-[300px]">
+                  <SelectValue placeholder={t('addressMap.selectOrigin', 'Select starting point')} />
+                </SelectTrigger>
+                <SelectContent className="bg-popover z-50">
+                  {originOptions.map(option => (
+                    <SelectItem key={option.id} value={option.id}>
+                      <div className="flex items-center gap-2">
+                        {option.type === 'home' ? (
+                          <Home className="w-4 h-4 text-green-500" />
+                        ) : (
+                          <Building2 className="w-4 h-4 text-blue-500" />
+                        )}
+                        <div className="flex flex-col">
+                          <span className="font-medium">{option.label}</span>
+                          <span className="text-xs text-muted-foreground">{option.address}, {option.city}</span>
+                        </div>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-          {/* Route info */}
-          {isCalculatingRoute ? (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="w-4 h-4 animate-spin" />
-              <span>{t('addressMap.calculatingRoute', 'Calculating route...')}</span>
-            </div>
-          ) : routeInfo ? (
-            <div className="flex items-center gap-4 text-sm">
-              <div className="flex items-center gap-1.5 text-muted-foreground">
-                <Clock className="w-4 h-4" />
-                <span className="font-medium text-foreground">{formatDuration(routeInfo.duration)}</span>
+            {/* Route info */}
+            {isCalculatingRoute ? (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>{t('addressMap.calculatingRoute', 'Calculating...')}</span>
               </div>
-              <div className="flex items-center gap-1.5 text-muted-foreground">
-                <Route className="w-4 h-4" />
-                <span className="font-medium text-foreground">{formatDistance(routeInfo.distance)}</span>
+            ) : routeInfo ? (
+              <div className="flex items-center gap-4 text-sm">
+                <div className="flex items-center gap-1.5 text-muted-foreground">
+                  <Clock className="w-4 h-4" />
+                  <span className="font-medium text-foreground">{formatDuration(routeInfo.duration)}</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-muted-foreground">
+                  <Route className="w-4 h-4" />
+                  <span className="font-medium text-foreground">{formatDistance(routeInfo.distance)}</span>
+                </div>
               </div>
+            ) : null}
+
+            {/* Space for costs - to be added later */}
+            <div className="flex items-center gap-4 text-sm ml-auto">
+              {/* Costs will be added here */}
             </div>
-          ) : null}
+          </div>
         </div>
       )}
       
