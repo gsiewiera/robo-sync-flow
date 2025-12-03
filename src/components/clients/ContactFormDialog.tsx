@@ -132,6 +132,18 @@ export const ContactFormDialog = ({
           .eq("id", clientId);
       }
 
+      // Sync billing contact to clients table
+      if (roleToSave === "billing") {
+        await supabase
+          .from("clients")
+          .update({
+            billing_person_name: payload.full_name,
+            billing_person_email: payload.email,
+            billing_person_phone: payload.phone,
+          })
+          .eq("id", clientId);
+      }
+
       onSuccess();
       onOpenChange(false);
     } catch (error: any) {

@@ -65,12 +65,6 @@ export function ClientInlineEdit({ client, onSave, onCancel }: ClientInlineEditP
     general_email: "",
     general_phone: "",
     website_url: "",
-    primary_contact_name: "",
-    primary_contact_email: "",
-    primary_contact_phone: "",
-    billing_person_name: "",
-    billing_person_email: "",
-    billing_person_phone: "",
     balance: 0,
     status: "active",
     reseller_id: "",
@@ -96,12 +90,6 @@ export function ClientInlineEdit({ client, onSave, onCancel }: ClientInlineEditP
       general_email: client.general_email || "",
       general_phone: client.general_phone || "",
       website_url: client.website_url || "",
-      primary_contact_name: client.primary_contact_name || "",
-      primary_contact_email: client.primary_contact_email || "",
-      primary_contact_phone: client.primary_contact_phone || "",
-      billing_person_name: client.billing_person_name || "",
-      billing_person_email: client.billing_person_email || "",
-      billing_person_phone: client.billing_person_phone || "",
       balance: client.balance || 0,
       status: client.status || "active",
       reseller_id: client.reseller_id || "",
@@ -256,12 +244,6 @@ export function ClientInlineEdit({ client, onSave, onCancel }: ClientInlineEditP
         general_email: formData.general_email || null,
         general_phone: formData.general_phone || null,
         website_url: formData.website_url || null,
-        primary_contact_name: formData.primary_contact_name || null,
-        primary_contact_email: formData.primary_contact_email || null,
-        primary_contact_phone: formData.primary_contact_phone || null,
-        billing_person_name: formData.billing_person_name || null,
-        billing_person_email: formData.billing_person_email || null,
-        billing_person_phone: formData.billing_person_phone || null,
         balance: formData.balance || 0,
         status: formData.status,
         reseller_id: formData.reseller_id || null,
@@ -582,33 +564,29 @@ export function ClientInlineEdit({ client, onSave, onCancel }: ClientInlineEditP
         {/* Billing Person */}
         <div className="space-y-4">
           <h3 className="text-lg font-semibold border-b pb-2">Billing Person</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label>Name</Label>
-              <Input
-                value={formData.billing_person_name}
-                onChange={(e) => setFormData({ ...formData, billing_person_name: e.target.value })}
-                placeholder="Billing contact name"
-              />
+          <p className="text-sm text-muted-foreground">
+            Billing person is managed in the Contacts tab. Add a contact with "billing" role to set them as the billing person.
+          </p>
+          {client.billing_person_name && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-muted/50 rounded-lg">
+              <div>
+                <Label className="text-muted-foreground text-xs">Name</Label>
+                <p className="text-sm font-medium">{client.billing_person_name}</p>
+              </div>
+              {client.billing_person_email && (
+                <div>
+                  <Label className="text-muted-foreground text-xs">Email</Label>
+                  <p className="text-sm font-medium">{client.billing_person_email}</p>
+                </div>
+              )}
+              {client.billing_person_phone && (
+                <div>
+                  <Label className="text-muted-foreground text-xs">Phone</Label>
+                  <p className="text-sm font-medium">{client.billing_person_phone}</p>
+                </div>
+              )}
             </div>
-            <div className="space-y-2">
-              <Label>Email</Label>
-              <Input
-                type="email"
-                value={formData.billing_person_email}
-                onChange={(e) => setFormData({ ...formData, billing_person_email: e.target.value })}
-                placeholder="Billing email"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Phone</Label>
-              <Input
-                value={formData.billing_person_phone}
-                onChange={(e) => setFormData({ ...formData, billing_person_phone: e.target.value })}
-                placeholder="Billing phone"
-              />
-            </div>
-          </div>
+          )}
         </div>
 
         {/* Assignment */}
