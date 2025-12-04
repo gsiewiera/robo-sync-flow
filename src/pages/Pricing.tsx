@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { ColumnVisibilityToggle, ColumnConfig } from "@/components/ui/column-visibility-toggle";
+import { TablePagination } from "@/components/ui/table-pagination";
 
 interface RobotPricing {
   id: string;
@@ -58,6 +59,8 @@ const Pricing = () => {
   const [vatRate, setVatRate] = useState(23);
   const [selectedPricing, setSelectedPricing] = useState<RobotPricing | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const { toast } = useToast();
 
   const columns: ColumnConfig[] = [
@@ -151,6 +154,11 @@ const Pricing = () => {
     }
     setLoading(false);
   };
+
+  // Pagination
+  const totalPages = Math.ceil(pricings.length / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const paginatedPricings = pricings.slice(startIndex, startIndex + pageSize);
 
   const formatCurrency = (amount: number, currency: string) => {
     return new Intl.NumberFormat("en-US", {
@@ -254,7 +262,7 @@ const Pricing = () => {
                   </TableCell>
                 </TableRow>
               ) : (
-                pricings.map((pricing) => (
+                paginatedPricings.map((pricing) => (
                   <TableRow 
                     key={pricing.id} 
                     className="h-9 cursor-pointer hover:bg-muted/50"
@@ -307,6 +315,16 @@ const Pricing = () => {
               )}
             </TableBody>
           </Table>
+          {pricings.length > 0 && (
+            <TablePagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              pageSize={pageSize}
+              totalItems={pricings.length}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={(size) => { setPageSize(size); setCurrentPage(1); }}
+            />
+          )}
         </Card>
       </div>
 

@@ -15,6 +15,7 @@ import { FileText, Filter, CalendarIcon, X, Check, ChevronsUpDown } from "lucide
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { ColumnVisibilityToggle, ColumnConfig } from "@/components/ui/column-visibility-toggle";
+import { TablePagination } from "@/components/ui/table-pagination";
 
 interface Invoice {
   id: string;
@@ -45,6 +46,8 @@ const Invoices = () => {
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [endDate, setEndDate] = useState<Date | undefined>();
   const [clientPopoverOpen, setClientPopoverOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const { toast } = useToast();
 
   const columns: ColumnConfig[] = [
@@ -145,6 +148,11 @@ const Invoices = () => {
       setIsLoading(false);
     }
   };
+
+  // Pagination
+  const totalPages = Math.ceil(invoices.length / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const paginatedInvoices = invoices.slice(startIndex, startIndex + pageSize);
 
   const getStatusBadge = (status: string, paidDate: string | null) => {
     if (paidDate) {
@@ -420,84 +428,94 @@ const Invoices = () => {
                 )}
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="h-9">
-                      {visibleColumns.includes("invoice_number") && (
-                        <TableHead className="py-1.5 text-xs">Invoice #</TableHead>
-                      )}
-                      {visibleColumns.includes("client") && (
-                        <TableHead className="py-1.5 text-xs">Client</TableHead>
-                      )}
-                      {visibleColumns.includes("issue_date") && (
-                        <TableHead className="py-1.5 text-xs">Issue Date</TableHead>
-                      )}
-                      {visibleColumns.includes("due_date") && (
-                        <TableHead className="py-1.5 text-xs">Due Date</TableHead>
-                      )}
-                      {visibleColumns.includes("amount_net") && (
-                        <TableHead className="py-1.5 text-xs">Amount (Net)</TableHead>
-                      )}
-                      {visibleColumns.includes("amount_gross") && (
-                        <TableHead className="py-1.5 text-xs">Amount (Gross)</TableHead>
-                      )}
-                      {visibleColumns.includes("status") && (
-                        <TableHead className="py-1.5 text-xs">Status</TableHead>
-                      )}
-                      {visibleColumns.includes("paid_date") && (
-                        <TableHead className="py-1.5 text-xs">Paid Date</TableHead>
-                      )}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {invoices.map((invoice) => (
-                      <TableRow key={invoice.id} className="h-9 hover:bg-muted/50">
+              <>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="h-9">
                         {visibleColumns.includes("invoice_number") && (
-                          <TableCell className="py-1.5 text-sm font-medium">
-                            {invoice.invoice_number}
-                          </TableCell>
+                          <TableHead className="py-1.5 text-xs">Invoice #</TableHead>
                         )}
                         {visibleColumns.includes("client") && (
-                          <TableCell className="py-1.5 text-sm">{invoice.clients?.name || "N/A"}</TableCell>
+                          <TableHead className="py-1.5 text-xs">Client</TableHead>
                         )}
                         {visibleColumns.includes("issue_date") && (
-                          <TableCell className="py-1.5 text-sm">
-                            {format(new Date(invoice.issue_date), "MMM dd, yyyy")}
-                          </TableCell>
+                          <TableHead className="py-1.5 text-xs">Issue Date</TableHead>
                         )}
                         {visibleColumns.includes("due_date") && (
-                          <TableCell className="py-1.5 text-sm">
-                            {format(new Date(invoice.due_date), "MMM dd, yyyy")}
-                          </TableCell>
+                          <TableHead className="py-1.5 text-xs">Due Date</TableHead>
                         )}
                         {visibleColumns.includes("amount_net") && (
-                          <TableCell className="py-1.5 text-sm">
-                            {invoice.amount_net.toLocaleString()} {invoice.currency}
-                          </TableCell>
+                          <TableHead className="py-1.5 text-xs">Amount (Net)</TableHead>
                         )}
                         {visibleColumns.includes("amount_gross") && (
-                          <TableCell className="py-1.5 text-sm">
-                            {invoice.amount_gross.toLocaleString()} {invoice.currency}
-                          </TableCell>
+                          <TableHead className="py-1.5 text-xs">Amount (Gross)</TableHead>
                         )}
                         {visibleColumns.includes("status") && (
-                          <TableCell className="py-1.5">
-                            {getStatusBadge(invoice.status, invoice.paid_date)}
-                          </TableCell>
+                          <TableHead className="py-1.5 text-xs">Status</TableHead>
                         )}
                         {visibleColumns.includes("paid_date") && (
-                          <TableCell className="py-1.5 text-sm">
-                            {invoice.paid_date
-                              ? format(new Date(invoice.paid_date), "MMM dd, yyyy")
-                              : "-"}
-                          </TableCell>
+                          <TableHead className="py-1.5 text-xs">Paid Date</TableHead>
                         )}
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                    </TableHeader>
+                    <TableBody>
+                      {paginatedInvoices.map((invoice) => (
+                        <TableRow key={invoice.id} className="h-9 hover:bg-muted/50">
+                          {visibleColumns.includes("invoice_number") && (
+                            <TableCell className="py-1.5 text-sm font-medium">
+                              {invoice.invoice_number}
+                            </TableCell>
+                          )}
+                          {visibleColumns.includes("client") && (
+                            <TableCell className="py-1.5 text-sm">{invoice.clients?.name || "N/A"}</TableCell>
+                          )}
+                          {visibleColumns.includes("issue_date") && (
+                            <TableCell className="py-1.5 text-sm">
+                              {format(new Date(invoice.issue_date), "MMM dd, yyyy")}
+                            </TableCell>
+                          )}
+                          {visibleColumns.includes("due_date") && (
+                            <TableCell className="py-1.5 text-sm">
+                              {format(new Date(invoice.due_date), "MMM dd, yyyy")}
+                            </TableCell>
+                          )}
+                          {visibleColumns.includes("amount_net") && (
+                            <TableCell className="py-1.5 text-sm">
+                              {invoice.amount_net.toLocaleString()} {invoice.currency}
+                            </TableCell>
+                          )}
+                          {visibleColumns.includes("amount_gross") && (
+                            <TableCell className="py-1.5 text-sm">
+                              {invoice.amount_gross.toLocaleString()} {invoice.currency}
+                            </TableCell>
+                          )}
+                          {visibleColumns.includes("status") && (
+                            <TableCell className="py-1.5">
+                              {getStatusBadge(invoice.status, invoice.paid_date)}
+                            </TableCell>
+                          )}
+                          {visibleColumns.includes("paid_date") && (
+                            <TableCell className="py-1.5 text-sm">
+                              {invoice.paid_date
+                                ? format(new Date(invoice.paid_date), "MMM dd, yyyy")
+                                : "-"}
+                            </TableCell>
+                          )}
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+                <TablePagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  pageSize={pageSize}
+                  totalItems={invoices.length}
+                  onPageChange={setCurrentPage}
+                  onPageSizeChange={(size) => { setPageSize(size); setCurrentPage(1); }}
+                />
+              </>
             )}
           </CardContent>
         </Card>
