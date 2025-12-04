@@ -24,6 +24,7 @@ import { NewContractDialog } from "@/components/contracts/NewContractDialog";
 import { TicketFormDialog } from "@/components/service/TicketFormDialog";
 import { formatMoney } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -40,6 +41,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 interface Client {
   id: string;
@@ -228,6 +230,7 @@ const ClientDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   const [client, setClient] = useState<Client | null>(null);
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [offers, setOffers] = useState<Offer[]>([]);
@@ -759,14 +762,14 @@ const ClientDetail = () => {
   return (
     <Layout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate("/clients")}>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-3 md:gap-4">
+            <Button variant="ghost" size="icon" onClick={() => navigate("/clients")} className="shrink-0">
               <ArrowLeft className="w-4 h-4" />
             </Button>
-            <div>
-              <div className="flex items-center gap-3">
-                <h1 className="text-3xl font-bold text-foreground">{client.name}</h1>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 md:gap-3 flex-wrap">
+                <h1 className="text-xl md:text-3xl font-bold text-foreground truncate">{client.name}</h1>
                 {client.status && (
                   <Badge className={statusColors[client.status]}>
                     {client.status}
@@ -775,19 +778,19 @@ const ClientDetail = () => {
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 md:gap-4 ml-11 md:ml-0">
             {client.balance !== null && (
-              <div className="text-right">
-                <p className="text-sm text-muted-foreground">Balance</p>
-                <p className={`text-2xl font-bold ${client.balance < 0 ? 'text-destructive' : 'text-success'}`}>
+              <div className="text-left md:text-right">
+                <p className="text-xs md:text-sm text-muted-foreground">Balance</p>
+                <p className={`text-lg md:text-2xl font-bold ${client.balance < 0 ? 'text-destructive' : 'text-success'}`}>
                   {formatMoney(client.balance)} PLN
                 </p>
               </div>
             )}
             {!isEditing && (
-              <Button onClick={() => setIsEditing(true)}>
+              <Button onClick={() => setIsEditing(true)} size={isMobile ? "sm" : "default"}>
                 <Edit className="h-4 w-4 mr-2" />
-                Edit Client
+                {!isMobile && "Edit Client"}
               </Button>
             )}
           </div>
@@ -806,7 +809,7 @@ const ClientDetail = () => {
         ) : (
           <>
 
-        <Card className="p-6">
+        <Card className="p-4 md:p-6">
           {/* Tags */}
           {clientTags.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-6">
@@ -825,50 +828,50 @@ const ClientDetail = () => {
           {/* Classification Section */}
           <div className="space-y-4 mb-6">
             <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">Classification</h3>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="bg-primary/5 rounded-lg p-4 border border-primary/10">
-                <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">Client Type</p>
-                <div className="flex flex-wrap gap-1.5">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+              <div className="bg-primary/5 rounded-lg p-3 md:p-4 border border-primary/10">
+                <p className="text-[10px] md:text-xs text-muted-foreground uppercase tracking-wide mb-1 md:mb-2">Client Type</p>
+                <div className="flex flex-wrap gap-1">
                   {clientTypeNames.length > 0 ? (
                     clientTypeNames.map((name, i) => (
-                      <Badge key={i} className="bg-primary/20 text-primary hover:bg-primary/30 border-0">{name}</Badge>
+                      <Badge key={i} className="bg-primary/20 text-primary hover:bg-primary/30 border-0 text-[10px] md:text-xs">{name}</Badge>
                     ))
                   ) : (
-                    <span className="text-muted-foreground italic text-sm">Not set</span>
+                    <span className="text-muted-foreground italic text-xs md:text-sm">Not set</span>
                   )}
                 </div>
               </div>
-              <div className="bg-amber-500/5 rounded-lg p-4 border border-amber-500/10">
-                <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">Client Size</p>
-                <div className="flex flex-wrap gap-1.5">
+              <div className="bg-amber-500/5 rounded-lg p-3 md:p-4 border border-amber-500/10">
+                <p className="text-[10px] md:text-xs text-muted-foreground uppercase tracking-wide mb-1 md:mb-2">Client Size</p>
+                <div className="flex flex-wrap gap-1">
                   {clientSizeName ? (
-                    <Badge className="bg-amber-500/20 text-amber-700 dark:text-amber-300 hover:bg-amber-500/30 border-0">{clientSizeName}</Badge>
+                    <Badge className="bg-amber-500/20 text-amber-700 dark:text-amber-300 hover:bg-amber-500/30 border-0 text-[10px] md:text-xs">{clientSizeName}</Badge>
                   ) : (
-                    <span className="text-muted-foreground italic text-sm">Not set</span>
+                    <span className="text-muted-foreground italic text-xs md:text-sm">Not set</span>
                   )}
                 </div>
               </div>
-              <div className="bg-blue-500/5 rounded-lg p-4 border border-blue-500/10">
-                <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">Market</p>
-                <div className="flex flex-wrap gap-1.5">
+              <div className="bg-blue-500/5 rounded-lg p-3 md:p-4 border border-blue-500/10">
+                <p className="text-[10px] md:text-xs text-muted-foreground uppercase tracking-wide mb-1 md:mb-2">Market</p>
+                <div className="flex flex-wrap gap-1">
                   {marketNames.length > 0 ? (
                     marketNames.map((name, i) => (
-                      <Badge key={i} className="bg-blue-500/20 text-blue-700 dark:text-blue-300 hover:bg-blue-500/30 border-0">{name}</Badge>
+                      <Badge key={i} className="bg-blue-500/20 text-blue-700 dark:text-blue-300 hover:bg-blue-500/30 border-0 text-[10px] md:text-xs">{name}</Badge>
                     ))
                   ) : (
-                    <span className="text-muted-foreground italic text-sm">Not set</span>
+                    <span className="text-muted-foreground italic text-xs md:text-sm">Not set</span>
                   )}
                 </div>
               </div>
-              <div className="bg-emerald-500/5 rounded-lg p-4 border border-emerald-500/10">
-                <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">Segment</p>
-                <div className="flex flex-wrap gap-1.5">
+              <div className="bg-emerald-500/5 rounded-lg p-3 md:p-4 border border-emerald-500/10">
+                <p className="text-[10px] md:text-xs text-muted-foreground uppercase tracking-wide mb-1 md:mb-2">Segment</p>
+                <div className="flex flex-wrap gap-1">
                   {segmentNames.length > 0 ? (
                     segmentNames.map((name, i) => (
-                      <Badge key={i} className="bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/30 border-0">{name}</Badge>
+                      <Badge key={i} className="bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/30 border-0 text-[10px] md:text-xs">{name}</Badge>
                     ))
                   ) : (
-                    <span className="text-muted-foreground italic text-sm">Not set</span>
+                    <span className="text-muted-foreground italic text-xs md:text-sm">Not set</span>
                   )}
                 </div>
               </div>
@@ -881,9 +884,9 @@ const ClientDetail = () => {
             )}
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
             {/* Contact Section */}
-            <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
+            <div className="space-y-3 md:space-y-4 p-3 md:p-4 bg-muted/30 rounded-lg">
               <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground flex items-center gap-2">
                 <Mail className="w-4 h-4" />
                 Contact
@@ -916,7 +919,7 @@ const ClientDetail = () => {
             </div>
 
             {/* Location Section */}
-            <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
+            <div className="space-y-3 md:space-y-4 p-3 md:p-4 bg-muted/30 rounded-lg">
               <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground flex items-center gap-2">
                 {addresses.length > 0 ? (
                   <button
@@ -950,7 +953,7 @@ const ClientDetail = () => {
             </div>
 
             {/* Assignment Section */}
-            <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
+            <div className="space-y-3 md:space-y-4 p-3 md:p-4 bg-muted/30 rounded-lg">
               <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground flex items-center gap-2">
                 <User className="w-4 h-4" />
                 Assignment
@@ -978,56 +981,70 @@ const ClientDetail = () => {
         </Card>
 
         <Tabs defaultValue="notes" className="w-full">
-          <TabsList className="w-full h-auto flex flex-wrap justify-start gap-1 p-1.5">
-            <TabsTrigger value="ai">
-              <Sparkles className="w-4 h-4 mr-2" />
-              AI
-            </TabsTrigger>
-            <TabsTrigger value="notes">
-              <StickyNote className="w-4 h-4 mr-2" />
-              Notes ({notes.length})
-            </TabsTrigger>
-            <TabsTrigger value="tasks">
-              <CheckSquare className="w-4 h-4 mr-2" />
-              Tasks ({tasks.length})
-            </TabsTrigger>
-            <TabsTrigger value="offers">
-              <ShoppingCart className="w-4 h-4 mr-2" />
-              Offers ({offers.length})
-            </TabsTrigger>
-            <TabsTrigger value="contacts">
-              <Users className="w-4 h-4 mr-2" />
-              Contacts ({contacts.length})
-            </TabsTrigger>
-            <TabsTrigger value="robots">
-              <Bot className="w-4 h-4 mr-2" />
-              Robots ({robots.length})
-            </TabsTrigger>
-            <TabsTrigger value="contracts">
-              <FileText className="w-4 h-4 mr-2" />
-              Contracts ({contracts.length})
-            </TabsTrigger>
-            <TabsTrigger value="invoices">
-              <Receipt className="w-4 h-4 mr-2" />
-              Payments ({invoices.length})
-            </TabsTrigger>
-            <TabsTrigger value="tickets">
-              <Wrench className="w-4 h-4 mr-2" />
-              Tickets ({tickets.length})
-            </TabsTrigger>
-            <TabsTrigger value="campaigns">
-              <Megaphone className="w-4 h-4 mr-2" />
-              Campaigns ({campaigns.length})
-            </TabsTrigger>
-            <TabsTrigger value="documents">
-              <FolderOpen className="w-4 h-4 mr-2" />
-              Docs ({documents.length})
-            </TabsTrigger>
-            <TabsTrigger value="addresses">
-              <MapPinned className="w-4 h-4 mr-2" />
-              Addresses ({addresses.length})
-            </TabsTrigger>
-          </TabsList>
+          <ScrollArea className="w-full whitespace-nowrap">
+            <TabsList className="w-max md:w-full h-auto inline-flex md:flex md:flex-wrap justify-start gap-1 p-1.5">
+              <TabsTrigger value="ai" className="shrink-0">
+                <Sparkles className="w-4 h-4 md:mr-2" />
+                <span className="hidden md:inline">AI</span>
+              </TabsTrigger>
+              <TabsTrigger value="notes" className="shrink-0">
+                <StickyNote className="w-4 h-4 md:mr-2" />
+                <span className="hidden md:inline">Notes</span>
+                <span className="ml-1 text-xs">({notes.length})</span>
+              </TabsTrigger>
+              <TabsTrigger value="tasks" className="shrink-0">
+                <CheckSquare className="w-4 h-4 md:mr-2" />
+                <span className="hidden md:inline">Tasks</span>
+                <span className="ml-1 text-xs">({tasks.length})</span>
+              </TabsTrigger>
+              <TabsTrigger value="offers" className="shrink-0">
+                <ShoppingCart className="w-4 h-4 md:mr-2" />
+                <span className="hidden md:inline">Offers</span>
+                <span className="ml-1 text-xs">({offers.length})</span>
+              </TabsTrigger>
+              <TabsTrigger value="contacts" className="shrink-0">
+                <Users className="w-4 h-4 md:mr-2" />
+                <span className="hidden md:inline">Contacts</span>
+                <span className="ml-1 text-xs">({contacts.length})</span>
+              </TabsTrigger>
+              <TabsTrigger value="robots" className="shrink-0">
+                <Bot className="w-4 h-4 md:mr-2" />
+                <span className="hidden md:inline">Robots</span>
+                <span className="ml-1 text-xs">({robots.length})</span>
+              </TabsTrigger>
+              <TabsTrigger value="contracts" className="shrink-0">
+                <FileText className="w-4 h-4 md:mr-2" />
+                <span className="hidden md:inline">Contracts</span>
+                <span className="ml-1 text-xs">({contracts.length})</span>
+              </TabsTrigger>
+              <TabsTrigger value="invoices" className="shrink-0">
+                <Receipt className="w-4 h-4 md:mr-2" />
+                <span className="hidden md:inline">Payments</span>
+                <span className="ml-1 text-xs">({invoices.length})</span>
+              </TabsTrigger>
+              <TabsTrigger value="tickets" className="shrink-0">
+                <Wrench className="w-4 h-4 md:mr-2" />
+                <span className="hidden md:inline">Tickets</span>
+                <span className="ml-1 text-xs">({tickets.length})</span>
+              </TabsTrigger>
+              <TabsTrigger value="campaigns" className="shrink-0">
+                <Megaphone className="w-4 h-4 md:mr-2" />
+                <span className="hidden md:inline">Campaigns</span>
+                <span className="ml-1 text-xs">({campaigns.length})</span>
+              </TabsTrigger>
+              <TabsTrigger value="documents" className="shrink-0">
+                <FolderOpen className="w-4 h-4 md:mr-2" />
+                <span className="hidden md:inline">Docs</span>
+                <span className="ml-1 text-xs">({documents.length})</span>
+              </TabsTrigger>
+              <TabsTrigger value="addresses" className="shrink-0">
+                <MapPinned className="w-4 h-4 md:mr-2" />
+                <span className="hidden md:inline">Addresses</span>
+                <span className="ml-1 text-xs">({addresses.length})</span>
+              </TabsTrigger>
+            </TabsList>
+            <ScrollBar orientation="horizontal" className="md:hidden" />
+          </ScrollArea>
 
           <TabsContent value="ai" className="space-y-4">
             <ClientAISummary
@@ -1104,25 +1121,25 @@ const ClientDetail = () => {
             {contracts.map((contract) => (
               <Card
                 key={contract.id}
-                className="p-4 hover:shadow-lg transition-shadow cursor-pointer"
+                className="p-3 md:p-4 hover:shadow-lg transition-shadow cursor-pointer"
                 onClick={() => navigate(`/contracts/${contract.id}`)}
               >
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
                   <div>
-                    <div className="flex items-center gap-3">
-                      <h3 className="font-semibold">{contract.contract_number}</h3>
+                    <div className="flex items-center gap-2 md:gap-3 flex-wrap">
+                      <h3 className="font-semibold text-sm md:text-base">{contract.contract_number}</h3>
                       <Badge className={statusColors[contract.status]}>
                         {contract.status.replace("_", " ")}
                       </Badge>
                     </div>
                     {contract.start_date && (
-                      <p className="text-sm text-muted-foreground mt-1">
+                      <p className="text-xs md:text-sm text-muted-foreground mt-1">
                         Start: {new Date(contract.start_date).toLocaleDateString()}
                       </p>
                     )}
                   </div>
                   {contract.monthly_payment && (
-                    <p className="text-lg font-bold text-primary">
+                    <p className="text-base md:text-lg font-bold text-primary">
                       {formatMoney(contract.monthly_payment)} PLN/mo
                     </p>
                   )}
@@ -1184,44 +1201,45 @@ const ClientDetail = () => {
               </Button>
             </div>
             {contacts.map((contact) => (
-              <Card key={contact.id} className="p-4 hover:shadow-lg transition-shadow">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3">
-                      <h3 className="font-semibold">{contact.full_name}</h3>
-                      <Badge variant="secondary">
+              <Card key={contact.id} className="p-3 md:p-4 hover:shadow-lg transition-shadow">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="font-semibold text-sm md:text-base">{contact.full_name}</h3>
+                      <Badge variant="secondary" className="text-xs">
                         {contact.role.charAt(0).toUpperCase() + contact.role.slice(1)}
                       </Badge>
                       {contact.is_primary && (
-                        <Badge variant="default" className="bg-primary">
+                        <Badge variant="default" className="bg-primary text-xs">
                           Primary
                         </Badge>
                       )}
                     </div>
-                    <div className="flex flex-wrap items-center gap-4 mt-2 text-sm text-muted-foreground">
+                    <div className="flex flex-col md:flex-row md:flex-wrap md:items-center gap-1 md:gap-4 mt-2 text-xs md:text-sm text-muted-foreground">
                       {contact.email && (
-                        <div className="flex items-center gap-1">
-                          <Mail className="w-3 h-3" />
-                          <span>{contact.email}</span>
+                        <div className="flex items-center gap-1 truncate">
+                          <Mail className="w-3 h-3 shrink-0" />
+                          <span className="truncate">{contact.email}</span>
                         </div>
                       )}
                       {contact.phone && (
                         <div className="flex items-center gap-1">
-                          <Phone className="w-3 h-3" />
+                          <Phone className="w-3 h-3 shrink-0" />
                           <span>{contact.phone}</span>
                         </div>
                       )}
                     </div>
                     {contact.notes && (
-                      <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
+                      <p className="text-xs md:text-sm text-muted-foreground mt-2 line-clamp-2">
                         {contact.notes}
                       </p>
                     )}
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 shrink-0">
                     <Button
                       variant="ghost"
                       size="icon"
+                      className="h-8 w-8"
                       onClick={() => handleEditContact(contact)}
                     >
                       <Pencil className="w-4 h-4" />
@@ -1229,6 +1247,7 @@ const ClientDetail = () => {
                     <Button
                       variant="ghost"
                       size="icon"
+                      className="h-8 w-8"
                       onClick={() => setContactToDelete(contact)}
                     >
                       <Trash2 className="w-4 h-4 text-destructive" />
