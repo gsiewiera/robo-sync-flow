@@ -114,8 +114,10 @@ const Campaigns = () => {
   const [selectedDealStatuses, setSelectedDealStatuses] = useState<string[]>([]);
   const [cities, setCities] = useState<string[]>([]);
   
+  // Template view mode: "list" or "form"
+  const [templateViewMode, setTemplateViewMode] = useState<"list" | "form">("list");
+  
   // Template form state
-  const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<EmailTemplate | null>(null);
   const [templateName, setTemplateName] = useState("");
   const [templateSubject, setTemplateSubject] = useState("");
@@ -514,7 +516,7 @@ const Campaigns = () => {
   };
 
   const resetTemplateForm = () => {
-    setTemplateDialogOpen(false);
+    setTemplateViewMode("list");
     setEditingTemplate(null);
     setTemplateName("");
     setTemplateSubject("");
@@ -558,7 +560,7 @@ const Campaigns = () => {
     setTemplateName(template.name);
     setTemplateSubject(template.subject);
     setTemplateBody(template.body);
-    setTemplateDialogOpen(true);
+    setTemplateViewMode("form");
   };
 
   // Pagination for current tab
@@ -832,124 +834,132 @@ const Campaigns = () => {
 
             {/* Templates Tab */}
             <TabsContent value="templates">
-              <div className="flex justify-end mb-4">
-                <Dialog open={templateDialogOpen} onOpenChange={(open) => !open && resetTemplateForm()}>
-                  <DialogTrigger asChild>
-                    <Button size="sm" onClick={() => setTemplateDialogOpen(true)}>
+              {templateViewMode === "form" ? (
+                <Card>
+                  <CardHeader className="pb-4">
+                    <div className="flex items-center gap-2">
+                      <Button variant="ghost" size="icon" onClick={resetTemplateForm}>
+                        <ArrowLeft className="w-4 h-4" />
+                      </Button>
+                      <CardTitle className="text-lg">
+                        {editingTemplate ? "Edit Template" : "Create Template"}
+                      </CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <Label>Template Name</Label>
+                      <Input
+                        value={templateName}
+                        onChange={(e) => setTemplateName(e.target.value)}
+                        placeholder="Enter template name"
+                      />
+                    </div>
+                    <div>
+                      <Label>Email Subject</Label>
+                      <Input
+                        value={templateSubject}
+                        onChange={(e) => setTemplateSubject(e.target.value)}
+                        placeholder="Enter email subject"
+                      />
+                    </div>
+                    <div>
+                      <Label>Email Body</Label>
+                      <Textarea
+                        value={templateBody}
+                        onChange={(e) => setTemplateBody(e.target.value)}
+                        placeholder="Enter email body (HTML supported)"
+                        className="min-h-[300px]"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Use {`{{client_name}}`} for client name placeholder
+                      </p>
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <Button variant="outline" onClick={resetTemplateForm}>Cancel</Button>
+                      <Button onClick={saveTemplate}>
+                        {editingTemplate ? "Update" : "Create"} Template
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                <>
+                  <div className="flex justify-end mb-4">
+                    <Button size="sm" onClick={() => setTemplateViewMode("form")}>
                       <Plus className="w-4 h-4 mr-1" />
                       New Template
                     </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-2xl">
-                    <DialogHeader>
-                      <DialogTitle>{editingTemplate ? "Edit Template" : "Create Template"}</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <div>
-                        <Label>Template Name</Label>
-                        <Input
-                          value={templateName}
-                          onChange={(e) => setTemplateName(e.target.value)}
-                          placeholder="Enter template name"
-                        />
-                      </div>
-                      <div>
-                        <Label>Email Subject</Label>
-                        <Input
-                          value={templateSubject}
-                          onChange={(e) => setTemplateSubject(e.target.value)}
-                          placeholder="Enter email subject"
-                        />
-                      </div>
-                      <div>
-                        <Label>Email Body</Label>
-                        <Textarea
-                          value={templateBody}
-                          onChange={(e) => setTemplateBody(e.target.value)}
-                          placeholder="Enter email body (HTML supported)"
-                          className="min-h-[200px]"
-                        />
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Use {`{{client_name}}`} for client name placeholder
-                        </p>
-                      </div>
-                      <div className="flex justify-end gap-2">
-                        <Button variant="outline" onClick={resetTemplateForm}>Cancel</Button>
-                        <Button onClick={saveTemplate}>
-                          {editingTemplate ? "Update" : "Create"} Template
-                        </Button>
-                      </div>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              </div>
+                  </div>
 
-              {loading ? (
-                <div className="space-y-2">
-                  {[1, 2, 3].map(i => (
-                    <div key={i} className="h-10 bg-muted animate-pulse rounded" />
-                  ))}
-                </div>
-              ) : templates.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <FileText className="w-10 h-10 mx-auto mb-3 opacity-50" />
-                  <p className="text-sm">No email templates yet</p>
-                </div>
-              ) : (
-                <>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Template Name</TableHead>
-                        <TableHead>Subject</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Created</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {paginatedTemplates.map(template => (
-                        <TableRow key={template.id}>
-                          <TableCell className="font-medium">{template.name}</TableCell>
-                          <TableCell className="text-sm">{template.subject}</TableCell>
-                          <TableCell>
-                            <Badge variant={template.is_active ? "default" : "secondary"}>
-                              {template.is_active ? "Active" : "Inactive"}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
-                            {format(new Date(template.created_at), "MMM dd, yyyy")}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex justify-end gap-1">
-                              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => editTemplate(template)}>
-                                <Pencil className="w-3.5 h-3.5" />
-                              </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className="h-7 w-7"
-                                onClick={() => {
-                                  setItemToDelete({ type: "template", id: template.id, name: template.name });
-                                  setDeleteDialogOpen(true);
-                                }}
-                              >
-                                <Trash2 className="w-3.5 h-3.5 text-destructive" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
+                  {loading ? (
+                    <div className="space-y-2">
+                      {[1, 2, 3].map(i => (
+                        <div key={i} className="h-10 bg-muted animate-pulse rounded" />
                       ))}
-                    </TableBody>
-                  </Table>
-                  <TablePagination
-                    currentPage={currentPage}
-                    totalPages={Math.ceil(templates.length / pageSize)}
-                    pageSize={pageSize}
-                    totalItems={templates.length}
-                    onPageChange={setCurrentPage}
-                    onPageSizeChange={(size) => { setPageSize(size); setCurrentPage(1); }}
-                  />
+                    </div>
+                  ) : templates.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <FileText className="w-10 h-10 mx-auto mb-3 opacity-50" />
+                      <p className="text-sm">No email templates yet</p>
+                    </div>
+                  ) : (
+                    <>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Template Name</TableHead>
+                            <TableHead>Subject</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Created</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {paginatedTemplates.map(template => (
+                            <TableRow key={template.id}>
+                              <TableCell className="font-medium">{template.name}</TableCell>
+                              <TableCell className="text-sm">{template.subject}</TableCell>
+                              <TableCell>
+                                <Badge variant={template.is_active ? "default" : "secondary"}>
+                                  {template.is_active ? "Active" : "Inactive"}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="text-sm text-muted-foreground">
+                                {format(new Date(template.created_at), "MMM dd, yyyy")}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <div className="flex justify-end gap-1">
+                                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => editTemplate(template)}>
+                                    <Pencil className="w-3.5 h-3.5" />
+                                  </Button>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="icon" 
+                                    className="h-7 w-7"
+                                    onClick={() => {
+                                      setItemToDelete({ type: "template", id: template.id, name: template.name });
+                                      setDeleteDialogOpen(true);
+                                    }}
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                      <TablePagination
+                        currentPage={currentPage}
+                        totalPages={Math.ceil(templates.length / pageSize)}
+                        pageSize={pageSize}
+                        totalItems={templates.length}
+                        onPageChange={setCurrentPage}
+                        onPageSizeChange={(size) => { setPageSize(size); setCurrentPage(1); }}
+                      />
+                    </>
+                  )}
                 </>
               )}
             </TabsContent>
