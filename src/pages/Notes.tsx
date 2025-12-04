@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Plus, Search, ListTodo, TableIcon, Users, CalendarIcon, BarChart3 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { TablePagination } from "@/components/ui/table-pagination";
 import {
   Table,
   TableBody,
@@ -97,6 +98,8 @@ const Notes = () => {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editingNote, setEditingNote] = useState<Note | null>(null);
   const [viewMode, setViewMode] = useState<"table" | "grouped" | "stats">("table");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
 
   useEffect(() => {
     fetchNotes();
@@ -180,6 +183,11 @@ const Notes = () => {
 
     return matchesSearch && matchesClient && matchesType && matchesSalesperson && matchesDate;
   });
+
+  // Pagination for table view
+  const totalPages = Math.ceil(filteredNotes.length / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const paginatedNotes = filteredNotes.slice(startIndex, startIndex + pageSize);
 
   const handlePresetChange = (preset: DatePreset) => {
     setDatePreset(preset);
@@ -454,7 +462,7 @@ const Notes = () => {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filteredNotes.map((note) => (
+                    paginatedNotes.map((note) => (
                       <TableRow
                         key={note.id}
                         className="h-9 cursor-pointer hover:bg-muted/50"
@@ -500,6 +508,19 @@ const Notes = () => {
                 </TableBody>
               </Table>
             </div>
+            {filteredNotes.length > 0 && (
+              <TablePagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                pageSize={pageSize}
+                totalItems={filteredNotes.length}
+                onPageChange={setCurrentPage}
+                onPageSizeChange={(size) => {
+                  setPageSize(size);
+                  setCurrentPage(1);
+                }}
+              />
+            )}
           </>
         ) : viewMode === "grouped" ? (
           <>

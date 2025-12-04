@@ -34,6 +34,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Package, Plus, Pencil, Trash2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { ColumnVisibilityToggle, ColumnConfig } from "@/components/ui/column-visibility-toggle";
+import { TablePagination } from "@/components/ui/table-pagination";
 
 interface Item {
   id: string;
@@ -51,6 +52,8 @@ const Items = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Item | null>(null);
   const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const { toast } = useToast();
 
   const columns: ColumnConfig[] = [
@@ -82,6 +85,11 @@ const Items = () => {
     vat_rate: "23",
     is_active: true,
   });
+
+  // Pagination
+  const totalPages = Math.ceil(items.length / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const paginatedItems = items.slice(startIndex, startIndex + pageSize);
 
   useEffect(() => {
     fetchItems();
@@ -384,7 +392,7 @@ const Items = () => {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  items.map((item) => {
+                  paginatedItems.map((item) => {
                     const priceGross = item.price_net * (1 + item.vat_rate / 100);
                     return (
                       <TableRow key={item.id} className="h-9">
@@ -449,12 +457,22 @@ const Items = () => {
                   })
                 )}
               </TableBody>
-            </Table>
-          </div>
-        </Card>
-      </div>
-    </Layout>
-  );
-};
+              </Table>
+            </div>
+            {items.length > 0 && (
+              <TablePagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                pageSize={pageSize}
+                totalItems={items.length}
+                onPageChange={setCurrentPage}
+                onPageSizeChange={(size) => { setPageSize(size); setCurrentPage(1); }}
+              />
+            )}
+          </Card>
+        </div>
+      </Layout>
+    );
+  };
 
 export default Items;

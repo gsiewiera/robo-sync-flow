@@ -34,6 +34,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { TablePagination } from "@/components/ui/table-pagination";
 
 interface RobotModel {
   id: string;
@@ -59,6 +60,8 @@ const RobotModels = () => {
   const [selectedModel, setSelectedModel] = useState<RobotModel | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [modelToDelete, setModelToDelete] = useState<RobotModel | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
 
   useEffect(() => {
     checkAdminRole();
@@ -141,6 +144,11 @@ const RobotModels = () => {
     const matchesManufacturer = manufacturerFilter === "all" || model.manufacturer === manufacturerFilter;
     return matchesSearch && matchesType && matchesManufacturer;
   });
+
+  // Pagination
+  const totalPages = Math.ceil(filteredModels.length / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const paginatedModels = filteredModels.slice(startIndex, startIndex + pageSize);
 
   return (
     <Layout>
@@ -228,7 +236,7 @@ const RobotModels = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredModels.map((model) => (
+                  {paginatedModels.map((model) => (
                     <TableRow 
                       key={model.id} 
                       className="h-10 cursor-pointer hover:bg-muted/50"
@@ -276,6 +284,15 @@ const RobotModels = () => {
                 </TableBody>
               </Table>
             </div>
+            <TablePagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              pageSize={pageSize}
+              totalItems={filteredModels.length}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={(size) => { setPageSize(size); setCurrentPage(1); }}
+            />
+          </>
           )}
         </CardContent>
       </Card>

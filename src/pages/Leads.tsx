@@ -20,6 +20,7 @@ import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { NewOfferDialog } from "@/components/offers/NewOfferDialog";
 import { ColumnVisibilityToggle, ColumnConfig } from "@/components/ui/column-visibility-toggle";
+import { TablePagination } from "@/components/ui/table-pagination";
 
 interface Lead {
   id: string;
@@ -88,6 +89,8 @@ const Leads = () => {
     thisMonth: 0,
     overdueFollowUps: 0,
   });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -260,6 +263,11 @@ const Leads = () => {
       setIsLoading(false);
     }
   };
+
+  // Pagination
+  const totalPages = Math.ceil(leads.length / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const paginatedLeads = leads.slice(startIndex, startIndex + pageSize);
 
   const handleRowClick = (offerId: string) => {
     navigate(`/offers/${offerId}`);
@@ -506,121 +514,134 @@ const Leads = () => {
                 </p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="h-9">
-                      {visibleColumns.includes("offer_number") && <TableHead className="py-1.5 text-xs">Offer #</TableHead>}
-                      {visibleColumns.includes("client") && <TableHead className="py-1.5 text-xs">Client</TableHead>}
-                      {visibleColumns.includes("salesperson") && <TableHead className="py-1.5 text-xs">Salesperson</TableHead>}
-                      {visibleColumns.includes("status") && <TableHead className="py-1.5 text-xs">Status</TableHead>}
-                      {visibleColumns.includes("next_action") && <TableHead className="py-1.5 text-xs">Next Action</TableHead>}
-                      {visibleColumns.includes("last_contact") && <TableHead className="py-1.5 text-xs">Last Contact</TableHead>}
-                      {visibleColumns.includes("value") && <TableHead className="py-1.5 text-xs">Value</TableHead>}
-                      {visibleColumns.includes("margin") && <TableHead className="py-1.5 text-xs text-emerald-600">Margin</TableHead>}
-                      {visibleColumns.includes("created") && <TableHead className="py-1.5 text-xs">Created</TableHead>}
-                      <TableHead className="w-20 py-1.5 text-xs">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {leads.map((lead) => (
-                      <TableRow 
-                        key={lead.id} 
-                        className="h-9 hover:bg-muted/50 cursor-pointer"
-                        onClick={() => handleRowClick(lead.id)}
-                      >
-                        {visibleColumns.includes("offer_number") && (
-                          <TableCell className="py-1.5 text-sm font-medium">
-                            {lead.offer_number}
-                          </TableCell>
-                        )}
-                        {visibleColumns.includes("client") && (
+              <>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="h-9">
+                        {visibleColumns.includes("offer_number") && <TableHead className="py-1.5 text-xs">Offer #</TableHead>}
+                        {visibleColumns.includes("client") && <TableHead className="py-1.5 text-xs">Client</TableHead>}
+                        {visibleColumns.includes("salesperson") && <TableHead className="py-1.5 text-xs">Salesperson</TableHead>}
+                        {visibleColumns.includes("status") && <TableHead className="py-1.5 text-xs">Status</TableHead>}
+                        {visibleColumns.includes("next_action") && <TableHead className="py-1.5 text-xs">Next Action</TableHead>}
+                        {visibleColumns.includes("last_contact") && <TableHead className="py-1.5 text-xs">Last Contact</TableHead>}
+                        {visibleColumns.includes("value") && <TableHead className="py-1.5 text-xs">Value</TableHead>}
+                        {visibleColumns.includes("margin") && <TableHead className="py-1.5 text-xs text-emerald-600">Margin</TableHead>}
+                        {visibleColumns.includes("created") && <TableHead className="py-1.5 text-xs">Created</TableHead>}
+                        <TableHead className="w-20 py-1.5 text-xs">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {paginatedLeads.map((lead) => (
+                        <TableRow 
+                          key={lead.id} 
+                          className="h-9 hover:bg-muted/50 cursor-pointer"
+                          onClick={() => handleRowClick(lead.id)}
+                        >
+                          {visibleColumns.includes("offer_number") && (
+                            <TableCell className="py-1.5 text-sm font-medium">
+                              {lead.offer_number}
+                            </TableCell>
+                          )}
+                          {visibleColumns.includes("client") && (
+                            <TableCell className="py-1.5">
+                              <div className="flex items-center gap-1.5">
+                                <Building2 className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                                <span className="text-sm truncate max-w-[150px]">{lead.clients?.name || "N/A"}</span>
+                              </div>
+                            </TableCell>
+                          )}
+                          {visibleColumns.includes("salesperson") && (
+                            <TableCell className="py-1.5 text-sm text-muted-foreground">
+                              {lead.salesperson_name || "-"}
+                            </TableCell>
+                          )}
+                          {visibleColumns.includes("status") && (
+                            <TableCell className="py-1.5">
+                              {getLeadStatusBadge(lead.lead_status)}
+                            </TableCell>
+                          )}
+                          {visibleColumns.includes("next_action") && (
+                            <TableCell className="py-1.5">
+                              {lead.next_action_date ? (
+                                <div className="flex items-center gap-1">
+                                  <span className="text-xs">{format(new Date(lead.next_action_date), "MMM dd")}</span>
+                                  {getNextActionStatus(lead.next_action_date)}
+                                </div>
+                              ) : (
+                                <span className="text-muted-foreground text-xs">-</span>
+                              )}
+                            </TableCell>
+                          )}
+                          {visibleColumns.includes("last_contact") && (
+                            <TableCell className="py-1.5 text-xs text-muted-foreground">
+                              {lead.last_contact_date 
+                                ? format(new Date(lead.last_contact_date), "MMM dd")
+                                : "-"
+                              }
+                            </TableCell>
+                          )}
+                          {visibleColumns.includes("value") && (
+                            <TableCell className="py-1.5 text-xs">
+                              {lead.total_price 
+                                ? `${lead.total_price.toLocaleString()} ${lead.currency}`
+                                : "-"
+                              }
+                            </TableCell>
+                          )}
+                          {visibleColumns.includes("margin") && (
+                            <TableCell className="py-1.5 text-xs text-emerald-500 font-medium">
+                              {leadMargins[lead.id] 
+                                ? `${leadMargins[lead.id].toLocaleString()}`
+                                : "-"
+                              }
+                            </TableCell>
+                          )}
+                          {visibleColumns.includes("created") && (
+                            <TableCell className="py-1.5 text-xs text-muted-foreground">
+                              {format(new Date(lead.created_at), "MMM dd")}
+                            </TableCell>
+                          )}
                           <TableCell className="py-1.5">
-                            <div className="flex items-center gap-1.5">
-                              <Building2 className="w-3 h-3 text-muted-foreground flex-shrink-0" />
-                              <span className="text-sm truncate max-w-[150px]">{lead.clients?.name || "N/A"}</span>
+                            <div className="flex gap-0.5">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 w-6 p-0"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate(`/offers/${lead.id}`);
+                                }}
+                              >
+                                <Eye className="w-3.5 h-3.5" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 w-6 p-0"
+                                onClick={(e) => handleEditLead(lead, e)}
+                              >
+                                <Edit className="w-3.5 h-3.5" />
+                              </Button>
                             </div>
                           </TableCell>
-                        )}
-                        {visibleColumns.includes("salesperson") && (
-                          <TableCell className="py-1.5 text-sm text-muted-foreground">
-                            {lead.salesperson_name || "-"}
-                          </TableCell>
-                        )}
-                        {visibleColumns.includes("status") && (
-                          <TableCell className="py-1.5">
-                            {getLeadStatusBadge(lead.lead_status)}
-                          </TableCell>
-                        )}
-                        {visibleColumns.includes("next_action") && (
-                          <TableCell className="py-1.5">
-                            {lead.next_action_date ? (
-                              <div className="flex items-center gap-1">
-                                <span className="text-xs">{format(new Date(lead.next_action_date), "MMM dd")}</span>
-                                {getNextActionStatus(lead.next_action_date)}
-                              </div>
-                            ) : (
-                              <span className="text-muted-foreground text-xs">-</span>
-                            )}
-                          </TableCell>
-                        )}
-                        {visibleColumns.includes("last_contact") && (
-                          <TableCell className="py-1.5 text-xs text-muted-foreground">
-                            {lead.last_contact_date 
-                              ? format(new Date(lead.last_contact_date), "MMM dd")
-                              : "-"
-                            }
-                          </TableCell>
-                        )}
-                        {visibleColumns.includes("value") && (
-                          <TableCell className="py-1.5 text-xs">
-                            {lead.total_price 
-                              ? `${lead.total_price.toLocaleString()} ${lead.currency}`
-                              : "-"
-                            }
-                          </TableCell>
-                        )}
-                        {visibleColumns.includes("margin") && (
-                          <TableCell className="py-1.5 text-xs text-emerald-500 font-medium">
-                            {leadMargins[lead.id] 
-                              ? `${leadMargins[lead.id].toLocaleString()}`
-                              : "-"
-                            }
-                          </TableCell>
-                        )}
-                        {visibleColumns.includes("created") && (
-                          <TableCell className="py-1.5 text-xs text-muted-foreground">
-                            {format(new Date(lead.created_at), "MMM dd")}
-                          </TableCell>
-                        )}
-                        <TableCell className="py-1.5">
-                          <div className="flex gap-0.5">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 w-6 p-0"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                navigate(`/offers/${lead.id}`);
-                              }}
-                            >
-                              <Eye className="w-3.5 h-3.5" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 w-6 p-0"
-                              onClick={(e) => handleEditLead(lead, e)}
-                            >
-                              <Edit className="w-3.5 h-3.5" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+                <TablePagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  pageSize={pageSize}
+                  totalItems={leads.length}
+                  onPageChange={setCurrentPage}
+                  onPageSizeChange={(size) => {
+                    setPageSize(size);
+                    setCurrentPage(1);
+                  }}
+                />
+              </>
             )}
           </CardContent>
         </Card>
