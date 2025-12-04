@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useTranslation } from "react-i18next";
-import { CheckCircle, Circle, Eye, Edit, Filter, X, ChevronDown, ArrowUpDown, ArrowUp, ArrowDown, Flag } from "lucide-react";
+import { Eye, Edit, Filter, X, ChevronDown, ArrowUpDown, ArrowUp, ArrowDown, Flag } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { TaskFormSheet } from "@/components/tasks/TaskFormSheet";
@@ -417,7 +417,6 @@ const Tasks = () => {
           <Table>
             <TableHeader>
               <TableRow className="h-9">
-                <TableHead className="w-8 py-1.5"></TableHead>
                 {visibleColumns.includes("title") && <TableHead className="py-1.5 text-xs">Title</TableHead>}
                 {visibleColumns.includes("client") && <TableHead className="py-1.5 text-xs">Client</TableHead>}
                 {visibleColumns.includes("priority") && <TableHead className="py-1.5 text-xs">Priority</TableHead>}
@@ -440,13 +439,10 @@ const Tasks = () => {
             </TableHeader>
             <TableBody>
               {currentRecords.length === 0 ? <TableRow>
-                  <TableCell colSpan={visibleColumns.length + 2} className="text-center py-6 text-muted-foreground text-sm">
+                  <TableCell colSpan={visibleColumns.length + 1} className="text-center py-6 text-muted-foreground text-sm">
                     No tasks found
                   </TableCell>
                 </TableRow> : currentRecords.map(task => <TableRow key={task.id} className="h-9 cursor-pointer hover:bg-muted/50" onClick={() => handleViewTask(task.id)}>
-                    <TableCell className="py-1.5">
-                      {task.status === "completed" ? <CheckCircle className="w-3.5 h-3.5 text-success" /> : <Circle className="w-3.5 h-3.5 text-muted-foreground" />}
-                    </TableCell>
                     {visibleColumns.includes("title") && <TableCell className="py-1.5">
                         <span className="text-sm font-medium">{task.title}</span>
                       </TableCell>}
