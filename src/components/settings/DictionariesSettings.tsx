@@ -12,6 +12,7 @@ import { toast } from "sonner";
 
 type Dictionary = {
   robot_types: string[];
+  robot_statuses: string[];
   client_types: string[];
   markets: string[];
   segments: string[];
@@ -47,6 +48,7 @@ const categories = [
   { key: "km_rate", label: "Travel Cost (per km)", type: "numeric" },
   { key: "client_tags", label: "Client Tags", type: "tags" },
   { key: "robot_types", label: "Robot Types", type: "list" },
+  { key: "robot_statuses", label: "Robot Statuses", type: "list" },
   { key: "manufacturers", label: "Manufacturers", type: "list" },
   { key: "client_types", label: "Client Types", type: "list" },
   { key: "client_sizes", label: "Client Sizes", type: "list" },
@@ -67,6 +69,7 @@ export const DictionariesSettings = () => {
   const [activeCategory, setActiveCategory] = useState<string>("km_rate");
   const [dictionaries, setDictionaries] = useState<Dictionary>({
     robot_types: [],
+    robot_statuses: [],
     manufacturers: [],
     client_types: [],
     markets: [],
@@ -95,6 +98,7 @@ export const DictionariesSettings = () => {
     checkAdminRole();
     fetchManufacturers();
     fetchRobotTypes();
+    fetchRobotStatuses();
     fetchNumericSettings();
     fetchClientTypes();
     fetchMarkets();
@@ -141,6 +145,20 @@ export const DictionariesSettings = () => {
       setDictionaries((prev) => ({
         ...prev,
         robot_types: data.map((t) => t.type_name),
+      }));
+    }
+  };
+
+  const fetchRobotStatuses = async () => {
+    const { data, error } = await supabase
+      .from("robot_status_dictionary")
+      .select("name")
+      .order("name");
+
+    if (!error && data) {
+      setDictionaries((prev) => ({
+        ...prev,
+        robot_statuses: data.map((s) => s.name),
       }));
     }
   };
@@ -295,6 +313,22 @@ export const DictionariesSettings = () => {
       return;
     }
 
+    // Handle robot statuses with database
+    if (category === "robot_statuses") {
+      const { error } = await supabase
+        .from("robot_status_dictionary")
+        .insert({ name: value.trim() });
+
+      if (error) {
+        console.error("Error adding robot status:", error);
+        toast.error("Failed to add robot status");
+        return;
+      }
+      await fetchRobotStatuses();
+      toast.success("Robot status added successfully");
+      return;
+    }
+
     // Handle client types with database
     if (category === "client_types") {
       const { error } = await supabase
@@ -400,6 +434,24 @@ export const DictionariesSettings = () => {
       }
       await fetchRobotTypes();
       toast.success("Robot type removed successfully");
+      return;
+    }
+
+    // Handle robot statuses with database
+    if (category === "robot_statuses") {
+      const statusName = dictionaries.robot_statuses[index];
+      const { error } = await supabase
+        .from("robot_status_dictionary")
+        .delete()
+        .eq("name", statusName);
+
+      if (error) {
+        console.error("Error removing robot status:", error);
+        toast.error("Failed to remove robot status");
+        return;
+      }
+      await fetchRobotStatuses();
+      toast.success("Robot status removed successfully");
       return;
     }
 
