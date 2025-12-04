@@ -171,8 +171,8 @@ export const AddressMap = ({ addresses }: AddressMapProps) => {
           throw new Error(fnError.message);
         }
         
-        if (data?.accessToken) {
-          setAccessToken(data.accessToken);
+        if (data?.token) {
+          setAccessToken(data.token);
         } else if (data?.error) {
           throw new Error(data.error);
         }
