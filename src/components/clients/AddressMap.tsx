@@ -567,7 +567,20 @@ export const AddressMap = ({ addresses }: AddressMapProps) => {
                   <span className="text-xs">({kmRate.toFixed(2)}/km)</span>
                 </div>
               </div>
-            ) : null}
+            ) : destinationCoords ? (
+              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                <Clock className="w-4 h-4" />
+                <span>--</span>
+                <Route className="w-4 h-4" />
+                <span>--</span>
+                <Banknote className="w-4 h-4" />
+                <span>--</span>
+              </div>
+            ) : (
+              <div className="text-sm text-muted-foreground italic">
+                {t('addressMap.noAddressForRoute', 'Add an address to calculate route')}
+              </div>
+            )}
           </div>
         </div>
       )}
