@@ -39,7 +39,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Pencil, Trash2, Send, Download, Mail, Megaphone, FileText, Users } from "lucide-react";
+import { Plus, Pencil, Trash2, Send, Download, Mail, Megaphone, FileText, Users, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -92,8 +92,10 @@ const Campaigns = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("campaigns");
   
+  // Campaign view mode: "list" or "form"
+  const [campaignViewMode, setCampaignViewMode] = useState<"list" | "form">("list");
+  
   // Campaign form state
-  const [campaignDialogOpen, setCampaignDialogOpen] = useState(false);
   const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null);
   const [campaignName, setCampaignName] = useState("");
   const [selectedClients, setSelectedClients] = useState<Client[]>([]);
@@ -495,7 +497,7 @@ const Campaigns = () => {
   };
 
   const resetCampaignForm = () => {
-    setCampaignDialogOpen(false);
+    setCampaignViewMode("list");
     setEditingCampaign(null);
     setCampaignName("");
     setSelectedClients([]);
@@ -544,7 +546,7 @@ const Campaigns = () => {
       setSelectedClients(campaignClients.map(cc => cc.client as any).filter(Boolean));
     }
     
-    setCampaignDialogOpen(true);
+    setCampaignViewMode("form");
   };
 
   const editTemplate = (template: EmailTemplate) => {
@@ -610,214 +612,222 @@ const Campaigns = () => {
 
             {/* Campaigns Tab */}
             <TabsContent value="campaigns">
-              <div className="flex justify-end mb-4">
-                <Dialog open={campaignDialogOpen} onOpenChange={(open) => !open && resetCampaignForm()}>
-                  <DialogTrigger asChild>
-                    <Button size="sm" onClick={() => setCampaignDialogOpen(true)}>
+              {campaignViewMode === "form" ? (
+                // Inline Campaign Form
+                <div className="space-y-4">
+                  <div className="flex items-center gap-4 mb-4">
+                    <Button variant="ghost" size="sm" onClick={resetCampaignForm}>
+                      <ArrowLeft className="w-4 h-4 mr-1" />
+                      Back
+                    </Button>
+                    <h3 className="text-lg font-semibold">
+                      {editingCampaign ? "Edit Campaign" : "Create Campaign"}
+                    </h3>
+                  </div>
+                  
+                  <div>
+                    <Label>Campaign Name</Label>
+                    <Input
+                      value={campaignName}
+                      onChange={(e) => setCampaignName(e.target.value)}
+                      placeholder="Enter campaign name"
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Client Type</Label>
+                      <Select value={selectedClientType} onValueChange={setSelectedClientType}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="All Types" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Types</SelectItem>
+                          {clientTypes.map(t => (
+                            <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>Segment</Label>
+                      <Select value={selectedSegment} onValueChange={setSelectedSegment}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="All Segments" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Segments</SelectItem>
+                          {segments.map(s => (
+                            <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>Market</Label>
+                      <Select value={selectedMarket} onValueChange={setSelectedMarket}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="All Markets" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Markets</SelectItem>
+                          {markets.map(m => (
+                            <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>Size</Label>
+                      <Select value={selectedSize} onValueChange={setSelectedSize}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="All Sizes" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Sizes</SelectItem>
+                          {sizes.map(s => (
+                            <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>City</Label>
+                      <Select value={selectedCity} onValueChange={setSelectedCity}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="All Cities" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Cities</SelectItem>
+                          {cities.map(c => (
+                            <SelectItem key={c} value={c}>{c}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>Deal Status</Label>
+                      <Select value={selectedDealStatus} onValueChange={setSelectedDealStatus}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="All Statuses" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Statuses</SelectItem>
+                          <SelectItem value="existing">Existing Client</SelectItem>
+                          <SelectItem value="won">Deal Won</SelectItem>
+                          <SelectItem value="lost">Deal Lost</SelectItem>
+                          <SelectItem value="lead">Existing Lead</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <Button onClick={applyFilters} variant="outline" className="w-full">
+                    Apply Filters ({selectedClients.length} clients selected)
+                  </Button>
+
+                  {selectedClients.length > 0 && (
+                    <div className="border rounded-md p-3 max-h-40 overflow-y-auto">
+                      <p className="text-sm text-muted-foreground mb-2">Selected Clients:</p>
+                      <div className="flex flex-wrap gap-1">
+                        {selectedClients.slice(0, 20).map(client => (
+                          <Badge key={client.id} variant="secondary" className="text-xs">
+                            {client.name}
+                          </Badge>
+                        ))}
+                        {selectedClients.length > 20 && (
+                          <Badge variant="outline" className="text-xs">
+                            +{selectedClients.length - 20} more
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex justify-end gap-2">
+                    <Button variant="outline" onClick={resetCampaignForm}>Cancel</Button>
+                    <Button onClick={saveCampaign}>
+                      {editingCampaign ? "Update" : "Create"} Campaign
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                // Campaign List View
+                <>
+                  <div className="flex justify-end mb-4">
+                    <Button size="sm" onClick={() => setCampaignViewMode("form")}>
                       <Plus className="w-4 h-4 mr-1" />
                       New Campaign
                     </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
-                      <DialogTitle>{editingCampaign ? "Edit Campaign" : "Create Campaign"}</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <div>
-                        <Label>Campaign Name</Label>
-                        <Input
-                          value={campaignName}
-                          onChange={(e) => setCampaignName(e.target.value)}
-                          placeholder="Enter campaign name"
-                        />
-                      </div>
-                      
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <Label>Client Type</Label>
-                          <Select value={selectedClientType} onValueChange={setSelectedClientType}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="All Types" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="all">All Types</SelectItem>
-                              {clientTypes.map(t => (
-                                <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <Label>Segment</Label>
-                          <Select value={selectedSegment} onValueChange={setSelectedSegment}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="All Segments" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="all">All Segments</SelectItem>
-                              {segments.map(s => (
-                                <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <Label>Market</Label>
-                          <Select value={selectedMarket} onValueChange={setSelectedMarket}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="All Markets" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="all">All Markets</SelectItem>
-                              {markets.map(m => (
-                                <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <Label>Size</Label>
-                          <Select value={selectedSize} onValueChange={setSelectedSize}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="All Sizes" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="all">All Sizes</SelectItem>
-                              {sizes.map(s => (
-                                <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <Label>City</Label>
-                          <Select value={selectedCity} onValueChange={setSelectedCity}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="All Cities" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="all">All Cities</SelectItem>
-                              {cities.map(c => (
-                                <SelectItem key={c} value={c}>{c}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <Label>Deal Status</Label>
-                          <Select value={selectedDealStatus} onValueChange={setSelectedDealStatus}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="All Statuses" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="all">All Statuses</SelectItem>
-                              <SelectItem value="existing">Existing Client</SelectItem>
-                              <SelectItem value="won">Deal Won</SelectItem>
-                              <SelectItem value="lost">Deal Lost</SelectItem>
-                              <SelectItem value="lead">Existing Lead</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
+                  </div>
 
-                      <Button onClick={applyFilters} variant="outline" className="w-full">
-                        Apply Filters ({selectedClients.length} clients selected)
-                      </Button>
-
-                      {selectedClients.length > 0 && (
-                        <div className="border rounded-md p-3 max-h-40 overflow-y-auto">
-                          <p className="text-sm text-muted-foreground mb-2">Selected Clients:</p>
-                          <div className="flex flex-wrap gap-1">
-                            {selectedClients.slice(0, 20).map(client => (
-                              <Badge key={client.id} variant="secondary" className="text-xs">
-                                {client.name}
-                              </Badge>
-                            ))}
-                            {selectedClients.length > 20 && (
-                              <Badge variant="outline" className="text-xs">
-                                +{selectedClients.length - 20} more
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                      )}
-
-                      <div className="flex justify-end gap-2">
-                        <Button variant="outline" onClick={resetCampaignForm}>Cancel</Button>
-                        <Button onClick={saveCampaign}>
-                          {editingCampaign ? "Update" : "Create"} Campaign
-                        </Button>
-                      </div>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              </div>
-
-              {loading ? (
-                <div className="space-y-2">
-                  {[1, 2, 3].map(i => (
-                    <div key={i} className="h-10 bg-muted animate-pulse rounded" />
-                  ))}
-                </div>
-              ) : campaigns.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Megaphone className="w-10 h-10 mx-auto mb-3 opacity-50" />
-                  <p className="text-sm">No campaigns yet</p>
-                </div>
-              ) : (
-                <>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Campaign Name</TableHead>
-                        <TableHead>Clients</TableHead>
-                        <TableHead>Created</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {paginatedCampaigns.map(campaign => (
-                        <TableRow key={campaign.id}>
-                          <TableCell className="font-medium">{campaign.name}</TableCell>
-                          <TableCell>
-                            <Badge variant="secondary">{campaign.client_count}</Badge>
-                          </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
-                            {format(new Date(campaign.created_at), "MMM dd, yyyy")}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex justify-end gap-1">
-                              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => editCampaign(campaign)}>
-                                <Pencil className="w-3.5 h-3.5" />
-                              </Button>
-                              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => exportCampaign(campaign)}>
-                                <Download className="w-3.5 h-3.5" />
-                              </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className="h-7 w-7"
-                                onClick={() => {
-                                  setItemToDelete({ type: "campaign", id: campaign.id, name: campaign.name });
-                                  setDeleteDialogOpen(true);
-                                }}
-                              >
-                                <Trash2 className="w-3.5 h-3.5 text-destructive" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
+                  {loading ? (
+                    <div className="space-y-2">
+                      {[1, 2, 3].map(i => (
+                        <div key={i} className="h-10 bg-muted animate-pulse rounded" />
                       ))}
-                    </TableBody>
-                  </Table>
-                  <TablePagination
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    pageSize={pageSize}
-                    totalItems={campaigns.length}
-                    onPageChange={setCurrentPage}
-                    onPageSizeChange={(size) => { setPageSize(size); setCurrentPage(1); }}
-                  />
+                    </div>
+                  ) : campaigns.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Megaphone className="w-10 h-10 mx-auto mb-3 opacity-50" />
+                      <p className="text-sm">No campaigns yet</p>
+                    </div>
+                  ) : (
+                    <>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Campaign Name</TableHead>
+                            <TableHead>Clients</TableHead>
+                            <TableHead>Created</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {paginatedCampaigns.map(campaign => (
+                            <TableRow key={campaign.id}>
+                              <TableCell className="font-medium">{campaign.name}</TableCell>
+                              <TableCell>
+                                <Badge variant="secondary">{campaign.client_count}</Badge>
+                              </TableCell>
+                              <TableCell className="text-sm text-muted-foreground">
+                                {format(new Date(campaign.created_at), "MMM dd, yyyy")}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <div className="flex justify-end gap-1">
+                                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => editCampaign(campaign)}>
+                                    <Pencil className="w-3.5 h-3.5" />
+                                  </Button>
+                                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => exportCampaign(campaign)}>
+                                    <Download className="w-3.5 h-3.5" />
+                                  </Button>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="icon" 
+                                    className="h-7 w-7"
+                                    onClick={() => {
+                                      setItemToDelete({ type: "campaign", id: campaign.id, name: campaign.name });
+                                      setDeleteDialogOpen(true);
+                                    }}
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                      <TablePagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        pageSize={pageSize}
+                        totalItems={campaigns.length}
+                        onPageChange={setCurrentPage}
+                        onPageSizeChange={(size) => { setPageSize(size); setCurrentPage(1); }}
+                      />
+                    </>
+                  )}
                 </>
               )}
             </TabsContent>
