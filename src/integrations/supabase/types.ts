@@ -2847,7 +2847,14 @@ export type Database = {
         | "expired"
         | "cancelled"
       offer_status: "draft" | "sent" | "modified" | "accepted" | "rejected"
-      robot_status: "in_warehouse" | "delivered" | "in_service" | "maintenance"
+      robot_status:
+        | "in_warehouse"
+        | "delivered"
+        | "in_service"
+        | "maintenance"
+        | "active"
+        | "decommissioned"
+        | "try_and_buy"
       task_status: "pending" | "in_progress" | "completed" | "overdue"
       ticket_status: "open" | "in_progress" | "resolved" | "closed"
     }
@@ -2986,7 +2993,15 @@ export const Constants = {
         "cancelled",
       ],
       offer_status: ["draft", "sent", "modified", "accepted", "rejected"],
-      robot_status: ["in_warehouse", "delivered", "in_service", "maintenance"],
+      robot_status: [
+        "in_warehouse",
+        "delivered",
+        "in_service",
+        "maintenance",
+        "active",
+        "decommissioned",
+        "try_and_buy",
+      ],
       task_status: ["pending", "in_progress", "completed", "overdue"],
       ticket_status: ["open", "in_progress", "resolved", "closed"],
     },
