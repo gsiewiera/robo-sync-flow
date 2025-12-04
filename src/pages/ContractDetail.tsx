@@ -43,6 +43,16 @@ interface Robot {
   status: string;
 }
 
+interface ContractLineItem {
+  id: string;
+  robot_model: string;
+  contract_type: string;
+  quantity: number;
+  unit_price: number;
+  lease_months: number | null;
+  monthly_price: number | null;
+}
+
 const statusColors: Record<string, string> = {
   draft: "bg-muted text-muted-foreground",
   pending_signature: "bg-warning text-warning-foreground",
@@ -57,6 +67,7 @@ const ContractDetail = () => {
   const [contract, setContract] = useState<Contract | null>(null);
   const [client, setClient] = useState<Client | null>(null);
   const [robots, setRobots] = useState<Robot[]>([]);
+  const [lineItems, setLineItems] = useState<ContractLineItem[]>([]);
 
   useEffect(() => {
     if (id) {
@@ -99,6 +110,16 @@ const ContractDetail = () => {
         if (robotsData) {
           setRobots(robotsData);
         }
+      }
+
+      // Fetch contract line items (robot pricing selections)
+      const { data: lineItemsData } = await supabase
+        .from("contract_line_items")
+        .select("*")
+        .eq("contract_id", id);
+
+      if (lineItemsData) {
+        setLineItems(lineItemsData);
       }
     }
   };
@@ -252,6 +273,37 @@ const ContractDetail = () => {
             </div>
           </div>
         </Card>
+
+        {/* Contract Line Items - Robot pricing selections */}
+        {lineItems.length > 0 && (
+          <Card className="p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Bot className="w-5 h-5 text-muted-foreground" />
+              <h2 className="text-xl font-semibold">Contract Items ({lineItems.length})</h2>
+            </div>
+            <div className="space-y-3">
+              {lineItems.map((item) => (
+                <Card key={item.id} className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-semibold">{item.robot_model}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {item.contract_type === 'lease' 
+                          ? `Lease: ${item.lease_months} months × ${formatMoney(item.monthly_price || 0)} PLN/month`
+                          : `Purchase: ${formatMoney(item.unit_price)} PLN`
+                        }
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <Badge variant="outline">{item.contract_type}</Badge>
+                      <p className="text-sm text-muted-foreground mt-1">Qty: {item.quantity}</p>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </Card>
+        )}
 
         <Card className="p-6">
           <div className="flex items-center gap-2 mb-4">

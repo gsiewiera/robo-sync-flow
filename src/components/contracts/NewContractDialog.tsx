@@ -341,6 +341,27 @@ export function NewContractDialog({ open, onOpenChange, onSuccess, initialClient
         throw contractError;
       }
 
+      // Insert contract line items (robot pricing selections)
+      if (contractRobots.length > 0) {
+        const lineItems = contractRobots.map(robot => ({
+          contract_id: contractData.id,
+          robot_model: robot.model,
+          contract_type: robot.contractType,
+          quantity: robot.quantity,
+          unit_price: robot.contractType === 'purchase' ? robot.unitPrice : 0,
+          lease_months: robot.contractType === 'lease' ? robot.leaseMonths : null,
+          monthly_price: robot.contractType === 'lease' ? robot.monthlyPrice : null,
+        }));
+
+        const { error: itemsError } = await supabase
+          .from("contract_line_items")
+          .insert(lineItems);
+
+        if (itemsError) {
+          console.error("Error inserting contract line items:", itemsError);
+        }
+      }
+
       toast({ title: t("common.success"), description: t("contracts.created") });
       onSuccess?.();
       onOpenChange(false);
