@@ -2345,16 +2345,19 @@ export type Database = {
       }
       robot_status_dictionary: {
         Row: {
+          color: string | null
           created_at: string | null
           id: string
           name: string
         }
         Insert: {
+          color?: string | null
           created_at?: string | null
           id?: string
           name: string
         }
         Update: {
+          color?: string | null
           created_at?: string | null
           id?: string
           name?: string
