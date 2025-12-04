@@ -197,16 +197,31 @@ export const AddressMap = ({ addresses }: AddressMapProps) => {
 
   // Load Google Maps script
   useEffect(() => {
-    if (!apiKey || isGoogleLoaded) return;
+    if (!apiKey) return;
 
-    const existingScript = document.getElementById('google-maps-script');
-    if (existingScript) {
-      if (window.google?.maps) {
-        setIsGoogleLoaded(true);
-      }
+    // If Google Maps is already available
+    if (window.google?.maps) {
+      setIsGoogleLoaded(true);
       return;
     }
 
+    const existingScript = document.getElementById('google-maps-script');
+    
+    if (existingScript) {
+      // Script exists but Google isn't ready yet - wait for it
+      const checkGoogle = setInterval(() => {
+        if (window.google?.maps) {
+          setIsGoogleLoaded(true);
+          clearInterval(checkGoogle);
+        }
+      }, 100);
+      
+      // Timeout after 10 seconds
+      setTimeout(() => clearInterval(checkGoogle), 10000);
+      return;
+    }
+
+    // Create callback before adding script
     window.initGoogleMaps = () => {
       setIsGoogleLoaded(true);
     };
@@ -216,12 +231,13 @@ export const AddressMap = ({ addresses }: AddressMapProps) => {
     script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&callback=initGoogleMaps&libraries=places`;
     script.async = true;
     script.defer = true;
-    document.head.appendChild(script);
-
-    return () => {
-      // Don't remove script on unmount to allow reuse
+    
+    script.onerror = () => {
+      setError('Failed to load Google Maps. Please check your API key configuration.');
     };
-  }, [apiKey, isGoogleLoaded]);
+    
+    document.head.appendChild(script);
+  }, [apiKey]);
 
   // Initialize map
   useEffect(() => {
