@@ -872,7 +872,7 @@ const Campaigns = () => {
                         className="min-h-[300px]"
                       />
                       <p className="text-xs text-muted-foreground mt-1">
-                        Available placeholders: {`{{client_name}}`}, {`{{contact_name}}`}, {`{{contact_email}}`}, {`{{contact_phone}}`}
+                        Available placeholders: {`{{client_name}}`}, {`{{contact_name}}`}
                       </p>
                     </div>
                     <div className="flex justify-end gap-2">
