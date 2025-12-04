@@ -988,7 +988,7 @@ const ClientDetail = () => {
         </Card>
 
         <Tabs defaultValue="notes" className="w-full">
-          <TabsList className="w-full h-auto flex-nowrap overflow-x-auto justify-start gap-1 p-1">
+          <TabsList className="w-full h-auto flex flex-wrap justify-start gap-1 p-1.5">
             <TabsTrigger value="ai">
               <Sparkles className="w-4 h-4 mr-2" />
               AI
