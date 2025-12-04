@@ -1,7 +1,7 @@
 project_id = "skfliyjipemazvyxcxtm"
 
 [functions.send-lead-reminders]
-verify_jwt = false
+verify_jwt = true
 
 [functions.get-mapbox-token]
 verify_jwt = true
@@ -10,4 +10,13 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.salesperson-ai-summary]
+verify_jwt = true
+
+[functions.send-offer-email]
+verify_jwt = true
+
+[functions.send-contract-email]
+verify_jwt = true
+
+[functions.send-scheduled-reports]
 verify_jwt = true
