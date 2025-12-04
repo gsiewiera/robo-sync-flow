@@ -901,6 +901,50 @@ export type Database = {
           },
         ]
       }
+      contract_line_items: {
+        Row: {
+          contract_id: string
+          contract_type: string | null
+          created_at: string
+          id: string
+          lease_months: number | null
+          monthly_price: number | null
+          quantity: number
+          robot_model: string
+          unit_price: number
+        }
+        Insert: {
+          contract_id: string
+          contract_type?: string | null
+          created_at?: string
+          id?: string
+          lease_months?: number | null
+          monthly_price?: number | null
+          quantity?: number
+          robot_model: string
+          unit_price: number
+        }
+        Update: {
+          contract_id?: string
+          contract_type?: string | null
+          created_at?: string
+          id?: string
+          lease_months?: number | null
+          monthly_price?: number | null
+          quantity?: number
+          robot_model?: string
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_line_items_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contract_robots: {
         Row: {
           contract_id: string | null
