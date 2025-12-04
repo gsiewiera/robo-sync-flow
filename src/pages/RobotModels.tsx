@@ -20,7 +20,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Search, Pencil, Trash2, Cpu } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { Plus, Search, Pencil, Trash2, Cpu, Filter, ChevronRight, Factory, Box } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { RobotModelFormDialog } from "@/components/robot-models/RobotModelFormDialog";
@@ -35,6 +42,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { TablePagination } from "@/components/ui/table-pagination";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface RobotModel {
   id: string;
@@ -50,6 +58,7 @@ interface RobotModel {
 
 const RobotModels = () => {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [models, setModels] = useState<RobotModel[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -62,6 +71,7 @@ const RobotModels = () => {
   const [modelToDelete, setModelToDelete] = useState<RobotModel | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
+  const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
 
   useEffect(() => {
     checkAdminRole();
@@ -150,6 +160,102 @@ const RobotModels = () => {
   const startIndex = (currentPage - 1) * pageSize;
   const paginatedModels = filteredModels.slice(startIndex, startIndex + pageSize);
 
+  const FilterContent = () => (
+    <div className="space-y-4">
+      <Select value={typeFilter} onValueChange={setTypeFilter}>
+        <SelectTrigger className="w-full h-9">
+          <SelectValue placeholder="Type" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Types</SelectItem>
+          {uniqueTypes.map((type) => (
+            <SelectItem key={type} value={type}>
+              {type}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <Select value={manufacturerFilter} onValueChange={setManufacturerFilter}>
+        <SelectTrigger className="w-full h-9">
+          <SelectValue placeholder="Manufacturer" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Manufacturers</SelectItem>
+          {uniqueManufacturers.map((mfr) => (
+            <SelectItem key={mfr} value={mfr}>
+              {mfr}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+
+  const MobileModelCard = ({ model }: { model: RobotModel }) => (
+    <div
+      className="p-3 border rounded-lg bg-card cursor-pointer hover:bg-muted/50 transition-colors"
+      onClick={() => navigate(`/robot-models/${model.id}`)}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <h3 className="font-medium text-sm truncate">{model.model_name}</h3>
+            <Badge variant={model.is_active ? "default" : "secondary"} className="text-[10px] shrink-0">
+              {model.is_active ? "Active" : "Inactive"}
+            </Badge>
+          </div>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+            {model.manufacturer && (
+              <span className="flex items-center gap-1">
+                <Factory className="w-3 h-3" />
+                {model.manufacturer}
+              </span>
+            )}
+            {model.type && (
+              <span className="flex items-center gap-1">
+                <Cpu className="w-3 h-3" />
+                {model.type}
+              </span>
+            )}
+            <span className="flex items-center gap-1">
+              <Box className="w-3 h-3" />
+              Stock: {model.stock ?? 0}
+            </span>
+          </div>
+        </div>
+        <div className="flex items-center gap-1 shrink-0">
+          {isAdmin && (
+            <>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleEdit(model);
+                }}
+              >
+                <Pencil className="w-3.5 h-3.5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDeleteClick(model);
+                }}
+              >
+                <Trash2 className="w-3.5 h-3.5 text-destructive" />
+              </Button>
+            </>
+          )}
+          <ChevronRight className="w-4 h-4 text-muted-foreground" />
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <Layout>
       <Card>
@@ -162,53 +268,60 @@ const RobotModels = () => {
             {isAdmin && (
               <Button size="sm" onClick={handleAdd}>
                 <Plus className="w-4 h-4 mr-1" />
-                New Model
+                <span className="hidden sm:inline">New Model</span>
+                <span className="sm:hidden">Add</span>
               </Button>
             )}
           </div>
-          <div className="flex flex-wrap gap-2 mt-3">
-            <div className="relative flex-1 min-w-[150px] max-w-[200px]">
-              <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-              <Input
-                placeholder="Search..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-8 h-9"
-              />
+
+          {/* Mobile: Search + Filter Button */}
+          {isMobile ? (
+            <div className="flex gap-2 mt-3">
+              <div className="relative flex-1">
+                <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                <Input
+                  placeholder="Search..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-8 h-9"
+                />
+              </div>
+              <Sheet open={isFilterSheetOpen} onOpenChange={setIsFilterSheetOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="outline" size="icon" className="h-9 w-9 shrink-0">
+                    <Filter className="w-4 h-4" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="bottom" className="h-auto">
+                  <SheetHeader>
+                    <SheetTitle>Filters</SheetTitle>
+                  </SheetHeader>
+                  <div className="py-4">
+                    <FilterContent />
+                  </div>
+                </SheetContent>
+              </Sheet>
             </div>
-            <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="w-[140px] h-9">
-                <SelectValue placeholder="Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                {uniqueTypes.map((type) => (
-                  <SelectItem key={type} value={type}>
-                    {type}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={manufacturerFilter} onValueChange={setManufacturerFilter}>
-              <SelectTrigger className="w-[160px] h-9">
-                <SelectValue placeholder="Manufacturer" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Manufacturers</SelectItem>
-                {uniqueManufacturers.map((mfr) => (
-                  <SelectItem key={mfr} value={mfr}>
-                    {mfr}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          ) : (
+            <div className="flex flex-wrap gap-2 mt-3">
+              <div className="relative flex-1 min-w-[150px] max-w-[200px]">
+                <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                <Input
+                  placeholder="Search..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-8 h-9"
+                />
+              </div>
+              <FilterContent />
+            </div>
+          )}
         </CardHeader>
         <CardContent className="pt-0">
           {loading ? (
             <div className="space-y-2">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-10 bg-muted animate-pulse rounded" />
+                <div key={i} className="h-16 md:h-10 bg-muted animate-pulse rounded" />
               ))}
             </div>
           ) : filteredModels.length === 0 ? (
@@ -222,6 +335,22 @@ const RobotModels = () => {
                 </Button>
               )}
             </div>
+          ) : isMobile ? (
+            <>
+              <div className="space-y-2">
+                {paginatedModels.map((model) => (
+                  <MobileModelCard key={model.id} model={model} />
+                ))}
+              </div>
+              <TablePagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                pageSize={pageSize}
+                totalItems={filteredModels.length}
+                onPageChange={setCurrentPage}
+                onPageSizeChange={(size) => { setPageSize(size); setCurrentPage(1); }}
+              />
+            </>
           ) : (
             <>
               <div className="overflow-x-auto">
