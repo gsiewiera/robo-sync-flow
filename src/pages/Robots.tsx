@@ -3,8 +3,8 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Search, ArrowUpDown, ArrowUp, ArrowDown, Eye } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Search, Eye } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { ColumnVisibilityToggle, ColumnConfig } from "@/components/ui/column-visibility-toggle";
@@ -17,6 +17,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { TablePagination } from "@/components/ui/table-pagination";
+import { useSortable } from "@/hooks/use-sortable";
+import { usePagination } from "@/hooks/use-pagination";
+import { useColumnVisibility } from "@/hooks/use-column-visibility";
 
 interface Robot {
   id: string;
@@ -29,43 +32,48 @@ interface Robot {
   created_at: string | null;
 }
 
-const statusColors: Record<string, string> = {
+type SortField = "serial_number" | "model" | "working_hours" | "created_at";
+
+const STATUS_COLORS: Record<string, string> = {
   in_warehouse: "bg-muted text-muted-foreground",
   delivered: "bg-success text-success-foreground",
   in_service: "bg-primary text-primary-foreground",
   maintenance: "bg-warning text-warning-foreground",
 };
 
+const COLUMNS: ColumnConfig[] = [
+  { key: "serial_number", label: "Serial Number", defaultVisible: true },
+  { key: "model", label: "Model", defaultVisible: true },
+  { key: "type", label: "Type", defaultVisible: true },
+  { key: "status", label: "Status", defaultVisible: true },
+  { key: "working_hours", label: "Working Hours", defaultVisible: true },
+  { key: "delivery_date", label: "Delivery Date", defaultVisible: true },
+  { key: "created_at", label: "Created", defaultVisible: false },
+];
+
 const Robots = () => {
   const [robots, setRobots] = useState<Robot[]>([]);
   const [search, setSearch] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [sortField, setSortField] = useState<"serial_number" | "model" | "working_hours" | "created_at">("serial_number");
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const navigate = useNavigate();
-  const [pageSize, setPageSize] = useState(20);
 
-  const columns: ColumnConfig[] = [
-    { key: "serial_number", label: "Serial Number", defaultVisible: true },
-    { key: "model", label: "Model", defaultVisible: true },
-    { key: "type", label: "Type", defaultVisible: true },
-    { key: "status", label: "Status", defaultVisible: true },
-    { key: "working_hours", label: "Working Hours", defaultVisible: true },
-    { key: "delivery_date", label: "Delivery Date", defaultVisible: true },
-    { key: "created_at", label: "Created", defaultVisible: false },
-  ];
+  const { sortField, sortDirection, handleSort, getSortIcon } = useSortable<SortField>({
+    defaultField: "serial_number",
+    defaultDirection: "asc",
+  });
 
-  const [visibleColumns, setVisibleColumns] = useState<string[]>(
-    columns.filter((col) => col.defaultVisible).map((col) => col.key)
-  );
+  const {
+    currentPage,
+    pageSize,
+    handlePageChange,
+    handlePageSizeChange,
+    resetPage,
+    getPaginatedData,
+    getTotalPages,
+  } = usePagination<Robot>();
 
-  const toggleColumn = (columnKey: string) => {
-    setVisibleColumns((prev) =>
-      prev.includes(columnKey)
-        ? prev.filter((key) => key !== columnKey)
-        : [...prev, columnKey]
-    );
-  };
+  const { visibleColumns, toggleColumn, isColumnVisible } = useColumnVisibility({
+    columns: COLUMNS,
+  });
 
   useEffect(() => {
     fetchRobots();
@@ -84,51 +92,26 @@ const Robots = () => {
 
   useEffect(() => {
     fetchRobots();
-    setCurrentPage(1);
+    resetPage();
   }, [sortField, sortDirection]);
 
-  const filteredRobots = robots.filter((robot) =>
-    robot.serial_number.toLowerCase().includes(search.toLowerCase()) ||
-    robot.model.toLowerCase().includes(search.toLowerCase()) ||
-    robot.type.toLowerCase().includes(search.toLowerCase())
+  const filteredRobots = useMemo(
+    () =>
+      robots.filter(
+        (robot) =>
+          robot.serial_number.toLowerCase().includes(search.toLowerCase()) ||
+          robot.model.toLowerCase().includes(search.toLowerCase()) ||
+          robot.type.toLowerCase().includes(search.toLowerCase())
+      ),
+    [robots, search]
   );
 
-  const indexOfLastRecord = currentPage * pageSize;
-  const indexOfFirstRecord = indexOfLastRecord - pageSize;
-  const currentRecords = filteredRobots.slice(indexOfFirstRecord, indexOfLastRecord);
-  const totalPages = Math.ceil(filteredRobots.length / pageSize);
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
-
-  const handlePageSizeChange = (size: number) => {
-    setPageSize(size);
-    setCurrentPage(1);
-  };
-
-  const handleSort = (field: "serial_number" | "model" | "working_hours" | "created_at") => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
-    } else {
-      setSortField(field);
-      setSortDirection("asc");
-    }
-  };
-
-  const getSortIcon = (field: "serial_number" | "model" | "working_hours" | "created_at") => {
-    if (sortField !== field) {
-      return <ArrowUpDown className="ml-2 h-4 w-4 text-muted-foreground" />;
-    }
-    return sortDirection === "asc" 
-      ? <ArrowUp className="ml-2 h-4 w-4" />
-      : <ArrowDown className="ml-2 h-4 w-4" />;
-  };
+  const currentRecords = getPaginatedData(filteredRobots);
+  const totalPages = getTotalPages(filteredRobots.length);
 
   return (
     <Layout>
       <div className="space-y-6">
-
         <Card className="p-4">
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
@@ -138,13 +121,13 @@ const Robots = () => {
                 value={search}
                 onChange={(e) => {
                   setSearch(e.target.value);
-                  setCurrentPage(1);
+                  resetPage();
                 }}
                 className="pl-10"
               />
             </div>
             <ColumnVisibilityToggle
-              columns={columns}
+              columns={COLUMNS}
               visibleColumns={visibleColumns}
               onToggleColumn={toggleColumn}
             />
@@ -155,7 +138,7 @@ const Robots = () => {
           <Table>
             <TableHeader>
               <TableRow className="h-9">
-                {visibleColumns.includes("serial_number") && (
+                {isColumnVisible("serial_number") && (
                   <TableHead className="py-1.5">
                     <Button
                       variant="ghost"
@@ -168,7 +151,7 @@ const Robots = () => {
                     </Button>
                   </TableHead>
                 )}
-                {visibleColumns.includes("model") && (
+                {isColumnVisible("model") && (
                   <TableHead className="py-1.5">
                     <Button
                       variant="ghost"
@@ -181,13 +164,13 @@ const Robots = () => {
                     </Button>
                   </TableHead>
                 )}
-                {visibleColumns.includes("type") && (
+                {isColumnVisible("type") && (
                   <TableHead className="py-1.5 text-xs">Type</TableHead>
                 )}
-                {visibleColumns.includes("status") && (
+                {isColumnVisible("status") && (
                   <TableHead className="py-1.5 text-xs">Status</TableHead>
                 )}
-                {visibleColumns.includes("working_hours") && (
+                {isColumnVisible("working_hours") && (
                   <TableHead className="py-1.5">
                     <Button
                       variant="ghost"
@@ -200,10 +183,10 @@ const Robots = () => {
                     </Button>
                   </TableHead>
                 )}
-                {visibleColumns.includes("delivery_date") && (
+                {isColumnVisible("delivery_date") && (
                   <TableHead className="py-1.5 text-xs">Delivery Date</TableHead>
                 )}
-                {visibleColumns.includes("created_at") && (
+                {isColumnVisible("created_at") && (
                   <TableHead className="py-1.5">
                     <Button
                       variant="ghost"
@@ -222,44 +205,49 @@ const Robots = () => {
             <TableBody>
               {currentRecords.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={visibleColumns.length + 1} className="text-center py-8 text-muted-foreground text-sm">
+                  <TableCell
+                    colSpan={visibleColumns.length + 1}
+                    className="text-center py-8 text-muted-foreground text-sm"
+                  >
                     No robots found
                   </TableCell>
                 </TableRow>
               ) : (
                 currentRecords.map((robot) => (
-                  <TableRow 
-                    key={robot.id} 
+                  <TableRow
+                    key={robot.id}
                     className="h-9 cursor-pointer hover:bg-muted/50"
                     onClick={() => navigate(`/robots/${robot.id}`)}
                   >
-                    {visibleColumns.includes("serial_number") && (
-                      <TableCell className="py-1.5 text-sm font-medium">{robot.serial_number}</TableCell>
+                    {isColumnVisible("serial_number") && (
+                      <TableCell className="py-1.5 text-sm font-medium">
+                        {robot.serial_number}
+                      </TableCell>
                     )}
-                    {visibleColumns.includes("model") && (
+                    {isColumnVisible("model") && (
                       <TableCell className="py-1.5 text-sm">{robot.model}</TableCell>
                     )}
-                    {visibleColumns.includes("type") && (
+                    {isColumnVisible("type") && (
                       <TableCell className="py-1.5 text-sm">{robot.type}</TableCell>
                     )}
-                    {visibleColumns.includes("status") && (
+                    {isColumnVisible("status") && (
                       <TableCell className="py-1.5">
-                        <Badge className={`${statusColors[robot.status]} text-xs px-1.5 py-0`}>
+                        <Badge className={`${STATUS_COLORS[robot.status]} text-xs px-1.5 py-0`}>
                           {robot.status.replace("_", " ")}
                         </Badge>
                       </TableCell>
                     )}
-                    {visibleColumns.includes("working_hours") && (
+                    {isColumnVisible("working_hours") && (
                       <TableCell className="py-1.5 text-sm">{robot.working_hours}h</TableCell>
                     )}
-                    {visibleColumns.includes("delivery_date") && (
+                    {isColumnVisible("delivery_date") && (
                       <TableCell className="py-1.5 text-sm">
                         {robot.delivery_date
                           ? new Date(robot.delivery_date).toLocaleDateString()
                           : "-"}
                       </TableCell>
                     )}
-                    {visibleColumns.includes("created_at") && (
+                    {isColumnVisible("created_at") && (
                       <TableCell className="py-1.5 text-sm">
                         {robot.created_at
                           ? new Date(robot.created_at).toLocaleDateString()
