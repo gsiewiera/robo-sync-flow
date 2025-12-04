@@ -223,76 +223,77 @@ const RobotModels = () => {
               )}
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="text-xs">Model</TableHead>
-                    <TableHead className="text-xs">Manufacturer</TableHead>
-                    <TableHead className="text-xs">Type</TableHead>
-                    <TableHead className="text-xs">Stock</TableHead>
-                    <TableHead className="text-xs">Status</TableHead>
-                    {isAdmin && <TableHead className="text-xs text-right">Actions</TableHead>}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {paginatedModels.map((model) => (
-                    <TableRow 
-                      key={model.id} 
-                      className="h-10 cursor-pointer hover:bg-muted/50"
-                      onClick={() => navigate(`/robot-models/${model.id}`)}
-                    >
-                      <TableCell className="font-medium py-2">{model.model_name}</TableCell>
-                      <TableCell className="py-2 text-sm">{model.manufacturer || "-"}</TableCell>
-                      <TableCell className="py-2 text-sm">{model.type || "-"}</TableCell>
-                      <TableCell className="py-2 text-sm">{model.stock ?? 0}</TableCell>
-                      <TableCell className="py-2">
-                        <Badge variant={model.is_active ? "default" : "secondary"} className="text-xs">
-                          {model.is_active ? "Active" : "Inactive"}
-                        </Badge>
-                      </TableCell>
-                      {isAdmin && (
-                        <TableCell className="text-right py-2">
-                          <div className="flex justify-end gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleEdit(model);
-                              }}
-                            >
-                              <Pencil className="w-3.5 h-3.5" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteClick(model);
-                              }}
-                            >
-                              <Trash2 className="w-3.5 h-3.5 text-destructive" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      )}
+            <>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-xs">Model</TableHead>
+                      <TableHead className="text-xs">Manufacturer</TableHead>
+                      <TableHead className="text-xs">Type</TableHead>
+                      <TableHead className="text-xs">Stock</TableHead>
+                      <TableHead className="text-xs">Status</TableHead>
+                      {isAdmin && <TableHead className="text-xs text-right">Actions</TableHead>}
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-            <TablePagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              pageSize={pageSize}
-              totalItems={filteredModels.length}
-              onPageChange={setCurrentPage}
-              onPageSizeChange={(size) => { setPageSize(size); setCurrentPage(1); }}
-            />
-          </>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedModels.map((model) => (
+                      <TableRow 
+                        key={model.id} 
+                        className="h-10 cursor-pointer hover:bg-muted/50"
+                        onClick={() => navigate(`/robot-models/${model.id}`)}
+                      >
+                        <TableCell className="font-medium py-2">{model.model_name}</TableCell>
+                        <TableCell className="py-2 text-sm">{model.manufacturer || "-"}</TableCell>
+                        <TableCell className="py-2 text-sm">{model.type || "-"}</TableCell>
+                        <TableCell className="py-2 text-sm">{model.stock ?? 0}</TableCell>
+                        <TableCell className="py-2">
+                          <Badge variant={model.is_active ? "default" : "secondary"} className="text-xs">
+                            {model.is_active ? "Active" : "Inactive"}
+                          </Badge>
+                        </TableCell>
+                        {isAdmin && (
+                          <TableCell className="text-right py-2">
+                            <div className="flex justify-end gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleEdit(model);
+                                }}
+                              >
+                                <Pencil className="w-3.5 h-3.5" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteClick(model);
+                                }}
+                              >
+                                <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        )}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+              <TablePagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                pageSize={pageSize}
+                totalItems={filteredModels.length}
+                onPageChange={setCurrentPage}
+                onPageSizeChange={(size) => { setPageSize(size); setCurrentPage(1); }}
+              />
+            </>
           )}
         </CardContent>
       </Card>
