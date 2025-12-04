@@ -424,7 +424,7 @@ const Dashboard = () => {
     return (
       <Card key={stat.title} className="transition-shadow hover:shadow-lg">
         <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
-          <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground line-clamp-1">
+          <CardTitle className="text-sm sm:text-sm font-medium text-muted-foreground line-clamp-1">
             {stat.title}
           </CardTitle>
           <Icon className={cn("w-4 h-4 sm:w-5 sm:h-5 shrink-0", stat.color)} />
@@ -432,12 +432,12 @@ const Dashboard = () => {
         <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
           <div className="flex items-end justify-between gap-2">
             <div className="text-2xl sm:text-3xl font-bold">{stat.value}</div>
-            <div className={cn("flex items-center gap-0.5 sm:gap-1 text-xs sm:text-sm font-medium shrink-0", changeColor)}>
-              <ChangeIcon className="w-3 h-3 sm:w-4 sm:h-4" />
+            <div className={cn("flex items-center gap-0.5 sm:gap-1 text-sm font-medium shrink-0", changeColor)}>
+              <ChangeIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               <span>{Math.abs(stat.change).toFixed(1)}%</span>
             </div>
           </div>
-          <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">vs previous period</p>
+          <p className="text-xs sm:text-xs text-muted-foreground mt-1">vs previous period</p>
         </CardContent>
       </Card>
     );
