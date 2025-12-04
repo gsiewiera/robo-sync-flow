@@ -7,7 +7,7 @@ import {
   ArrowLeft, Mail, Phone, MapPin, FileText, ShoppingCart, Bot, 
   Globe, Edit, DollarSign, Receipt, CreditCard, CheckSquare, Calendar,
   Users, Plus, Trash2, Pencil, Upload, File, Download, FolderOpen, User, MapPinned,
-  StickyNote, Wrench, Sparkles
+  StickyNote, Wrench, Sparkles, Megaphone
 } from "lucide-react";
 import { ClientAISummary } from "@/components/clients/ClientAISummary";
 import { useState, useEffect } from "react";
@@ -188,6 +188,13 @@ interface ServiceTicket {
   due_date: string | null;
 }
 
+interface Campaign {
+  id: string;
+  name: string;
+  client_count: number;
+  created_at: string;
+}
+
 const DEFAULT_ROLES = ["contact", "billing", "technical", "decision maker", "manager"];
 
 const statusColors: Record<string, string> = {
@@ -258,6 +265,7 @@ const ClientDetail = () => {
   const [salespeople, setSalespeople] = useState<{ id: string; full_name: string }[]>([]);
   const [tickets, setTickets] = useState<ServiceTicket[]>([]);
   const [isTicketFormOpen, setIsTicketFormOpen] = useState(false);
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   
   // Classification names
   const [clientTypeNames, setClientTypeNames] = useState<string[]>([]);
@@ -274,6 +282,7 @@ const ClientDetail = () => {
       fetchSalespeople();
       fetchTickets();
       fetchClientClassifications();
+      fetchCampaigns();
     }
   }, [id]);
 
@@ -369,6 +378,20 @@ const ClientDetail = () => {
       .order("created_at", { ascending: false });
     if (data) {
       setTickets(data);
+    }
+  };
+
+  const fetchCampaigns = async () => {
+    const { data } = await supabase
+      .from("campaign_clients")
+      .select("campaign_id, campaigns(id, name, client_count, created_at)")
+      .eq("client_id", id);
+    
+    if (data) {
+      const campaignList = data
+        .map((item: any) => item.campaigns)
+        .filter(Boolean);
+      setCampaigns(campaignList);
     }
   };
 
@@ -1002,6 +1025,10 @@ const ClientDetail = () => {
               <Wrench className="w-4 h-4 mr-2" />
               Tickets ({tickets.length})
             </TabsTrigger>
+            <TabsTrigger value="campaigns">
+              <Megaphone className="w-4 h-4 mr-2" />
+              Campaigns ({campaigns.length})
+            </TabsTrigger>
             <TabsTrigger value="documents">
               <FolderOpen className="w-4 h-4 mr-2" />
               Docs ({documents.length})
@@ -1403,6 +1430,35 @@ const ClientDetail = () => {
             {tickets.length === 0 && (
               <Card className="p-8 text-center">
                 <p className="text-muted-foreground">No service tickets found for this client</p>
+              </Card>
+            )}
+          </TabsContent>
+
+          <TabsContent value="campaigns" className="space-y-4">
+            {campaigns.map((campaign) => (
+              <Card
+                key={campaign.id}
+                className="p-4 hover:shadow-lg transition-shadow cursor-pointer"
+                onClick={() => navigate(`/campaigns`)}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-primary/10 rounded-lg">
+                      <Megaphone className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-medium">{campaign.name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {campaign.client_count} clients • Created {new Date(campaign.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            ))}
+            {campaigns.length === 0 && (
+              <Card className="p-8 text-center">
+                <p className="text-muted-foreground">This client is not part of any campaigns</p>
               </Card>
             )}
           </TabsContent>
