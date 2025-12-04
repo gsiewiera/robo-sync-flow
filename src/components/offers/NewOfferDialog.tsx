@@ -103,6 +103,9 @@ interface RobotPricing {
   sale_price_pln_net: number;
   sale_price_usd_net: number;
   sale_price_eur_net: number;
+  try_buy_price_pln_net?: number | null;
+  try_buy_price_usd_net?: number | null;
+  try_buy_price_eur_net?: number | null;
 }
 
 interface LeasePricing {
@@ -431,11 +434,18 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer, mode = "o
     const pricing = robotPricing.find((p) => p.robot_model === robotModel);
     if (!pricing) return 0;
 
-    if (contractType === "purchase" || contractType === "try_buy") {
+    if (contractType === "purchase") {
       let price = 0;
       if (currency === "PLN") price = Number(pricing.sale_price_pln_net);
       if (currency === "USD") price = Number(pricing.sale_price_usd_net);
       if (currency === "EUR") price = Number(pricing.sale_price_eur_net);
+      return Math.round(price * 100) / 100;
+    } else if (contractType === "try_buy") {
+      let price = 0;
+      // Use try_buy pricing if available, otherwise fall back to sale pricing
+      if (currency === "PLN") price = Number(pricing.try_buy_price_pln_net || pricing.sale_price_pln_net);
+      if (currency === "USD") price = Number(pricing.try_buy_price_usd_net || pricing.sale_price_usd_net);
+      if (currency === "EUR") price = Number(pricing.try_buy_price_eur_net || pricing.sale_price_eur_net);
       return Math.round(price * 100) / 100;
     } else if (contractType === "lease" && leaseMonths) {
       const lease = leasePricing.find(

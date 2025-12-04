@@ -25,6 +25,9 @@ interface RobotPricing {
   evidence_price_pln_net?: number | null;
   evidence_price_usd_net?: number | null;
   evidence_price_eur_net?: number | null;
+  try_buy_price_pln_net?: number | null;
+  try_buy_price_usd_net?: number | null;
+  try_buy_price_eur_net?: number | null;
 }
 
 interface LeasePricing {
@@ -66,6 +69,9 @@ export const RobotModelPricing = ({ modelName, isAdmin }: RobotModelPricingProps
     evidence_price_pln_net: "",
     evidence_price_usd_net: "",
     evidence_price_eur_net: "",
+    try_buy_price_pln_net: "",
+    try_buy_price_usd_net: "",
+    try_buy_price_eur_net: "",
   });
 
   const [leaseFormData, setLeaseFormData] = useState<Record<string, { pln: string; usd: string; eur: string }>>({});
@@ -100,6 +106,9 @@ export const RobotModelPricing = ({ modelName, isAdmin }: RobotModelPricingProps
         evidence_price_pln_net: data.evidence_price_pln_net?.toString() || "",
         evidence_price_usd_net: data.evidence_price_usd_net?.toString() || "",
         evidence_price_eur_net: data.evidence_price_eur_net?.toString() || "",
+        try_buy_price_pln_net: data.try_buy_price_pln_net?.toString() || "",
+        try_buy_price_usd_net: data.try_buy_price_usd_net?.toString() || "",
+        try_buy_price_eur_net: data.try_buy_price_eur_net?.toString() || "",
       });
 
       // Fetch lease pricing
@@ -161,6 +170,9 @@ export const RobotModelPricing = ({ modelName, isAdmin }: RobotModelPricingProps
         evidence_price_pln_net: pricing.evidence_price_pln_net?.toString() || "",
         evidence_price_usd_net: pricing.evidence_price_usd_net?.toString() || "",
         evidence_price_eur_net: pricing.evidence_price_eur_net?.toString() || "",
+        try_buy_price_pln_net: pricing.try_buy_price_pln_net?.toString() || "",
+        try_buy_price_usd_net: pricing.try_buy_price_usd_net?.toString() || "",
+        try_buy_price_eur_net: pricing.try_buy_price_eur_net?.toString() || "",
       });
     }
   };
@@ -182,6 +194,9 @@ export const RobotModelPricing = ({ modelName, isAdmin }: RobotModelPricingProps
       evidence_price_pln_net: formData.evidence_price_pln_net ? parseFloat(formData.evidence_price_pln_net) : null,
       evidence_price_usd_net: formData.evidence_price_usd_net ? parseFloat(formData.evidence_price_usd_net) : null,
       evidence_price_eur_net: formData.evidence_price_eur_net ? parseFloat(formData.evidence_price_eur_net) : null,
+      try_buy_price_pln_net: formData.try_buy_price_pln_net ? parseFloat(formData.try_buy_price_pln_net) : null,
+      try_buy_price_usd_net: formData.try_buy_price_usd_net ? parseFloat(formData.try_buy_price_usd_net) : null,
+      try_buy_price_eur_net: formData.try_buy_price_eur_net ? parseFloat(formData.try_buy_price_eur_net) : null,
     };
 
     let robotPricingId: string;
@@ -253,6 +268,9 @@ export const RobotModelPricing = ({ modelName, isAdmin }: RobotModelPricingProps
       evidence_price_pln_net: "",
       evidence_price_usd_net: "",
       evidence_price_eur_net: "",
+      try_buy_price_pln_net: "",
+      try_buy_price_usd_net: "",
+      try_buy_price_eur_net: "",
     });
     setLeaseFormData({});
     setIsEditing(true);
@@ -317,10 +335,11 @@ export const RobotModelPricing = ({ modelName, isAdmin }: RobotModelPricingProps
       <CardContent>
         {isEditing ? (
           <Tabs defaultValue="sale" className="w-full">
-            <TabsList className={`grid w-full ${isAdmin ? "grid-cols-4" : "grid-cols-3"}`}>
+            <TabsList className={`grid w-full ${isAdmin ? "grid-cols-5" : "grid-cols-4"}`}>
               <TabsTrigger value="sale" className="text-xs">Sale</TabsTrigger>
               <TabsTrigger value="promo" className="text-xs">Promo</TabsTrigger>
               {isAdmin && <TabsTrigger value="evidence" className="text-xs">Evidence</TabsTrigger>}
+              <TabsTrigger value="try_buy" className="text-xs">Try&Buy</TabsTrigger>
               <TabsTrigger value="lease" className="text-xs">Lease</TabsTrigger>
             </TabsList>
 
@@ -423,6 +442,39 @@ export const RobotModelPricing = ({ modelName, isAdmin }: RobotModelPricingProps
                 </div>
               </TabsContent>
             )}
+
+            <TabsContent value="try_buy" className="mt-4 space-y-3">
+              <p className="text-xs text-muted-foreground">Try&Buy pricing (one-time fee for trial period)</p>
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <Label className="text-xs">PLN (Net)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={formData.try_buy_price_pln_net}
+                    onChange={(e) => setFormData({ ...formData, try_buy_price_pln_net: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">EUR (Net)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={formData.try_buy_price_eur_net}
+                    onChange={(e) => setFormData({ ...formData, try_buy_price_eur_net: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">USD (Net)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={formData.try_buy_price_usd_net}
+                    onChange={(e) => setFormData({ ...formData, try_buy_price_usd_net: e.target.value })}
+                  />
+                </div>
+              </div>
+            </TabsContent>
 
             <TabsContent value="lease" className="mt-4 space-y-3">
               <p className="text-xs text-muted-foreground">Monthly lease pricing by term</p>
