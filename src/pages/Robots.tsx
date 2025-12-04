@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Search, Eye } from "lucide-react";
+import { Search, Eye, X } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -16,6 +16,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { useSortable } from "@/hooks/use-sortable";
 import { usePagination } from "@/hooks/use-pagination";
@@ -34,7 +41,7 @@ interface Robot {
 
 type SortField = "serial_number" | "model" | "working_hours" | "created_at";
 
-interface RobotStatus {
+interface StatusOption {
   name: string;
   color: string | null;
 }
@@ -54,6 +61,16 @@ const Robots = () => {
   const [statusColors, setStatusColors] = useState<Record<string, string>>({});
   const [search, setSearch] = useState("");
   const navigate = useNavigate();
+
+  // Filter options
+  const [models, setModels] = useState<string[]>([]);
+  const [types, setTypes] = useState<string[]>([]);
+  const [statuses, setStatuses] = useState<StatusOption[]>([]);
+
+  // Selected filters
+  const [filterModel, setFilterModel] = useState<string>("");
+  const [filterType, setFilterType] = useState<string>("");
+  const [filterStatus, setFilterStatus] = useState<string>("");
 
   const { sortField, sortDirection, handleSort, getSortIcon } = useSortable<SortField>({
     defaultField: "serial_number",
@@ -76,7 +93,7 @@ const Robots = () => {
 
   useEffect(() => {
     fetchRobots();
-    fetchStatusColors();
+    fetchFilterOptions();
   }, []);
 
   const fetchRobots = async () => {
@@ -90,14 +107,29 @@ const Robots = () => {
     }
   };
 
-  const fetchStatusColors = async () => {
-    const { data, error } = await supabase
-      .from("robot_status_dictionary")
-      .select("name, color");
+  const fetchFilterOptions = async () => {
+    // Fetch distinct models from robots
+    const { data: robotData } = await supabase
+      .from("robots")
+      .select("model, type");
 
-    if (data && !error) {
+    if (robotData) {
+      const uniqueModels = [...new Set(robotData.map((r) => r.model))].sort();
+      const uniqueTypes = [...new Set(robotData.map((r) => r.type))].sort();
+      setModels(uniqueModels);
+      setTypes(uniqueTypes);
+    }
+
+    // Fetch statuses with colors
+    const { data: statusData } = await supabase
+      .from("robot_status_dictionary")
+      .select("name, color")
+      .order("name");
+
+    if (statusData) {
+      setStatuses(statusData);
       const colors: Record<string, string> = {};
-      data.forEach((status) => {
+      statusData.forEach((status) => {
         colors[status.name] = status.color || "#6b7280";
       });
       setStatusColors(colors);
@@ -109,16 +141,29 @@ const Robots = () => {
     resetPage();
   }, [sortField, sortDirection]);
 
-  const filteredRobots = useMemo(
-    () =>
-      robots.filter(
-        (robot) =>
-          robot.serial_number.toLowerCase().includes(search.toLowerCase()) ||
-          robot.model.toLowerCase().includes(search.toLowerCase()) ||
-          robot.type.toLowerCase().includes(search.toLowerCase())
-      ),
-    [robots, search]
-  );
+  const filteredRobots = useMemo(() => {
+    return robots.filter((robot) => {
+      const matchesSearch =
+        robot.serial_number.toLowerCase().includes(search.toLowerCase()) ||
+        robot.model.toLowerCase().includes(search.toLowerCase()) ||
+        robot.type.toLowerCase().includes(search.toLowerCase());
+
+      const matchesModel = !filterModel || robot.model === filterModel;
+      const matchesType = !filterType || robot.type === filterType;
+      const matchesStatus = !filterStatus || robot.status === filterStatus;
+
+      return matchesSearch && matchesModel && matchesType && matchesStatus;
+    });
+  }, [robots, search, filterModel, filterType, filterStatus]);
+
+  const hasActiveFilters = filterModel || filterType || filterStatus;
+
+  const clearFilters = () => {
+    setFilterModel("");
+    setFilterType("");
+    setFilterStatus("");
+    resetPage();
+  };
 
   const currentRecords = getPaginatedData(filteredRobots);
   const totalPages = getTotalPages(filteredRobots.length);
@@ -127,24 +172,83 @@ const Robots = () => {
     <Layout>
       <div className="space-y-6">
         <Card className="p-4">
-          <div className="flex items-center gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-              <Input
-                placeholder="Search by serial number, model, or type..."
-                value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                  resetPage();
-                }}
-                className="pl-10"
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                <Input
+                  placeholder="Search by serial number, model, or type..."
+                  value={search}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                    resetPage();
+                  }}
+                  className="pl-10"
+                />
+              </div>
+              <ColumnVisibilityToggle
+                columns={COLUMNS}
+                visibleColumns={visibleColumns}
+                onToggleColumn={toggleColumn}
               />
             </div>
-            <ColumnVisibilityToggle
-              columns={COLUMNS}
-              visibleColumns={visibleColumns}
-              onToggleColumn={toggleColumn}
-            />
+            
+            <div className="flex flex-wrap items-center gap-2">
+              <Select value={filterModel || "all"} onValueChange={(val) => { setFilterModel(val === "all" ? "" : val); resetPage(); }}>
+                <SelectTrigger className="w-[160px] h-8 text-sm">
+                  <SelectValue placeholder="All Models" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Models</SelectItem>
+                  {models.map((model) => (
+                    <SelectItem key={model} value={model}>
+                      {model}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={filterType || "all"} onValueChange={(val) => { setFilterType(val === "all" ? "" : val); resetPage(); }}>
+                <SelectTrigger className="w-[160px] h-8 text-sm">
+                  <SelectValue placeholder="All Types" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  {types.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {type}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={filterStatus || "all"} onValueChange={(val) => { setFilterStatus(val === "all" ? "" : val); resetPage(); }}>
+                <SelectTrigger className="w-[160px] h-8 text-sm">
+                  <SelectValue placeholder="All Statuses" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  {statuses.map((status) => (
+                    <SelectItem key={status.name} value={status.name}>
+                      <div className="flex items-center gap-2">
+                        <div 
+                          className="w-2.5 h-2.5 rounded-full" 
+                          style={{ backgroundColor: status.color || "#6b7280" }}
+                        />
+                        {status.name.replace(/_/g, " ")}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {hasActiveFilters && (
+                <Button variant="ghost" size="sm" onClick={clearFilters} className="h-8 px-2 text-sm">
+                  <X className="w-3.5 h-3.5 mr-1" />
+                  Clear
+                </Button>
+              )}
+            </div>
           </div>
         </Card>
 
