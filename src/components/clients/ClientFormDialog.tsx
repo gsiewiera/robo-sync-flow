@@ -7,7 +7,6 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -534,11 +533,6 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
       <DialogContent className="max-w-4xl max-h-[90vh] p-0">
         <DialogHeader className="px-6 pt-6">
           <DialogTitle>{isEditMode ? "Edit Client" : "New Client"}</DialogTitle>
-          <DialogDescription>
-            {isEditMode
-              ? "Update client information and contact details"
-              : "Add a new client with company and contact information"}
-          </DialogDescription>
         </DialogHeader>
 
         <ScrollArea className="max-h-[calc(90vh-120px)] px-6">
@@ -546,7 +540,6 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 pb-6">
               {/* Company Information */}
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Company Information</h3>
                 
                 <FormField
                   control={form.control}
