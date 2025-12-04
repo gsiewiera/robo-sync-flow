@@ -23,6 +23,9 @@ interface RobotPricing {
   evidence_price_pln_net?: number;
   evidence_price_usd_net?: number;
   evidence_price_eur_net?: number;
+  try_buy_price_pln_net?: number;
+  try_buy_price_usd_net?: number;
+  try_buy_price_eur_net?: number;
   created_at: string;
 }
 
@@ -72,6 +75,9 @@ export const PricingDetailForm = ({
     evidence_price_pln_net: pricing.evidence_price_pln_net || 0,
     evidence_price_usd_net: pricing.evidence_price_usd_net || 0,
     evidence_price_eur_net: pricing.evidence_price_eur_net || 0,
+    try_buy_price_pln_net: pricing.try_buy_price_pln_net || 0,
+    try_buy_price_usd_net: pricing.try_buy_price_usd_net || 0,
+    try_buy_price_eur_net: pricing.try_buy_price_eur_net || 0,
   });
 
   const [leaseData, setLeaseData] = useState<Record<number, { 
@@ -144,6 +150,9 @@ export const PricingDetailForm = ({
           evidence_price_pln_net: formData.evidence_price_pln_net || null,
           evidence_price_usd_net: formData.evidence_price_usd_net || null,
           evidence_price_eur_net: formData.evidence_price_eur_net || null,
+          try_buy_price_pln_net: formData.try_buy_price_pln_net || null,
+          try_buy_price_usd_net: formData.try_buy_price_usd_net || null,
+          try_buy_price_eur_net: formData.try_buy_price_eur_net || null,
         })
         .eq("id", pricing.id);
 
@@ -191,6 +200,9 @@ export const PricingDetailForm = ({
       evidence_price_pln_net: pricing.evidence_price_pln_net || 0,
       evidence_price_usd_net: pricing.evidence_price_usd_net || 0,
       evidence_price_eur_net: pricing.evidence_price_eur_net || 0,
+      try_buy_price_pln_net: pricing.try_buy_price_pln_net || 0,
+      try_buy_price_usd_net: pricing.try_buy_price_usd_net || 0,
+      try_buy_price_eur_net: pricing.try_buy_price_eur_net || 0,
     });
     const leaseMap: Record<number, { 
       pln: number; usd: number; eur: number;
@@ -396,6 +408,28 @@ export const PricingDetailForm = ({
             <PriceField label="PLN" field="promo_price_pln_net" currency="PLN" />
             <PriceField label="USD" field="promo_price_usd_net" currency="USD" />
             <PriceField label="EUR" field="promo_price_eur_net" currency="EUR" />
+          </CardContent>
+        </Card>
+
+        {/* Try&Buy Prices */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              Try&Buy Prices
+              {(formData.try_buy_price_pln_net || formData.try_buy_price_usd_net || formData.try_buy_price_eur_net) && (
+                <Badge variant="secondary">Active</Badge>
+              )}
+            </CardTitle>
+            <div className="grid grid-cols-3 gap-4 text-xs text-muted-foreground pt-2">
+              <span>Currency</span>
+              <span className="text-right">Net</span>
+              <span className="text-right">Gross</span>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <PriceField label="PLN" field="try_buy_price_pln_net" currency="PLN" />
+            <PriceField label="USD" field="try_buy_price_usd_net" currency="USD" />
+            <PriceField label="EUR" field="try_buy_price_eur_net" currency="EUR" />
           </CardContent>
         </Card>
 
