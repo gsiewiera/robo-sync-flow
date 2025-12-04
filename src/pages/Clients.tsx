@@ -59,6 +59,12 @@ const Clients = () => {
   const [salespeople, setSalespeople] = useState<Salesperson[]>([]);
   const [salespersonFilters, setSalespersonFilters] = useState<string[]>([]);
   const [salespersonMap, setSalespersonMap] = useState<Record<string, string>>({});
+  const [clientTypes, setClientTypes] = useState<{ id: string; name: string }[]>([]);
+  const [selectedClientTypeFilters, setSelectedClientTypeFilters] = useState<string[]>([]);
+  const [clientClientTypes, setClientClientTypes] = useState<Record<string, string[]>>({});
+  const [markets, setMarkets] = useState<{ id: string; name: string }[]>([]);
+  const [selectedMarketFilters, setSelectedMarketFilters] = useState<string[]>([]);
+  const [clientMarkets, setClientMarkets] = useState<Record<string, string[]>>({});
   const navigate = useNavigate();
   const [pageSize, setPageSize] = useState(20);
 
@@ -92,6 +98,10 @@ const Clients = () => {
     fetchTags();
     fetchClientTags();
     fetchSalespeople();
+    fetchClientTypes();
+    fetchMarkets();
+    fetchClientClientTypes();
+    fetchClientMarkets();
   }, []);
 
   const fetchSalespeople = async () => {
@@ -155,10 +165,66 @@ const Clients = () => {
     }
   };
 
+  const fetchClientTypes = async () => {
+    const { data } = await supabase
+      .from("client_type_dictionary")
+      .select("id, name")
+      .order("name");
+    
+    if (data) {
+      setClientTypes(data);
+    }
+  };
+
+  const fetchMarkets = async () => {
+    const { data } = await supabase
+      .from("market_dictionary")
+      .select("id, name")
+      .order("name");
+    
+    if (data) {
+      setMarkets(data);
+    }
+  };
+
+  const fetchClientClientTypes = async () => {
+    const { data } = await supabase
+      .from("client_client_types")
+      .select("client_id, client_type_id");
+    
+    if (data) {
+      const typesMap: Record<string, string[]> = {};
+      data.forEach(item => {
+        if (!typesMap[item.client_id]) {
+          typesMap[item.client_id] = [];
+        }
+        typesMap[item.client_id].push(item.client_type_id);
+      });
+      setClientClientTypes(typesMap);
+    }
+  };
+
+  const fetchClientMarkets = async () => {
+    const { data } = await supabase
+      .from("client_markets")
+      .select("client_id, market_id");
+    
+    if (data) {
+      const marketsMap: Record<string, string[]> = {};
+      data.forEach(item => {
+        if (!marketsMap[item.client_id]) {
+          marketsMap[item.client_id] = [];
+        }
+        marketsMap[item.client_id].push(item.market_id);
+      });
+      setClientMarkets(marketsMap);
+    }
+  };
+
   useEffect(() => {
     fetchClients();
     setCurrentPage(1);
-  }, [sortField, sortDirection, selectedTagFilters, salespersonFilters]);
+  }, [sortField, sortDirection, selectedTagFilters, salespersonFilters, selectedClientTypeFilters, selectedMarketFilters]);
 
   const filteredClients = clients.filter((client) => {
     // Search filter
@@ -176,7 +242,19 @@ const Clients = () => {
     const matchesSalesperson = salespersonFilters.length === 0 ||
       (client.assigned_salesperson_id && salespersonFilters.includes(client.assigned_salesperson_id));
     
-    return matchesSearch && matchesTags && matchesSalesperson;
+    // Client Type filter
+    const matchesClientType = selectedClientTypeFilters.length === 0 ||
+      selectedClientTypeFilters.some(typeId => 
+        clientClientTypes[client.id]?.includes(typeId)
+      );
+    
+    // Market filter
+    const matchesMarket = selectedMarketFilters.length === 0 ||
+      selectedMarketFilters.some(marketId => 
+        clientMarkets[client.id]?.includes(marketId)
+      );
+    
+    return matchesSearch && matchesTags && matchesSalesperson && matchesClientType && matchesMarket;
   });
 
   const toggleTagFilter = (tagId: string) => {
@@ -187,12 +265,30 @@ const Clients = () => {
     );
   };
 
+  const toggleClientTypeFilter = (typeId: string) => {
+    setSelectedClientTypeFilters(prev =>
+      prev.includes(typeId)
+        ? prev.filter(id => id !== typeId)
+        : [...prev, typeId]
+    );
+  };
+
+  const toggleMarketFilter = (marketId: string) => {
+    setSelectedMarketFilters(prev =>
+      prev.includes(marketId)
+        ? prev.filter(id => id !== marketId)
+        : [...prev, marketId]
+    );
+  };
+
   const clearFilters = () => {
     setSelectedTagFilters([]);
     setSalespersonFilters([]);
+    setSelectedClientTypeFilters([]);
+    setSelectedMarketFilters([]);
   };
 
-  const hasActiveFilters = selectedTagFilters.length > 0 || salespersonFilters.length > 0;
+  const hasActiveFilters = selectedTagFilters.length > 0 || salespersonFilters.length > 0 || selectedClientTypeFilters.length > 0 || selectedMarketFilters.length > 0;
 
   const indexOfLastRecord = currentPage * pageSize;
   const indexOfFirstRecord = indexOfLastRecord - pageSize;
@@ -276,6 +372,62 @@ const Clients = () => {
                           style={{ backgroundColor: tag.color }}
                         />
                         {tag.name}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
+
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="w-[180px] justify-between">
+                  Client Type {selectedClientTypeFilters.length > 0 && `(${selectedClientTypeFilters.length})`}
+                  <ChevronDown className="ml-2 h-4 w-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[250px] p-3 bg-background z-50">
+                <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                  {clientTypes.map((type) => (
+                    <div key={type.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`filter-type-${type.id}`}
+                        checked={selectedClientTypeFilters.includes(type.id)}
+                        onCheckedChange={() => toggleClientTypeFilter(type.id)}
+                      />
+                      <label
+                        htmlFor={`filter-type-${type.id}`}
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      >
+                        {type.name}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
+
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="w-[180px] justify-between">
+                  Market {selectedMarketFilters.length > 0 && `(${selectedMarketFilters.length})`}
+                  <ChevronDown className="ml-2 h-4 w-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[250px] p-3 bg-background z-50">
+                <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                  {markets.map((market) => (
+                    <div key={market.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`filter-market-${market.id}`}
+                        checked={selectedMarketFilters.includes(market.id)}
+                        onCheckedChange={() => toggleMarketFilter(market.id)}
+                      />
+                      <label
+                        htmlFor={`filter-market-${market.id}`}
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      >
+                        {market.name}
                       </label>
                     </div>
                   ))}
