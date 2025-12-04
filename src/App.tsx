@@ -37,6 +37,7 @@ import Leaderboard from "./pages/Leaderboard";
 import Goals from "./pages/Goals";
 import SalespersonPanel from "./pages/SalespersonPanel";
 import Settings from "./pages/Settings";
+import Campaigns from "./pages/Campaigns";
 import ActivityReport from "./pages/reports/ActivityReport";
 import SalesReport from "./pages/reports/SalesReport";
 import ResellerReport from "./pages/reports/ResellerReport";
@@ -89,6 +90,7 @@ const App = () => (
           <Route path="/clients/:id" element={<ProtectedRoute><ClientDetail /></ProtectedRoute>} />
           <Route path="/resellers" element={<ProtectedRoute><Resellers /></ProtectedRoute>} />
           <Route path="/resellers/:id" element={<ProtectedRoute><ResellerDetail /></ProtectedRoute>} />
+          <Route path="/campaigns" element={<ProtectedRoute><Campaigns /></ProtectedRoute>} />
           <Route path="/robots" element={<ProtectedRoute><Robots /></ProtectedRoute>} />
           <Route path="/robots/:id" element={<ProtectedRoute><RobotDetail /></ProtectedRoute>} />
           <Route path="/tasks" element={<ProtectedRoute><Tasks /></ProtectedRoute>} />

@@ -27,7 +27,8 @@ import {
   Target,
   StickyNote,
   UserCog,
-  Cpu
+  Cpu,
+  Megaphone
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -69,6 +70,7 @@ const allNavItems: NavItem[] = [
   { icon: ShoppingCart, label: "Offers", translationKey: "nav.offers", path: "/offers", roles: ["admin", "manager", "salesperson"] },
   { icon: TrendingUp, label: "Funnel", translationKey: "nav.funnel", path: "/funnel", roles: ["admin", "manager"] },
   { icon: Users, label: "Clients", translationKey: "nav.clients", path: "/clients", roles: ["admin", "manager", "salesperson"] },
+  { icon: Megaphone, label: "Campaigns", translationKey: "nav.campaigns", path: "/campaigns", roles: ["admin", "manager", "salesperson"] },
   { icon: Building2, label: "Resellers", translationKey: "nav.resellers", path: "/resellers", roles: ["admin", "manager", "salesperson"] },
   { icon: FileText, label: "Contracts", translationKey: "nav.contracts", path: "/contracts", roles: ["admin", "manager", "salesperson"] },
   { icon: Receipt, label: "Invoices", translationKey: "nav.invoices", path: "/invoices", roles: ["admin", "manager", "salesperson"] },

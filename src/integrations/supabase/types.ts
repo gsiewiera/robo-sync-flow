@@ -14,6 +14,189 @@ export type Database = {
   }
   public: {
     Tables: {
+      campaign_clients: {
+        Row: {
+          campaign_id: string
+          client_id: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          campaign_id: string
+          client_id: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          campaign_id?: string
+          client_id?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_clients_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_clients_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaign_mailing_logs: {
+        Row: {
+          client_id: string
+          email: string
+          error: string | null
+          id: string
+          mailing_id: string
+          sent_at: string | null
+          status: string
+        }
+        Insert: {
+          client_id: string
+          email: string
+          error?: string | null
+          id?: string
+          mailing_id: string
+          sent_at?: string | null
+          status?: string
+        }
+        Update: {
+          client_id?: string
+          email?: string
+          error?: string | null
+          id?: string
+          mailing_id?: string
+          sent_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_mailing_logs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_mailing_logs_mailing_id_fkey"
+            columns: ["mailing_id"]
+            isOneToOne: false
+            referencedRelation: "campaign_mailings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaign_mailings: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          failed_count: number
+          id: string
+          name: string
+          sent_at: string | null
+          sent_by: string | null
+          sent_count: number
+          status: string
+          template_id: string
+          total_count: number
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          failed_count?: number
+          id?: string
+          name: string
+          sent_at?: string | null
+          sent_by?: string | null
+          sent_count?: number
+          status?: string
+          template_id: string
+          total_count?: number
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          failed_count?: number
+          id?: string
+          name?: string
+          sent_at?: string | null
+          sent_by?: string | null
+          sent_count?: number
+          status?: string
+          template_id?: string
+          total_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_mailings_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_mailings_sent_by_fkey"
+            columns: ["sent_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_mailings_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "email_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaigns: {
+        Row: {
+          client_count: number
+          created_at: string
+          created_by: string | null
+          filters: Json
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          client_count?: number
+          created_at?: string
+          created_by?: string | null
+          filters?: Json
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          client_count?: number
+          created_at?: string
+          created_by?: string | null
+          filters?: Json
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaigns_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_addresses: {
         Row: {
           address: string
@@ -940,6 +1123,47 @@ export type Database = {
           name?: string
         }
         Relationships: []
+      }
+      email_templates: {
+        Row: {
+          body: string
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          name: string
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_templates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       invoices: {
         Row: {
