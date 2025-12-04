@@ -140,13 +140,6 @@ const Campaigns = () => {
     fetchFilterOptions();
   }, []);
 
-  // Auto-apply filters when any filter changes
-  useEffect(() => {
-    if (campaignViewMode === "form") {
-      applyFilters();
-    }
-  }, [selectedClientTypes, selectedSegments, selectedMarkets, selectedSizes, selectedCities, selectedDealStatuses, campaignViewMode]);
-
   const fetchData = async () => {
     setLoading(true);
     await Promise.all([fetchCampaigns(), fetchTemplates(), fetchMailings()]);
@@ -737,11 +730,17 @@ const Campaigns = () => {
                     </div>
                   </div>
 
-                  <div className="border rounded-md p-4 bg-muted/30">
-                    <p className="text-sm font-medium text-center">
-                      {selectedClients.length} clients match current filters
-                    </p>
-                  </div>
+                  <Button onClick={applyFilters} variant="secondary" className="w-full">
+                    Count Matching Clients
+                  </Button>
+
+                  {selectedClients.length > 0 && (
+                    <div className="border rounded-md p-4 bg-muted/30">
+                      <p className="text-sm font-medium text-center">
+                        {selectedClients.length} clients match current filters
+                      </p>
+                    </div>
+                  )}
 
                   <div className="flex justify-end gap-2">
                     <Button variant="outline" onClick={resetCampaignForm}>Cancel</Button>
