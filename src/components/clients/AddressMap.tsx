@@ -1,7 +1,7 @@
 /// <reference types="@types/google.maps" />
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { Card } from '@/components/ui/card';
-import { MapPin, AlertCircle, Loader2, Navigation, Clock, Route, Home, Building2, Banknote, ArrowLeftRight, Maximize2, Minimize2 } from 'lucide-react';
+import { AlertCircle, Loader2, Navigation, Clock, Route, Home, Building2, Banknote, ArrowLeftRight, Maximize2, Minimize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -35,13 +35,6 @@ interface RouteInfo {
 
 interface AddressMapProps {
   addresses: Address[];
-}
-
-declare global {
-  interface Window {
-    google: typeof google;
-    initGoogleMaps: () => void;
-  }
 }
 
 export const AddressMap = ({ addresses }: AddressMapProps) => {
@@ -197,47 +190,36 @@ export const AddressMap = ({ addresses }: AddressMapProps) => {
 
   // Load Google Maps script
   useEffect(() => {
-    if (!apiKey) return;
+    if (!apiKey || isGoogleLoaded) return;
 
-    // If Google Maps is already available
+    // Check if already loaded
     if (window.google?.maps) {
       setIsGoogleLoaded(true);
       return;
     }
 
-    const existingScript = document.getElementById('google-maps-script');
+    // Create a unique callback name
+    const callbackName = `initGoogleMaps_${Date.now()}`;
     
-    if (existingScript) {
-      // Script exists but Google isn't ready yet - wait for it
-      const checkGoogle = setInterval(() => {
-        if (window.google?.maps) {
-          setIsGoogleLoaded(true);
-          clearInterval(checkGoogle);
-        }
-      }, 100);
-      
-      // Timeout after 10 seconds
-      setTimeout(() => clearInterval(checkGoogle), 10000);
-      return;
-    }
-
-    // Create callback before adding script
-    window.initGoogleMaps = () => {
+    // Set up callback
+    (window as any)[callbackName] = () => {
       setIsGoogleLoaded(true);
+      delete (window as any)[callbackName];
     };
 
+    // Create and add script
     const script = document.createElement('script');
-    script.id = 'google-maps-script';
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&callback=initGoogleMaps&libraries=places`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&callback=${callbackName}&libraries=places`;
     script.async = true;
     script.defer = true;
     
     script.onerror = () => {
       setError('Failed to load Google Maps. Please check your API key configuration.');
+      delete (window as any)[callbackName];
     };
     
     document.head.appendChild(script);
-  }, [apiKey]);
+  }, [apiKey, isGoogleLoaded]);
 
   // Initialize map
   useEffect(() => {
