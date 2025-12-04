@@ -160,10 +160,10 @@ const RobotModels = () => {
   const startIndex = (currentPage - 1) * pageSize;
   const paginatedModels = filteredModels.slice(startIndex, startIndex + pageSize);
 
-  const FilterContent = () => (
-    <div className="space-y-4">
+  const FilterContent = ({ vertical = false }: { vertical?: boolean }) => (
+    <div className={vertical ? "space-y-4" : "flex gap-2"}>
       <Select value={typeFilter} onValueChange={setTypeFilter}>
-        <SelectTrigger className="w-full h-9">
+        <SelectTrigger className={vertical ? "w-full h-9" : "w-[150px] h-9"}>
           <SelectValue placeholder="Type" />
         </SelectTrigger>
         <SelectContent>
@@ -176,7 +176,7 @@ const RobotModels = () => {
         </SelectContent>
       </Select>
       <Select value={manufacturerFilter} onValueChange={setManufacturerFilter}>
-        <SelectTrigger className="w-full h-9">
+        <SelectTrigger className={vertical ? "w-full h-9" : "w-[180px] h-9"}>
           <SelectValue placeholder="Manufacturer" />
         </SelectTrigger>
         <SelectContent>
@@ -297,14 +297,14 @@ const RobotModels = () => {
                     <SheetTitle>Filters</SheetTitle>
                   </SheetHeader>
                   <div className="py-4">
-                    <FilterContent />
+                    <FilterContent vertical />
                   </div>
                 </SheetContent>
               </Sheet>
             </div>
           ) : (
-            <div className="flex flex-wrap gap-2 mt-3">
-              <div className="relative flex-1 min-w-[150px] max-w-[200px]">
+            <div className="flex items-center gap-2 mt-3">
+              <div className="relative w-[200px]">
                 <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                 <Input
                   placeholder="Search..."
