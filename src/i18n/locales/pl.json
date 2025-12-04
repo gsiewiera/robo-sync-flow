@@ -23,7 +23,9 @@
     "settings": "Ustawienia",
     "logout": "Wyloguj",
     "navigation": "Nawigacja",
-    "reports": "Raporty"
+    "reports": "Raporty",
+    "notes": "Notatki",
+    "campaigns": "Kampanie"
   },
   "reports": {
     "activity": "Aktywność",

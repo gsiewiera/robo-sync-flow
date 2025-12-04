@@ -25,7 +25,8 @@
     "logout": "Logout",
     "navigation": "Navigation",
     "reports": "Reports",
-    "notes": "Notes"
+    "notes": "Notes",
+    "campaigns": "Campaigns"
   },
   "reports": {
     "activity": "Activity",
