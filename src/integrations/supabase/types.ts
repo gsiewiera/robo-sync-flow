@@ -634,6 +634,7 @@ export type Database = {
           general_email: string | null
           general_phone: string | null
           id: string
+          is_reference: boolean | null
           market: string | null
           name: string
           nip: string | null
@@ -661,6 +662,7 @@ export type Database = {
           general_email?: string | null
           general_phone?: string | null
           id?: string
+          is_reference?: boolean | null
           market?: string | null
           name: string
           nip?: string | null
@@ -688,6 +690,7 @@ export type Database = {
           general_email?: string | null
           general_phone?: string | null
           id?: string
+          is_reference?: boolean | null
           market?: string | null
           name?: string
           nip?: string | null
