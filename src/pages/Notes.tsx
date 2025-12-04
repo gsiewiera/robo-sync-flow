@@ -294,25 +294,27 @@ const Notes = () => {
 
   return (
     <Layout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "table" | "grouped" | "stats")}>
-            <TabsList>
-              <TabsTrigger value="table" className="flex items-center gap-2">
+      <div className="space-y-4 sm:space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "table" | "grouped" | "stats")} className="w-full sm:w-auto">
+            <TabsList className="w-full sm:w-auto grid grid-cols-3 sm:flex">
+              <TabsTrigger value="table" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
                 <TableIcon className="h-4 w-4" />
-                {t("notes.tableView", "Table View")}
+                <span className="hidden sm:inline">{t("notes.tableView", "Table View")}</span>
+                <span className="sm:hidden">{t("notes.table", "Table")}</span>
               </TabsTrigger>
-              <TabsTrigger value="grouped" className="flex items-center gap-2">
+              <TabsTrigger value="grouped" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
                 <Users className="h-4 w-4" />
-                {t("notes.groupedView", "By Salesperson")}
+                <span className="hidden sm:inline">{t("notes.groupedView", "By Salesperson")}</span>
+                <span className="sm:hidden">{t("notes.grouped", "Grouped")}</span>
               </TabsTrigger>
-              <TabsTrigger value="stats" className="flex items-center gap-2">
+              <TabsTrigger value="stats" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
                 <BarChart3 className="h-4 w-4" />
                 {t("notes.statsView", "Stats")}
               </TabsTrigger>
             </TabsList>
           </Tabs>
-          <Button onClick={handleAdd} size="sm">
+          <Button onClick={handleAdd} size="sm" className="w-full sm:w-auto">
             <Plus className="h-4 w-4 mr-2" />
             {t("notes.addNote", "Add Note")}
           </Button>
@@ -320,8 +322,8 @@ const Notes = () => {
 
         {viewMode === "table" ? (
           <>
-            <div className="flex flex-wrap gap-4 items-center">
-              <div className="relative flex-1 min-w-[200px]">
+            <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 items-stretch sm:items-center">
+              <div className="relative w-full sm:flex-1 sm:min-w-[200px]">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder={t("common.search")}
@@ -332,7 +334,7 @@ const Notes = () => {
               </div>
 
               <Select value={clientFilter} onValueChange={setClientFilter}>
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-full sm:w-[180px]">
                   <SelectValue placeholder={t("notes.allClients", "All Clients")} />
                 </SelectTrigger>
                 <SelectContent>
@@ -346,7 +348,7 @@ const Notes = () => {
               </Select>
 
               <Select value={typeFilter} onValueChange={setTypeFilter}>
-                <SelectTrigger className="w-[150px]">
+                <SelectTrigger className="w-full sm:w-[150px]">
                   <SelectValue placeholder={t("notes.allTypes", "All Types")} />
                 </SelectTrigger>
                 <SelectContent>
@@ -358,38 +360,40 @@ const Notes = () => {
                 </SelectContent>
               </Select>
 
-              <Select value={salespersonFilter} onValueChange={setSalespersonFilter}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder={t("notes.allSalespeople", "All Salespeople")} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t("notes.allSalespeople", "All Salespeople")}</SelectItem>
-                  {salespeople.map((sp) => (
-                    <SelectItem key={sp.id} value={sp.id}>
-                      {sp.full_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="grid grid-cols-2 sm:flex gap-3 sm:gap-4">
+                <Select value={salespersonFilter} onValueChange={setSalespersonFilter}>
+                  <SelectTrigger className="w-full sm:w-[180px]">
+                    <SelectValue placeholder={t("notes.allSalespeople", "All Salespeople")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t("notes.allSalespeople", "All Salespeople")}</SelectItem>
+                    {salespeople.map((sp) => (
+                      <SelectItem key={sp.id} value={sp.id}>
+                        {sp.full_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
 
-              <Select value={datePreset} onValueChange={(v) => handlePresetChange(v as DatePreset)}>
-                <SelectTrigger className="w-[120px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="today">{presetLabels.today}</SelectItem>
-                  <SelectItem value="yesterday">{presetLabels.yesterday}</SelectItem>
-                  <SelectItem value="lastWeek">{presetLabels.lastWeek}</SelectItem>
-                  <SelectItem value="lastMonth">{presetLabels.lastMonth}</SelectItem>
-                </SelectContent>
-              </Select>
+                <Select value={datePreset} onValueChange={(v) => handlePresetChange(v as DatePreset)}>
+                  <SelectTrigger className="w-full sm:w-[120px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="today">{presetLabels.today}</SelectItem>
+                    <SelectItem value="yesterday">{presetLabels.yesterday}</SelectItem>
+                    <SelectItem value="lastWeek">{presetLabels.lastWeek}</SelectItem>
+                    <SelectItem value="lastMonth">{presetLabels.lastMonth}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
                     className={cn(
-                      "w-[220px] justify-start text-left font-normal",
+                      "w-full sm:w-[220px] justify-start text-left font-normal",
                       !dateFrom && "text-muted-foreground"
                     )}
                   >
@@ -411,8 +415,18 @@ const Notes = () => {
                       if (range?.from) setDateFrom(range.from);
                       if (range?.to) setDateTo(range.to);
                     }}
+                    numberOfMonths={1}
+                    className={cn("p-3 pointer-events-auto sm:hidden")}
+                  />
+                  <Calendar
+                    mode="range"
+                    selected={{ from: dateFrom, to: dateTo }}
+                    onSelect={(range) => {
+                      if (range?.from) setDateFrom(range.from);
+                      if (range?.to) setDateTo(range.to);
+                    }}
                     numberOfMonths={2}
-                    className={cn("p-3 pointer-events-auto")}
+                    className={cn("p-3 pointer-events-auto hidden sm:block")}
                   />
                 </PopoverContent>
               </Popover>
@@ -421,6 +435,7 @@ const Notes = () => {
                 <Button
                   variant="ghost"
                   size="sm"
+                  className="w-full sm:w-auto"
                   onClick={() => {
                     setClientFilter("all");
                     setTypeFilter("all");
@@ -433,31 +448,30 @@ const Notes = () => {
               )}
             </div>
 
-            <div className="border rounded-lg">
+            <div className="border rounded-lg overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow className="h-9">
                     <TableHead className="py-1.5 text-xs">{t("notes.client", "Client")}</TableHead>
                     <TableHead className="py-1.5 text-xs">{t("notes.contactPerson", "Contact Person")}</TableHead>
-                    <TableHead className="py-1.5 text-xs">{t("notes.offer", "Offer")}</TableHead>
+                    <TableHead className="py-1.5 text-xs hidden sm:table-cell">{t("notes.offer", "Offer")}</TableHead>
                     <TableHead className="py-1.5 text-xs">{t("common.date")}</TableHead>
-                    <TableHead className="py-1.5 text-xs">{t("notes.salesperson", "Salesperson")}</TableHead>
-                    <TableHead className="py-1.5 text-xs">{t("common.priority")}</TableHead>
-                    <TableHead className="py-1.5 text-xs">{t("notes.contactType", "Contact Type")}</TableHead>
-                    <TableHead className="py-1.5 text-xs">{t("tasks.task", "Task")}</TableHead>
-                    <TableHead className="py-1.5 text-xs">{t("common.actions")}</TableHead>
+                    <TableHead className="py-1.5 text-xs hidden md:table-cell">{t("notes.salesperson", "Salesperson")}</TableHead>
+                    <TableHead className="py-1.5 text-xs hidden lg:table-cell">{t("common.priority")}</TableHead>
+                    <TableHead className="py-1.5 text-xs hidden lg:table-cell">{t("notes.contactType", "Contact Type")}</TableHead>
+                    <TableHead className="py-1.5 text-xs hidden md:table-cell">{t("tasks.task", "Task")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {loading ? (
                     <TableRow>
-                      <TableCell colSpan={9} className="text-center py-8">
+                      <TableCell colSpan={8} className="text-center py-8">
                         {t("common.loading")}
                       </TableCell>
                     </TableRow>
                   ) : filteredNotes.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                         {t("notes.noNotes", "No notes found")}
                       </TableCell>
                     </TableRow>
@@ -468,18 +482,18 @@ const Notes = () => {
                         className="h-9 cursor-pointer hover:bg-muted/50"
                         onClick={() => handleEdit(note)}
                       >
-                        <TableCell className="py-1.5 font-medium">
+                        <TableCell className="py-1.5 font-medium max-w-[120px] sm:max-w-none truncate">
                           {note.clients?.name || "-"}
                         </TableCell>
-                        <TableCell className="py-1.5">{note.contact_person || "-"}</TableCell>
-                        <TableCell className="py-1.5">{note.offers?.offer_number || "-"}</TableCell>
-                        <TableCell className="py-1.5">
+                        <TableCell className="py-1.5 max-w-[100px] sm:max-w-none truncate">{note.contact_person || "-"}</TableCell>
+                        <TableCell className="py-1.5 hidden sm:table-cell">{note.offers?.offer_number || "-"}</TableCell>
+                        <TableCell className="py-1.5 whitespace-nowrap">
                           {format(new Date(note.note_date), "yyyy-MM-dd")}
                         </TableCell>
-                        <TableCell className="py-1.5">{note.profiles?.full_name || "-"}</TableCell>
-                        <TableCell className="py-1.5">{getPriorityBadge(note.priority)}</TableCell>
-                        <TableCell className="py-1.5">{getContactTypeBadge(note.contact_type)}</TableCell>
-                        <TableCell className="py-1.5">
+                        <TableCell className="py-1.5 hidden md:table-cell">{note.profiles?.full_name || "-"}</TableCell>
+                        <TableCell className="py-1.5 hidden lg:table-cell">{getPriorityBadge(note.priority)}</TableCell>
+                        <TableCell className="py-1.5 hidden lg:table-cell">{getContactTypeBadge(note.contact_type)}</TableCell>
+                        <TableCell className="py-1.5 hidden md:table-cell">
                           {note.tasks && note.tasks.length > 0 ? (
                             <Button
                               variant="ghost"
@@ -496,11 +510,6 @@ const Notes = () => {
                           ) : (
                             <span className="text-muted-foreground">-</span>
                           )}
-                        </TableCell>
-                        <TableCell className="py-1.5">
-                          <Button variant="ghost" size="sm" className="h-6 px-2">
-                            {t("common.view")}
-                          </Button>
                         </TableCell>
                       </TableRow>
                     ))
@@ -524,9 +533,9 @@ const Notes = () => {
           </>
         ) : viewMode === "grouped" ? (
           <>
-            <div className="flex flex-wrap items-center gap-4">
+            <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3 sm:gap-4">
               <Select value={datePreset} onValueChange={(v) => handlePresetChange(v as DatePreset)}>
-                <SelectTrigger className="w-[140px]">
+                <SelectTrigger className="w-full sm:w-[140px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -542,7 +551,7 @@ const Notes = () => {
                   <Button
                     variant="outline"
                     className={cn(
-                      "w-[240px] justify-start text-left font-normal",
+                      "w-full sm:w-[240px] justify-start text-left font-normal",
                       !dateFrom && "text-muted-foreground"
                     )}
                   >
@@ -564,13 +573,23 @@ const Notes = () => {
                       if (range?.from) setDateFrom(range.from);
                       if (range?.to) setDateTo(range.to);
                     }}
+                    numberOfMonths={1}
+                    className={cn("p-3 pointer-events-auto sm:hidden")}
+                  />
+                  <Calendar
+                    mode="range"
+                    selected={{ from: dateFrom, to: dateTo }}
+                    onSelect={(range) => {
+                      if (range?.from) setDateFrom(range.from);
+                      if (range?.to) setDateTo(range.to);
+                    }}
                     numberOfMonths={2}
-                    className={cn("p-3 pointer-events-auto")}
+                    className={cn("p-3 pointer-events-auto hidden sm:block")}
                   />
                 </PopoverContent>
               </Popover>
 
-              <span className="text-muted-foreground">
+              <span className="text-sm text-muted-foreground">
                 {t("notes.showingNotesFor", "Showing notes for")} {format(dateFrom, "MMM d")} - {format(dateTo, "MMM d, yyyy")}
               </span>
             </div>
@@ -585,42 +604,42 @@ const Notes = () => {
               </div>
             ) : (
               <>
-                <div className="flex flex-wrap gap-3 p-4 rounded-lg bg-muted/50 border">
-                  <span className="text-sm font-medium text-muted-foreground mr-2">
+                <div className="flex flex-wrap gap-2 sm:gap-3 p-3 sm:p-4 rounded-lg bg-muted/50 border">
+                  <span className="text-sm font-medium text-muted-foreground mr-2 w-full sm:w-auto">
                     {t("notes.summary", "Summary")}:
                   </span>
                   {groupedNotes.map((group) => (
-                    <Badge key={group.salesperson} variant="outline" className="text-sm">
+                    <Badge key={group.salesperson} variant="outline" className="text-xs sm:text-sm">
                       {group.salesperson}: {group.notes.length}
                     </Badge>
                   ))}
-                  <Badge variant="default" className="ml-auto">
+                  <Badge variant="default" className="sm:ml-auto">
                     {t("notes.total", "Total")}: {groupedNotes.reduce((sum, g) => sum + g.notes.length, 0)}
                   </Badge>
                 </div>
-                <div className="space-y-6">
+                <div className="space-y-4 sm:space-y-6">
                 {groupedNotes.map((group) => (
                   <Card key={group.salesperson}>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="flex items-center gap-2 text-lg">
-                        <Users className="h-5 w-5" />
+                    <CardHeader className="pb-3 px-3 sm:px-6">
+                      <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                        <Users className="h-4 w-4 sm:h-5 sm:w-5" />
                         {group.salesperson}
-                        <Badge variant="secondary" className="ml-2">
+                        <Badge variant="secondary" className="ml-2 text-xs">
                           {group.notes.length} {group.notes.length === 1 ? t("notes.note", "note") : t("notes.notesPlural", "notes")}
                         </Badge>
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-2">
+                    <CardContent className="space-y-2 px-3 sm:px-6">
                       {group.notes.map((note) => (
                         <div
                           key={note.id}
-                          className="flex gap-4 p-3 rounded-lg border bg-muted/30 hover:bg-muted/50 cursor-pointer transition-colors"
+                          className="flex flex-col sm:flex-row gap-2 sm:gap-4 p-3 rounded-lg border bg-muted/30 hover:bg-muted/50 cursor-pointer transition-colors"
                           onClick={() => handleEdit(note)}
                         >
-                          <div className="font-medium min-w-[200px] text-primary">
+                          <div className="font-medium sm:min-w-[200px] text-primary text-sm sm:text-base">
                             {note.clients?.name || "-"}
                           </div>
-                          <div className="flex-1 text-muted-foreground line-clamp-2">
+                          <div className="flex-1 text-muted-foreground text-sm line-clamp-2">
                             {note.note || "-"}
                           </div>
                         </div>
@@ -634,9 +653,9 @@ const Notes = () => {
           </>
         ) : (
           <>
-            <div className="flex flex-wrap items-center gap-4 mb-4">
+            <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3 sm:gap-4 mb-4">
               <Select value={datePreset} onValueChange={(v) => handlePresetChange(v as DatePreset)}>
-                <SelectTrigger className="w-[140px]">
+                <SelectTrigger className="w-full sm:w-[140px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -652,7 +671,7 @@ const Notes = () => {
                   <Button
                     variant="outline"
                     className={cn(
-                      "w-[240px] justify-start text-left font-normal",
+                      "w-full sm:w-[240px] justify-start text-left font-normal",
                       !dateFrom && "text-muted-foreground"
                     )}
                   >
@@ -674,8 +693,18 @@ const Notes = () => {
                       if (range?.from) setDateFrom(range.from);
                       if (range?.to) setDateTo(range.to);
                     }}
+                    numberOfMonths={1}
+                    className={cn("p-3 pointer-events-auto sm:hidden")}
+                  />
+                  <Calendar
+                    mode="range"
+                    selected={{ from: dateFrom, to: dateTo }}
+                    onSelect={(range) => {
+                      if (range?.from) setDateFrom(range.from);
+                      if (range?.to) setDateTo(range.to);
+                    }}
                     numberOfMonths={2}
-                    className={cn("p-3 pointer-events-auto")}
+                    className={cn("p-3 pointer-events-auto hidden sm:block")}
                   />
                 </PopoverContent>
               </Popover>
