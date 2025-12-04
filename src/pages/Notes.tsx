@@ -428,16 +428,16 @@ const Notes = () => {
             <div className="border rounded-lg">
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead>{t("notes.client", "Client")}</TableHead>
-                    <TableHead>{t("notes.contactPerson", "Contact Person")}</TableHead>
-                    <TableHead>{t("notes.offer", "Offer")}</TableHead>
-                    <TableHead>{t("common.date")}</TableHead>
-                    <TableHead>{t("notes.salesperson", "Salesperson")}</TableHead>
-                    <TableHead>{t("common.priority")}</TableHead>
-                    <TableHead>{t("notes.contactType", "Contact Type")}</TableHead>
-                    <TableHead>{t("tasks.task", "Task")}</TableHead>
-                    <TableHead>{t("common.actions")}</TableHead>
+                  <TableRow className="h-9">
+                    <TableHead className="py-1.5 text-xs">{t("notes.client", "Client")}</TableHead>
+                    <TableHead className="py-1.5 text-xs">{t("notes.contactPerson", "Contact Person")}</TableHead>
+                    <TableHead className="py-1.5 text-xs">{t("notes.offer", "Offer")}</TableHead>
+                    <TableHead className="py-1.5 text-xs">{t("common.date")}</TableHead>
+                    <TableHead className="py-1.5 text-xs">{t("notes.salesperson", "Salesperson")}</TableHead>
+                    <TableHead className="py-1.5 text-xs">{t("common.priority")}</TableHead>
+                    <TableHead className="py-1.5 text-xs">{t("notes.contactType", "Contact Type")}</TableHead>
+                    <TableHead className="py-1.5 text-xs">{t("tasks.task", "Task")}</TableHead>
+                    <TableHead className="py-1.5 text-xs">{t("common.actions")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -457,26 +457,26 @@ const Notes = () => {
                     filteredNotes.map((note) => (
                       <TableRow
                         key={note.id}
-                        className="cursor-pointer hover:bg-muted/50"
+                        className="h-9 cursor-pointer hover:bg-muted/50"
                         onClick={() => handleEdit(note)}
                       >
-                        <TableCell className="font-medium">
+                        <TableCell className="py-1.5 font-medium">
                           {note.clients?.name || "-"}
                         </TableCell>
-                        <TableCell>{note.contact_person || "-"}</TableCell>
-                        <TableCell>{note.offers?.offer_number || "-"}</TableCell>
-                        <TableCell>
+                        <TableCell className="py-1.5">{note.contact_person || "-"}</TableCell>
+                        <TableCell className="py-1.5">{note.offers?.offer_number || "-"}</TableCell>
+                        <TableCell className="py-1.5">
                           {format(new Date(note.note_date), "yyyy-MM-dd")}
                         </TableCell>
-                        <TableCell>{note.profiles?.full_name || "-"}</TableCell>
-                        <TableCell>{getPriorityBadge(note.priority)}</TableCell>
-                        <TableCell>{getContactTypeBadge(note.contact_type)}</TableCell>
-                        <TableCell>
+                        <TableCell className="py-1.5">{note.profiles?.full_name || "-"}</TableCell>
+                        <TableCell className="py-1.5">{getPriorityBadge(note.priority)}</TableCell>
+                        <TableCell className="py-1.5">{getContactTypeBadge(note.contact_type)}</TableCell>
+                        <TableCell className="py-1.5">
                           {note.tasks && note.tasks.length > 0 ? (
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="text-primary"
+                              className="text-primary h-6 px-2"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 navigate(`/tasks?taskId=${note.tasks![0].id}`);
@@ -489,8 +489,8 @@ const Notes = () => {
                             <span className="text-muted-foreground">-</span>
                           )}
                         </TableCell>
-                        <TableCell>
-                          <Button variant="ghost" size="sm">
+                        <TableCell className="py-1.5">
+                          <Button variant="ghost" size="sm" className="h-6 px-2">
                             {t("common.view")}
                           </Button>
                         </TableCell>
