@@ -25,14 +25,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
+import { TablePagination } from "@/components/ui/table-pagination";
 
 interface Client {
   id: string;
@@ -67,7 +60,7 @@ const Clients = () => {
   const [salespersonFilters, setSalespersonFilters] = useState<string[]>([]);
   const [salespersonMap, setSalespersonMap] = useState<Record<string, string>>({});
   const navigate = useNavigate();
-  const recordsPerPage = 20;
+  const [pageSize, setPageSize] = useState(20);
 
   const columns: ColumnConfig[] = useMemo(() => [
     { key: "name", label: "Name", defaultVisible: true },
@@ -201,13 +194,18 @@ const Clients = () => {
 
   const hasActiveFilters = selectedTagFilters.length > 0 || salespersonFilters.length > 0;
 
-  const indexOfLastRecord = currentPage * recordsPerPage;
-  const indexOfFirstRecord = indexOfLastRecord - recordsPerPage;
+  const indexOfLastRecord = currentPage * pageSize;
+  const indexOfFirstRecord = indexOfLastRecord - pageSize;
   const currentRecords = filteredClients.slice(indexOfFirstRecord, indexOfLastRecord);
-  const totalPages = Math.ceil(filteredClients.length / recordsPerPage);
+  const totalPages = Math.ceil(filteredClients.length / pageSize);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
+  };
+
+  const handlePageSizeChange = (size: number) => {
+    setPageSize(size);
+    setCurrentPage(1);
   };
 
   const handleSort = (field: "name" | "city" | "created_at") => {
@@ -447,35 +445,14 @@ const Clients = () => {
           </Table>
         </Card>
 
-        {totalPages > 1 && (
-          <Pagination>
-            <PaginationContent>
-              <PaginationItem>
-                <PaginationPrevious
-                  onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
-                  className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                />
-              </PaginationItem>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                <PaginationItem key={page}>
-                  <PaginationLink
-                    onClick={() => handlePageChange(page)}
-                    isActive={currentPage === page}
-                    className="cursor-pointer"
-                  >
-                    {page}
-                  </PaginationLink>
-                </PaginationItem>
-              ))}
-              <PaginationItem>
-                <PaginationNext
-                  onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
-                  className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                />
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
-        )}
+        <TablePagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          pageSize={pageSize}
+          totalItems={filteredClients.length}
+          onPageChange={handlePageChange}
+          onPageSizeChange={handlePageSizeChange}
+        />
       </div>
 
       <ClientFormDialog
