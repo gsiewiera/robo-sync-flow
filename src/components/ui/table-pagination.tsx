@@ -87,9 +87,7 @@ export const TablePagination = ({
             ))}
           </SelectContent>
         </Select>
-        <span>
-          of {totalItems} items
-        </span>
+        <span className="whitespace-nowrap">of {totalItems} items</span>
       </div>
 
       {totalPages > 1 && (
