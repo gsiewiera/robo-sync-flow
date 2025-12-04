@@ -1,6 +1,5 @@
+/// <reference types="@types/google.maps" />
 import { useEffect, useRef, useState, useCallback } from 'react';
-import mapboxgl from 'mapbox-gl';
-import 'mapbox-gl/dist/mapbox-gl.css';
 import { Card } from '@/components/ui/card';
 import { MapPin, AlertCircle, Loader2, Navigation, Clock, Route, Home, Building2, Banknote, ArrowLeftRight, Maximize2, Minimize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -30,52 +29,58 @@ interface OriginOption {
 }
 
 interface RouteInfo {
-  distance: number; // in meters
-  duration: number; // in seconds
+  distance: number;
+  duration: number;
 }
 
 interface AddressMapProps {
   addresses: Address[];
 }
 
+declare global {
+  interface Window {
+    google: typeof google;
+    initGoogleMaps: () => void;
+  }
+}
+
 export const AddressMap = ({ addresses }: AddressMapProps) => {
   const { t } = useTranslation();
   const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<mapboxgl.Map | null>(null);
-  const [mapboxToken, setMapboxToken] = useState<string | null>(null);
+  const mapRef = useRef<google.maps.Map | null>(null);
+  const markersRef = useRef<google.maps.Marker[]>([]);
+  const directionsRendererRef = useRef<google.maps.DirectionsRenderer | null>(null);
+  
+  const [apiKey, setApiKey] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isMapReady, setIsMapReady] = useState(false);
-  const markersRef = useRef<mapboxgl.Marker[]>([]);
+  const [isGoogleLoaded, setIsGoogleLoaded] = useState(false);
   
-  // Route-related state
   const [originOptions, setOriginOptions] = useState<OriginOption[]>([]);
   const [selectedOrigin, setSelectedOrigin] = useState<string>('');
   const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null);
   const [isCalculatingRoute, setIsCalculatingRoute] = useState(false);
-  const [destinationCoords, setDestinationCoords] = useState<[number, number] | null>(null);
-  const [kmRate, setKmRate] = useState<number>(1.50); // default value
+  const [destinationCoords, setDestinationCoords] = useState<google.maps.LatLng | null>(null);
+  const [kmRate, setKmRate] = useState<number>(1.50);
   const [isRoundTrip, setIsRoundTrip] = useState<boolean>(() => {
     const saved = localStorage.getItem('mapRoundTrip');
     return saved === 'true';
   });
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  // Save round-trip preference
   useEffect(() => {
     localStorage.setItem('mapRoundTrip', isRoundTrip.toString());
   }, [isRoundTrip]);
 
-  // Resize map when fullscreen changes
   useEffect(() => {
-    if (map.current) {
+    if (mapRef.current) {
       setTimeout(() => {
-        map.current?.resize();
+        google.maps.event.trigger(mapRef.current!, 'resize');
       }, 100);
     }
   }, [isFullscreen]);
 
-  // Fetch km rate from database
   useEffect(() => {
     const fetchKmRate = async () => {
       const { data, error } = await supabase
@@ -92,7 +97,6 @@ export const AddressMap = ({ addresses }: AddressMapProps) => {
     fetchKmRate();
   }, []);
 
-  // Fetch origin options (user's home address + company addresses)
   useEffect(() => {
     const fetchOriginOptions = async () => {
       try {
@@ -101,7 +105,6 @@ export const AddressMap = ({ addresses }: AddressMapProps) => {
 
         const options: OriginOption[] = [];
 
-        // Fetch user's profile (home address)
         const { data: profile } = await supabase
           .from('profiles')
           .select('id, address, city, postal_code, country, full_name')
@@ -120,7 +123,6 @@ export const AddressMap = ({ addresses }: AddressMapProps) => {
           });
         }
 
-        // Fetch company addresses
         const { data: companyAddresses } = await supabase
           .from('company_addresses')
           .select('id, address, city, postal_code, country, label')
@@ -142,7 +144,6 @@ export const AddressMap = ({ addresses }: AddressMapProps) => {
 
         setOriginOptions(options);
         
-        // Set default: prefer home address, then first company address
         if (options.length > 0) {
           const saved = localStorage.getItem('preferredMapOrigin');
           if (saved && options.find(o => o.id === saved)) {
@@ -159,161 +160,136 @@ export const AddressMap = ({ addresses }: AddressMapProps) => {
     fetchOriginOptions();
   }, [t]);
 
-  // Save selected origin preference
   useEffect(() => {
     if (selectedOrigin) {
       localStorage.setItem('preferredMapOrigin', selectedOrigin);
     }
   }, [selectedOrigin]);
 
-  // Fetch Mapbox token from edge function
+  // Fetch Google Maps API key
   useEffect(() => {
-    const fetchToken = async () => {
+    const fetchApiKey = async () => {
       try {
         setIsLoading(true);
         setError(null);
         
-        const { data, error: fnError } = await supabase.functions.invoke('get-mapbox-token');
+        const { data, error: fnError } = await supabase.functions.invoke('get-google-maps-key');
         
         if (fnError) {
           throw new Error(fnError.message);
         }
         
-        if (data?.token) {
-          setMapboxToken(data.token);
+        if (data?.apiKey) {
+          setApiKey(data.apiKey);
         } else if (data?.error) {
           throw new Error(data.error);
         }
       } catch (err) {
-        console.error('Failed to fetch Mapbox token:', err);
+        console.error('Failed to fetch Google Maps API key:', err);
         setError(err instanceof Error ? err.message : 'Failed to load map');
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchToken();
+    fetchApiKey();
   }, []);
 
-  const geocodeAddress = useCallback(async (addr: { address: string; city: string | null; postal_code: string | null; country: string | null }): Promise<[number, number] | null> => {
-    if (!mapboxToken) return null;
-    
-    const query = `${addr.address}, ${addr.postal_code || ''} ${addr.city || ''}, ${addr.country || 'Poland'}`;
-    try {
-      const response = await fetch(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${mapboxToken}&limit=1`
-      );
-      const data = await response.json();
-      if (data.features && data.features.length > 0) {
-        return data.features[0].center as [number, number];
-      }
-    } catch (error) {
-      console.error('Geocoding error:', error);
-    }
-    return null;
-  }, [mapboxToken]);
-
-  const fetchRoute = useCallback(async (origin: [number, number], destination: [number, number]) => {
-    if (!mapboxToken) return null;
-    
-    try {
-      const response = await fetch(
-        `https://api.mapbox.com/directions/v5/mapbox/driving/${origin[0]},${origin[1]};${destination[0]},${destination[1]}?geometries=geojson&access_token=${mapboxToken}`
-      );
-      const data = await response.json();
-      
-      if (data.routes && data.routes.length > 0) {
-        return {
-          geometry: data.routes[0].geometry,
-          distance: data.routes[0].distance,
-          duration: data.routes[0].duration,
-        };
-      }
-    } catch (error) {
-      console.error('Route fetch error:', error);
-    }
-    return null;
-  }, [mapboxToken]);
-
-  const drawRoute = useCallback((geometry: GeoJSON.Geometry) => {
-    if (!map.current) return;
-
-    // Remove existing route layer and source
-    if (map.current.getLayer('route')) {
-      map.current.removeLayer('route');
-    }
-    if (map.current.getSource('route')) {
-      map.current.removeSource('route');
-    }
-
-    // Add route source and layer
-    map.current.addSource('route', {
-      type: 'geojson',
-      data: {
-        type: 'Feature',
-        properties: {},
-        geometry: geometry,
-      },
-    });
-
-    map.current.addLayer({
-      id: 'route',
-      type: 'line',
-      source: 'route',
-      layout: {
-        'line-join': 'round',
-        'line-cap': 'round',
-      },
-      paint: {
-        'line-color': '#3b82f6',
-        'line-width': 5,
-        'line-opacity': 0.75,
-      },
-    });
-  }, []);
-
+  // Load Google Maps script
   useEffect(() => {
-    if (!mapContainer.current || !mapboxToken) return;
+    if (!apiKey || isGoogleLoaded) return;
 
-    mapboxgl.accessToken = mapboxToken;
+    const existingScript = document.getElementById('google-maps-script');
+    if (existingScript) {
+      if (window.google?.maps) {
+        setIsGoogleLoaded(true);
+      }
+      return;
+    }
+
+    window.initGoogleMaps = () => {
+      setIsGoogleLoaded(true);
+    };
+
+    const script = document.createElement('script');
+    script.id = 'google-maps-script';
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&callback=initGoogleMaps&libraries=places`;
+    script.async = true;
+    script.defer = true;
+    document.head.appendChild(script);
+
+    return () => {
+      // Don't remove script on unmount to allow reuse
+    };
+  }, [apiKey, isGoogleLoaded]);
+
+  // Initialize map
+  useEffect(() => {
+    if (!mapContainer.current || !isGoogleLoaded || !window.google) return;
 
     try {
-      map.current = new mapboxgl.Map({
-        container: mapContainer.current,
-        style: 'mapbox://styles/mapbox/light-v11',
-        zoom: 5,
-        center: [19.145136, 51.919438], // Poland center
+      mapRef.current = new google.maps.Map(mapContainer.current, {
+        zoom: 6,
+        center: { lat: 51.919438, lng: 19.145136 }, // Poland center
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: false,
       });
 
-      map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
-
-      map.current.on('load', () => {
-        setIsMapReady(true);
+      directionsRendererRef.current = new google.maps.DirectionsRenderer({
+        map: mapRef.current,
+        suppressMarkers: true,
+        polylineOptions: {
+          strokeColor: '#3b82f6',
+          strokeWeight: 5,
+          strokeOpacity: 0.75,
+        },
       });
+
+      setIsMapReady(true);
 
       return () => {
-        markersRef.current.forEach(marker => marker.remove());
+        markersRef.current.forEach(marker => marker.setMap(null));
         markersRef.current = [];
-        map.current?.remove();
-        setIsMapReady(false);
+        if (directionsRendererRef.current) {
+          directionsRendererRef.current.setMap(null);
+        }
       };
     } catch (error) {
       console.error('Map initialization error:', error);
       setError('Failed to initialize map');
     }
-  }, [mapboxToken]);
+  }, [isGoogleLoaded]);
+
+  const geocodeAddress = useCallback(async (addr: { address: string; city: string | null; postal_code: string | null; country: string | null }): Promise<google.maps.LatLng | null> => {
+    if (!window.google) return null;
+    
+    const geocoder = new google.maps.Geocoder();
+    const query = `${addr.address}, ${addr.postal_code || ''} ${addr.city || ''}, ${addr.country || 'Poland'}`;
+    
+    return new Promise((resolve) => {
+      geocoder.geocode({ address: query }, (results, status) => {
+        if (status === 'OK' && results && results[0]) {
+          resolve(results[0].geometry.location);
+        } else {
+          console.error('Geocoding failed:', status);
+          resolve(null);
+        }
+      });
+    });
+  }, []);
 
   // Add destination markers
   useEffect(() => {
-    if (!isMapReady || !map.current || addresses.length === 0 || !mapboxToken) return;
+    if (!isMapReady || !mapRef.current || addresses.length === 0 || !window.google) return;
 
     // Clear existing markers
-    markersRef.current.forEach(marker => marker.remove());
+    markersRef.current.forEach(marker => marker.setMap(null));
     markersRef.current = [];
 
-    const bounds = new mapboxgl.LngLatBounds();
+    const bounds = new google.maps.LatLngBounds();
     let hasValidCoords = false;
-    let primaryCoords: [number, number] | null = null;
+    let primaryCoords: google.maps.LatLng | null = null;
 
     const addMarkers = async () => {
       for (const address of addresses) {
@@ -322,36 +298,43 @@ export const AddressMap = ({ addresses }: AddressMapProps) => {
           hasValidCoords = true;
           bounds.extend(coords);
           
-          // Save primary address coords for route calculation
           if (address.is_primary) {
             primaryCoords = coords;
             setDestinationCoords(coords);
           }
 
-          const el = document.createElement('div');
-          el.className = 'flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground shadow-lg';
-          el.innerHTML = address.is_primary 
-            ? '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>'
-            : '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/></svg>';
+          const marker = new google.maps.Marker({
+            position: coords,
+            map: mapRef.current!,
+            icon: {
+              path: google.maps.SymbolPath.CIRCLE,
+              scale: address.is_primary ? 12 : 8,
+              fillColor: '#3b82f6',
+              fillOpacity: 1,
+              strokeColor: '#ffffff',
+              strokeWeight: 2,
+            },
+            title: address.label || 'Address',
+          });
 
-          const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
-            <div class="p-2">
-              <p class="font-semibold text-sm">${address.label || 'Address'}</p>
-              <p class="text-xs text-gray-600">${address.address}</p>
-              <p class="text-xs text-gray-600">${address.postal_code || ''} ${address.city || ''}</p>
-            </div>
-          `);
+          const infoWindow = new google.maps.InfoWindow({
+            content: `
+              <div style="padding: 8px;">
+                <p style="font-weight: 600; font-size: 14px; margin: 0 0 4px 0;">${address.label || 'Address'}</p>
+                <p style="font-size: 12px; color: #666; margin: 0;">${address.address}</p>
+                <p style="font-size: 12px; color: #666; margin: 0;">${address.postal_code || ''} ${address.city || ''}</p>
+              </div>
+            `,
+          });
 
-          const marker = new mapboxgl.Marker(el)
-            .setLngLat(coords)
-            .setPopup(popup)
-            .addTo(map.current!);
+          marker.addListener('click', () => {
+            infoWindow.open(mapRef.current!, marker);
+          });
 
           markersRef.current.push(marker);
         }
       }
 
-      // If no primary address, use first address
       if (!primaryCoords && hasValidCoords && addresses.length > 0) {
         const firstCoords = await geocodeAddress(addresses[0]);
         if (firstCoords) {
@@ -359,17 +342,17 @@ export const AddressMap = ({ addresses }: AddressMapProps) => {
         }
       }
 
-      if (hasValidCoords && map.current) {
-        map.current.fitBounds(bounds, { padding: 50, maxZoom: 14 });
+      if (hasValidCoords && mapRef.current) {
+        mapRef.current.fitBounds(bounds, 50);
       }
     };
 
     addMarkers();
-  }, [isMapReady, addresses, mapboxToken, geocodeAddress]);
+  }, [isMapReady, addresses, geocodeAddress]);
 
-  // Calculate and draw route when origin changes
+  // Calculate and draw route
   useEffect(() => {
-    if (!isMapReady || !map.current || !destinationCoords || !selectedOrigin || !mapboxToken) return;
+    if (!isMapReady || !mapRef.current || !destinationCoords || !selectedOrigin || !window.google) return;
 
     const calculateRoute = async () => {
       const originOption = originOptions.find(o => o.id === selectedOrigin);
@@ -385,58 +368,85 @@ export const AddressMap = ({ addresses }: AddressMapProps) => {
           return;
         }
 
-        // Add origin marker
-        const existingOriginMarker = markersRef.current.find(m => m.getElement().classList.contains('origin-marker'));
+        // Remove existing origin marker
+        const existingOriginMarker = markersRef.current.find(m => (m as any).isOrigin);
         if (existingOriginMarker) {
-          existingOriginMarker.remove();
+          existingOriginMarker.setMap(null);
           markersRef.current = markersRef.current.filter(m => m !== existingOriginMarker);
         }
 
-        const originEl = document.createElement('div');
-        originEl.className = 'origin-marker flex items-center justify-center w-8 h-8 rounded-full bg-green-500 text-white shadow-lg';
-        originEl.innerHTML = originOption.type === 'home'
-          ? '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>'
-          : '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></svg>';
+        // Add origin marker
+        const originMarker = new google.maps.Marker({
+          position: originCoords,
+          map: mapRef.current!,
+          icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 12,
+            fillColor: '#22c55e',
+            fillOpacity: 1,
+            strokeColor: '#ffffff',
+            strokeWeight: 2,
+          },
+          title: originOption.label,
+        });
+        (originMarker as any).isOrigin = true;
 
-        const originPopup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
-          <div class="p-2">
-            <p class="font-semibold text-sm">${originOption.label}</p>
-            <p class="text-xs text-gray-600">${originOption.address}</p>
-            <p class="text-xs text-gray-600">${originOption.postal_code || ''} ${originOption.city || ''}</p>
-          </div>
-        `);
+        const originInfoWindow = new google.maps.InfoWindow({
+          content: `
+            <div style="padding: 8px;">
+              <p style="font-weight: 600; font-size: 14px; margin: 0 0 4px 0;">${originOption.label}</p>
+              <p style="font-size: 12px; color: #666; margin: 0;">${originOption.address}</p>
+              <p style="font-size: 12px; color: #666; margin: 0;">${originOption.postal_code || ''} ${originOption.city || ''}</p>
+            </div>
+          `,
+        });
 
-        const originMarker = new mapboxgl.Marker(originEl)
-          .setLngLat(originCoords)
-          .setPopup(originPopup)
-          .addTo(map.current!);
+        originMarker.addListener('click', () => {
+          originInfoWindow.open(mapRef.current!, originMarker);
+        });
 
         markersRef.current.push(originMarker);
 
-        // Fetch and draw route
-        const routeData = await fetchRoute(originCoords, destinationCoords);
-        if (routeData) {
-          drawRoute(routeData.geometry);
-          setRouteInfo({
-            distance: routeData.distance,
-            duration: routeData.duration,
-          });
+        // Calculate route
+        const directionsService = new google.maps.DirectionsService();
+        
+        directionsService.route(
+          {
+            origin: originCoords,
+            destination: destinationCoords,
+            travelMode: google.maps.TravelMode.DRIVING,
+          },
+          (result, status) => {
+            if (status === 'OK' && result) {
+              directionsRendererRef.current?.setDirections(result);
+              
+              const route = result.routes[0];
+              if (route && route.legs[0]) {
+                setRouteInfo({
+                  distance: route.legs[0].distance?.value || 0,
+                  duration: route.legs[0].duration?.value || 0,
+                });
+              }
 
-          // Fit bounds to include both origin and destination
-          const bounds = new mapboxgl.LngLatBounds();
-          bounds.extend(originCoords);
-          bounds.extend(destinationCoords);
-          map.current?.fitBounds(bounds, { padding: 80, maxZoom: 12 });
-        }
+              // Fit bounds to show full route
+              const bounds = new google.maps.LatLngBounds();
+              bounds.extend(originCoords);
+              bounds.extend(destinationCoords);
+              mapRef.current?.fitBounds(bounds, 80);
+            } else {
+              console.error('Directions request failed:', status);
+            }
+            setIsCalculatingRoute(false);
+          }
+        );
       } catch (err) {
         console.error('Route calculation error:', err);
-      } finally {
         setIsCalculatingRoute(false);
       }
     };
 
     calculateRoute();
-  }, [isMapReady, destinationCoords, selectedOrigin, originOptions, mapboxToken, geocodeAddress, fetchRoute, drawRoute]);
+  }, [isMapReady, destinationCoords, selectedOrigin, originOptions, geocodeAddress]);
 
   const formatDuration = (seconds: number): string => {
     const hours = Math.floor(seconds / 3600);
@@ -469,7 +479,7 @@ export const AddressMap = ({ addresses }: AddressMapProps) => {
           <div>
             <h4 className="font-semibold text-sm">Map Unavailable</h4>
             <p className="text-xs text-muted-foreground mt-1">
-              {error}. Please ensure the Mapbox token is configured in Supabase secrets.
+              {error}. Please ensure the Google Maps API key is configured.
             </p>
           </div>
         </div>
@@ -479,7 +489,6 @@ export const AddressMap = ({ addresses }: AddressMapProps) => {
 
   return (
     <Card className={`overflow-hidden relative ${isFullscreen ? 'fixed inset-4 z-50 flex flex-col' : ''}`}>
-      {/* Fullscreen backdrop */}
       {isFullscreen && (
         <div 
           className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40" 
@@ -487,7 +496,6 @@ export const AddressMap = ({ addresses }: AddressMapProps) => {
         />
       )}
       
-      {/* Fullscreen toggle button */}
       <Button
         variant="outline"
         size="icon"
@@ -497,11 +505,9 @@ export const AddressMap = ({ addresses }: AddressMapProps) => {
         {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
       </Button>
       
-      {/* Origin selector and route info - single row */}
       {originOptions.length > 0 && (
         <div className="p-3 border-b bg-muted/30">
           <div className="flex items-center gap-4 flex-wrap">
-            {/* Origin selector */}
             <div className="flex items-center gap-2 min-w-0 flex-1">
               <Navigation className="w-4 h-4 text-muted-foreground shrink-0" />
               <span className="text-sm font-medium shrink-0">{t('addressMap.routeFrom', 'Route from')}:</span>
@@ -526,7 +532,6 @@ export const AddressMap = ({ addresses }: AddressMapProps) => {
               </Select>
             </div>
 
-            {/* Route info */}
             {isCalculatingRoute ? (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -534,7 +539,6 @@ export const AddressMap = ({ addresses }: AddressMapProps) => {
               </div>
             ) : routeInfo ? (
               <div className="flex items-center gap-4 text-sm flex-wrap">
-                {/* Round-trip toggle */}
                 <div className="flex items-center gap-1.5">
                   <ArrowLeftRight className="w-4 h-4 text-muted-foreground" />
                   <span className="text-xs text-muted-foreground">{t('addressMap.roundTrip', 'Round-trip')}</span>
