@@ -431,18 +431,22 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer, mode = "o
     const pricing = robotPricing.find((p) => p.robot_model === robotModel);
     if (!pricing) return 0;
 
-    if (contractType === "purchase") {
-      if (currency === "PLN") return Number(pricing.sale_price_pln_net);
-      if (currency === "USD") return Number(pricing.sale_price_usd_net);
-      if (currency === "EUR") return Number(pricing.sale_price_eur_net);
+    if (contractType === "purchase" || contractType === "try_buy") {
+      let price = 0;
+      if (currency === "PLN") price = Number(pricing.sale_price_pln_net);
+      if (currency === "USD") price = Number(pricing.sale_price_usd_net);
+      if (currency === "EUR") price = Number(pricing.sale_price_eur_net);
+      return Math.round(price * 100) / 100;
     } else if (contractType === "lease" && leaseMonths) {
       const lease = leasePricing.find(
         (l) => l.robot_pricing_id === pricing.id && l.months === leaseMonths
       );
       if (lease) {
-        if (currency === "PLN") return Number(lease.price_pln_net);
-        if (currency === "USD") return Number(lease.price_usd_net);
-        if (currency === "EUR") return Number(lease.price_eur_net);
+        let price = 0;
+        if (currency === "PLN") price = Number(lease.price_pln_net);
+        if (currency === "USD") price = Number(lease.price_usd_net);
+        if (currency === "EUR") price = Number(lease.price_eur_net);
+        return Math.round(price * 100) / 100;
       }
     }
 
@@ -1148,9 +1152,10 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer, mode = "o
                         <FormLabel>Price</FormLabel>
                         <Input
                           type="number"
-                          value={robot.price}
+                          step="0.01"
+                          value={Math.round(robot.price * 100) / 100}
                           onChange={(e) =>
-                            updateRobotSelection(robot.id, { price: parseFloat(e.target.value) })
+                            updateRobotSelection(robot.id, { price: Math.round(parseFloat(e.target.value) * 100) / 100 })
                           }
                         />
                       </div>
