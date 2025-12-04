@@ -1596,8 +1596,8 @@ const ClientDetail = () => {
               </Button>
             </div>
             {addresses.length > 0 ? (
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                {/* Addresses list - 1/3 width */}
+              <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+                {/* Addresses list - 1/4 width */}
                 <div className="space-y-3">
                   {addresses.map((address) => (
                     <Card key={address.id} className="p-3 hover:shadow-md transition-shadow">
@@ -1645,8 +1645,8 @@ const ClientDetail = () => {
                     </Card>
                   ))}
                 </div>
-                {/* Map - 2/3 width */}
-                <div className="lg:col-span-2">
+                {/* Map - 3/4 width */}
+                <div className="lg:col-span-3">
                   <AddressMap addresses={addresses} />
                 </div>
               </div>
