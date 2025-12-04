@@ -506,7 +506,7 @@ export const AddressMap = ({ addresses }: AddressMapProps) => {
               <Navigation className="w-4 h-4 text-muted-foreground shrink-0" />
               <span className="text-sm font-medium shrink-0">{t('addressMap.routeFrom', 'Route from')}:</span>
               <Select value={selectedOrigin} onValueChange={setSelectedOrigin}>
-                <SelectTrigger className="h-8 min-w-[200px] max-w-[300px]">
+                <SelectTrigger className="h-8 w-[180px]">
                   <SelectValue placeholder={t('addressMap.selectOrigin', 'Select starting point')} />
                 </SelectTrigger>
                 <SelectContent className="bg-popover z-50">
@@ -514,11 +514,11 @@ export const AddressMap = ({ addresses }: AddressMapProps) => {
                     <SelectItem key={option.id} value={option.id}>
                       <div className="flex items-center gap-2">
                         {option.type === 'home' ? (
-                          <Home className="w-4 h-4 text-green-500" />
+                          <Home className="w-4 h-4 text-green-500 shrink-0" />
                         ) : (
-                          <Building2 className="w-4 h-4 text-blue-500" />
+                          <Building2 className="w-4 h-4 text-blue-500 shrink-0" />
                         )}
-                        <span>{option.label}{option.city && ` - ${option.city}`}</span>
+                        <span className="truncate">{option.label}{option.city && ` - ${option.city}`}</span>
                       </div>
                     </SelectItem>
                   ))}
