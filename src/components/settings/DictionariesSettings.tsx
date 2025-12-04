@@ -26,6 +26,12 @@ type Dictionary = {
   manufacturers: string[];
 };
 
+type ClientTag = {
+  id: string;
+  name: string;
+  color: string | null;
+};
+
 type DictionaryIds = {
   client_types: { id: string; name: string }[];
   markets: { id: string; name: string }[];
@@ -39,6 +45,7 @@ type NumericSettings = {
 
 const categories = [
   { key: "km_rate", label: "Travel Cost (per km)", type: "numeric" },
+  { key: "client_tags", label: "Client Tags", type: "tags" },
   { key: "robot_types", label: "Robot Types", type: "list" },
   { key: "manufacturers", label: "Manufacturers", type: "list" },
   { key: "client_types", label: "Client Types", type: "list" },
@@ -82,6 +89,7 @@ export const DictionariesSettings = () => {
   const [numericSettings, setNumericSettings] = useState<NumericSettings>({
     km_rate: 1.50,
   });
+  const [clientTags, setClientTags] = useState<ClientTag[]>([]);
 
   useEffect(() => {
     checkAdminRole();
@@ -92,6 +100,7 @@ export const DictionariesSettings = () => {
     fetchMarkets();
     fetchSegments();
     fetchClientSizes();
+    fetchClientTags();
   }, []);
 
   const checkAdminRole = async () => {
@@ -205,6 +214,17 @@ export const DictionariesSettings = () => {
         ...prev,
         client_sizes: data,
       }));
+    }
+  };
+
+  const fetchClientTags = async () => {
+    const { data, error } = await supabase
+      .from("client_tags")
+      .select("id, name, color")
+      .order("name");
+
+    if (!error && data) {
+      setClientTags(data);
     }
   };
 
@@ -513,12 +533,112 @@ export const DictionariesSettings = () => {
     );
   };
 
+  const TagEditor = () => {
+    const [newTagName, setNewTagName] = useState("");
+    const [newTagColor, setNewTagColor] = useState("#10b981");
+
+    const addTag = async () => {
+      if (!newTagName.trim()) return;
+
+      const { error } = await supabase
+        .from("client_tags")
+        .insert({ name: newTagName.trim(), color: newTagColor });
+
+      if (error) {
+        console.error("Error adding tag:", error);
+        toast.error("Failed to add tag");
+        return;
+      }
+      await fetchClientTags();
+      setNewTagName("");
+      setNewTagColor("#10b981");
+      toast.success("Tag added successfully");
+    };
+
+    const removeTag = async (tagId: string) => {
+      const { error } = await supabase
+        .from("client_tags")
+        .delete()
+        .eq("id", tagId);
+
+      if (error) {
+        console.error("Error removing tag:", error);
+        toast.error("Failed to remove tag");
+        return;
+      }
+      await fetchClientTags();
+      toast.success("Tag removed successfully");
+    };
+
+    return (
+      <div className="space-y-6">
+        <div>
+          <Label className="text-lg font-semibold">Client Tags</Label>
+          <p className="text-sm text-muted-foreground mt-1">
+            Manage tags that can be assigned to clients
+          </p>
+        </div>
+
+        <div className="flex gap-2 items-center">
+          <Input
+            placeholder="Tag name"
+            value={newTagName}
+            onChange={(e) => setNewTagName(e.target.value)}
+            onKeyPress={(e) => {
+              if (e.key === "Enter") {
+                addTag();
+              }
+            }}
+            disabled={!isAdmin}
+            className="flex-1"
+          />
+          <input
+            type="color"
+            value={newTagColor}
+            onChange={(e) => setNewTagColor(e.target.value)}
+            disabled={!isAdmin}
+            className="w-10 h-10 rounded border border-border cursor-pointer"
+          />
+          <Button onClick={addTag} disabled={!isAdmin}>
+            Add
+          </Button>
+        </div>
+
+        <div className="flex gap-2 flex-wrap">
+          {clientTags.map((tag) => (
+            <Badge
+              key={tag.id}
+              variant="secondary"
+              className="gap-2 py-2 px-3 text-sm"
+              style={{ backgroundColor: tag.color || "#10b981", color: "#fff" }}
+            >
+              {tag.name}
+              {isAdmin && (
+                <X
+                  className="h-3 w-3 cursor-pointer hover:opacity-70"
+                  onClick={() => removeTag(tag.id)}
+                />
+              )}
+            </Badge>
+          ))}
+          {clientTags.length === 0 && (
+            <p className="text-sm text-muted-foreground">No tags defined yet</p>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   const DictionaryEditor = () => {
     const [newValue, setNewValue] = useState("");
     const currentCategory = categories.find(c => c.key === activeCategory);
 
     if (currentCategory?.type === "numeric") {
       return <NumericSettingEditor settingKey={activeCategory as keyof NumericSettings} />;
+    }
+
+    if (currentCategory?.type === "tags") {
+      return <TagEditor />;
     }
 
     const dictionaryKey = activeCategory as keyof Dictionary;
