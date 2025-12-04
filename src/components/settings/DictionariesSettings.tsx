@@ -50,8 +50,13 @@ type NumericSettings = {
   km_rate: number;
 };
 
+type TextSettings = {
+  contract_number_mask: string;
+};
+
 const categories = [
   { key: "km_rate", label: "Travel Cost (per km)", type: "numeric" },
+  { key: "contract_number_mask", label: "Contract Number Mask", type: "text_setting" },
   { key: "client_tags", label: "Client Tags", type: "tags" },
   { key: "robot_types", label: "Robot Types", type: "list" },
   { key: "robot_statuses", label: "Robot Statuses", type: "statuses" },
@@ -98,6 +103,9 @@ export const DictionariesSettings = () => {
   const [numericSettings, setNumericSettings] = useState<NumericSettings>({
     km_rate: 1.50,
   });
+  const [textSettings, setTextSettings] = useState<TextSettings>({
+    contract_number_mask: "CNT-{YYYY}-{NNN}",
+  });
   const [clientTags, setClientTags] = useState<ClientTag[]>([]);
   const [robotStatuses, setRobotStatuses] = useState<RobotStatus[]>([]);
 
@@ -107,6 +115,7 @@ export const DictionariesSettings = () => {
     fetchRobotTypes();
     fetchRobotStatuses();
     fetchNumericSettings();
+    fetchTextSettings();
     fetchClientTypes();
     fetchMarkets();
     fetchSegments();
@@ -283,6 +292,38 @@ export const DictionariesSettings = () => {
     }
     
     setNumericSettings((prev) => ({ ...prev, [key]: value }));
+    toast.success("Setting updated successfully");
+  };
+
+  const fetchTextSettings = async () => {
+    const { data, error } = await supabase
+      .from("system_text_settings")
+      .select("setting_key, setting_value");
+
+    if (!error && data) {
+      const settings: Partial<TextSettings> = {};
+      data.forEach((row) => {
+        if (row.setting_key === "contract_number_mask") {
+          settings.contract_number_mask = row.setting_value;
+        }
+      });
+      setTextSettings((prev) => ({ ...prev, ...settings }));
+    }
+  };
+
+  const updateTextSetting = async (key: keyof TextSettings, value: string) => {
+    const { error } = await supabase
+      .from("system_text_settings")
+      .update({ setting_value: value, updated_at: new Date().toISOString() })
+      .eq("setting_key", key);
+
+    if (error) {
+      console.error("Error updating setting:", error);
+      toast.error("Failed to update setting");
+      return;
+    }
+    
+    setTextSettings((prev) => ({ ...prev, [key]: value }));
     toast.success("Setting updated successfully");
   };
 
@@ -927,6 +968,46 @@ export const DictionariesSettings = () => {
 
     if (currentCategory?.type === "numeric") {
       return <NumericSettingEditor settingKey={activeCategory as keyof NumericSettings} />;
+    }
+
+    if (currentCategory?.type === "text_setting") {
+      return (
+        <div className="space-y-6">
+          <div>
+            <Label className="text-lg font-semibold">{currentCategory?.label}</Label>
+            <p className="text-sm text-muted-foreground mt-1">
+              Configure the format for auto-generated contract numbers
+            </p>
+          </div>
+          <div className="space-y-4">
+            <div>
+              <Label>Contract Number Format</Label>
+              <Input
+                value={textSettings.contract_number_mask}
+                onChange={(e) => setTextSettings(prev => ({ ...prev, contract_number_mask: e.target.value }))}
+                disabled={!isAdmin}
+                placeholder="CNT-{YYYY}-{NNN}"
+                className="mt-1"
+              />
+            </div>
+            <div className="text-sm text-muted-foreground space-y-1">
+              <p>Available placeholders:</p>
+              <ul className="list-disc list-inside ml-2">
+                <li><code className="bg-muted px-1 rounded">{"{YYYY}"}</code> - Current year (e.g., 2025)</li>
+                <li><code className="bg-muted px-1 rounded">{"{NNN}"}</code> - Sequential number (e.g., 001, 002)</li>
+              </ul>
+              <p className="mt-2">Example: <code className="bg-muted px-1 rounded">CNT-{"{YYYY}"}-{"{NNN}"}</code> → CNT-2025-001</p>
+            </div>
+            <Button 
+              onClick={() => updateTextSetting("contract_number_mask", textSettings.contract_number_mask)}
+              disabled={!isAdmin}
+            >
+              <Save className="h-4 w-4 mr-2" />
+              Save
+            </Button>
+          </div>
+        </div>
+      );
     }
 
     if (currentCategory?.type === "tags") {

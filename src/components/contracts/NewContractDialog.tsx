@@ -142,23 +142,42 @@ export function NewContractDialog({ open, onOpenChange, onSuccess, initialClient
   };
 
   const generateContractNumber = async () => {
+    // Fetch the contract number mask from settings
+    const { data: maskSetting } = await supabase
+      .from("system_text_settings")
+      .select("setting_value")
+      .eq("setting_key", "contract_number_mask")
+      .single();
+
+    const mask = maskSetting?.setting_value || "CNT-{YYYY}-{NNN}";
     const currentYear = new Date().getFullYear();
+    
+    // Extract prefix pattern (everything before {NNN}) for searching existing contracts
+    const prefixPattern = mask.replace("{YYYY}", String(currentYear)).replace("{NNN}", "");
+    
     const { data: contracts } = await supabase
       .from("contracts")
       .select("contract_number")
-      .like("contract_number", `CNT-${currentYear}-%`);
+      .like("contract_number", `${prefixPattern}%`);
 
     let maxNumber = 0;
     if (contracts && contracts.length > 0) {
       contracts.forEach(contract => {
-        const match = contract.contract_number.match(/-(\d+)$/);
+        const match = contract.contract_number.match(/(\d+)$/);
         if (match) {
           const num = parseInt(match[1]);
           if (num > maxNumber) maxNumber = num;
         }
       });
     }
-    setContractNumber(`CNT-${currentYear}-${String(maxNumber + 1).padStart(3, "0")}`);
+    
+    // Generate new number using the mask
+    const newNumber = String(maxNumber + 1).padStart(3, "0");
+    const generatedNumber = mask
+      .replace("{YYYY}", String(currentYear))
+      .replace("{NNN}", newNumber);
+    
+    setContractNumber(generatedNumber);
   };
 
   const getPriceForCurrency = (pricing: RobotPricing) => {
