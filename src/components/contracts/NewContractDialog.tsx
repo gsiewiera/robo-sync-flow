@@ -89,6 +89,7 @@ export function NewContractDialog({ open, onOpenChange, onSuccess, initialClient
   const [leasePricing, setLeasePricing] = useState<LeasePricing[]>([]);
   const [items, setItems] = useState<Item[]>([]);
   const [leaseMonthOptions, setLeaseMonthOptions] = useState<number[]>([]);
+  const [contractStatuses, setContractStatuses] = useState<{ id: string; name: string }[]>([]);
   
   // Contract items
   const [contractRobots, setContractRobots] = useState<ContractRobotItem[]>([]);
@@ -96,7 +97,7 @@ export function NewContractDialog({ open, onOpenChange, onSuccess, initialClient
   
   // Contract fields
   const [contractNumber, setContractNumber] = useState("");
-  const [status, setStatus] = useState<"draft" | "pending_signature" | "active">("draft");
+  const [status, setStatus] = useState("draft");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [billingSchedule, setBillingSchedule] = useState("monthly");
@@ -109,14 +110,27 @@ export function NewContractDialog({ open, onOpenChange, onSuccess, initialClient
       fetchRobotPricing();
       fetchItems();
       fetchLeaseMonths();
+      fetchContractStatuses();
       generateContractNumber();
       // Reset form
       setContractRobots([]);
       setContractItems([]);
       setSelectedClientId(initialClientId || "all");
       setCurrency("PLN");
+      setStatus("draft");
     }
   }, [open, initialClientId]);
+
+  const fetchContractStatuses = async () => {
+    const { data } = await supabase
+      .from("contract_status_dictionary")
+      .select("id, name")
+      .order("display_order");
+
+    if (data) {
+      setContractStatuses(data);
+    }
+  };
 
   const fetchClients = async () => {
     const { data } = await supabase.from("clients").select("id, name").order("name");
@@ -430,12 +444,14 @@ export function NewContractDialog({ open, onOpenChange, onSuccess, initialClient
               </div>
               <div>
                 <Label>{t("common.status")}</Label>
-                <Select value={status} onValueChange={(v) => setStatus(v as typeof status)}>
+                <Select value={status} onValueChange={setStatus}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="draft">{t("status.draft")}</SelectItem>
-                    <SelectItem value="pending_signature">{t("status.pending_signature")}</SelectItem>
-                    <SelectItem value="active">{t("status.active")}</SelectItem>
+                    {contractStatuses.map((s) => (
+                      <SelectItem key={s.id} value={s.name}>
+                        {t(`status.${s.name}`, s.name.replace(/_/g, ' '))}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
