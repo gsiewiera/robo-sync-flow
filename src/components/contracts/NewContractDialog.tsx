@@ -383,7 +383,7 @@ export function NewContractDialog({ open, onOpenChange, onSuccess, initialClient
             </div>
 
             {/* Contract Details */}
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>{t("contracts.contractNumber")}</Label>
                 <Input value={contractNumber} onChange={(e) => setContractNumber(e.target.value)} required />
@@ -396,17 +396,6 @@ export function NewContractDialog({ open, onOpenChange, onSuccess, initialClient
                     <SelectItem value="draft">{t("status.draft")}</SelectItem>
                     <SelectItem value="pending_signature">{t("status.pending_signature")}</SelectItem>
                     <SelectItem value="active">{t("status.active")}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>{t("contracts.currency")}</Label>
-                <Select value={currency} onValueChange={setCurrency}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="PLN">PLN</SelectItem>
-                    <SelectItem value="EUR">EUR</SelectItem>
-                    <SelectItem value="USD">USD</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
