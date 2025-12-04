@@ -20,3 +20,6 @@ verify_jwt = true
 
 [functions.send-scheduled-reports]
 verify_jwt = true
+
+[functions.fetch-gus-data]
+verify_jwt = false

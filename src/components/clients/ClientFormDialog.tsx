@@ -23,7 +23,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { X, ChevronDown } from "lucide-react";
+import { X, ChevronDown, Search, Loader2 } from "lucide-react";
 import {
   Popover,
   PopoverContent,
@@ -84,6 +84,7 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
   const isEditMode = !!client;
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isFetchingGus, setIsFetchingGus] = useState(false);
   const [availableTags, setAvailableTags] = useState<any[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [resellers, setResellers] = useState<any[]>([]);
@@ -268,6 +269,57 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
         ? prev.filter(id => id !== tagId)
         : [...prev, tagId]
     );
+  };
+
+  const fetchGusData = async () => {
+    const nip = form.getValues('nip');
+    if (!nip || nip.trim().length < 10) {
+      toast({
+        title: "Invalid NIP",
+        description: "Please enter a valid NIP number (10 digits)",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsFetchingGus(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('fetch-gus-data', {
+        body: { nip: nip.trim() },
+      });
+
+      if (error) throw error;
+
+      if (data.error) {
+        toast({
+          title: "Company not found",
+          description: data.error,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Update form fields with fetched data
+      if (data.name) form.setValue('name', data.name);
+      if (data.address) form.setValue('address', data.address);
+      if (data.postal_code) form.setValue('postal_code', data.postal_code);
+      if (data.city) form.setValue('city', data.city);
+      form.setValue('country', 'Poland');
+
+      toast({
+        title: "Data fetched",
+        description: "Company data has been loaded from GUS database",
+      });
+    } catch (error: any) {
+      console.error('GUS fetch error:', error);
+      toast({
+        title: "Error fetching data",
+        description: error.message || "Could not fetch data from GUS",
+        variant: "destructive",
+      });
+    } finally {
+      setIsFetchingGus(false);
+    }
   };
 
   const toggleClientType = (typeId: string) => {
@@ -562,9 +614,25 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>NIP</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Tax ID number" {...field} />
-                        </FormControl>
+                        <div className="flex gap-1">
+                          <FormControl>
+                            <Input placeholder="Tax ID number" {...field} />
+                          </FormControl>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            onClick={fetchGusData}
+                            disabled={isFetchingGus}
+                            title="Fetch data from GUS"
+                          >
+                            {isFetchingGus ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Search className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </div>
                         <FormMessage />
                       </FormItem>
                     )}
