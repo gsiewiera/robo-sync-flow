@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { X, Save } from "lucide-react";
+import { X, Save, Pencil, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -536,6 +536,9 @@ export const DictionariesSettings = () => {
   const TagEditor = () => {
     const [newTagName, setNewTagName] = useState("");
     const [newTagColor, setNewTagColor] = useState("#10b981");
+    const [editingTag, setEditingTag] = useState<ClientTag | null>(null);
+    const [editName, setEditName] = useState("");
+    const [editColor, setEditColor] = useState("");
 
     const addTag = async () => {
       if (!newTagName.trim()) return;
@@ -555,6 +558,24 @@ export const DictionariesSettings = () => {
       toast.success("Tag added successfully");
     };
 
+    const updateTag = async () => {
+      if (!editingTag || !editName.trim()) return;
+
+      const { error } = await supabase
+        .from("client_tags")
+        .update({ name: editName.trim(), color: editColor })
+        .eq("id", editingTag.id);
+
+      if (error) {
+        console.error("Error updating tag:", error);
+        toast.error("Failed to update tag");
+        return;
+      }
+      await fetchClientTags();
+      setEditingTag(null);
+      toast.success("Tag updated successfully");
+    };
+
     const removeTag = async (tagId: string) => {
       const { error } = await supabase
         .from("client_tags")
@@ -568,6 +589,12 @@ export const DictionariesSettings = () => {
       }
       await fetchClientTags();
       toast.success("Tag removed successfully");
+    };
+
+    const startEditing = (tag: ClientTag) => {
+      setEditingTag(tag);
+      setEditName(tag.name);
+      setEditColor(tag.color || "#10b981");
     };
 
     return (
@@ -604,22 +631,62 @@ export const DictionariesSettings = () => {
           </Button>
         </div>
 
-        <div className="flex gap-2 flex-wrap">
+        <div className="space-y-2">
           {clientTags.map((tag) => (
-            <Badge
-              key={tag.id}
-              variant="secondary"
-              className="gap-2 py-2 px-3 text-sm"
-              style={{ backgroundColor: tag.color || "#10b981", color: "#fff" }}
-            >
-              {tag.name}
-              {isAdmin && (
-                <X
-                  className="h-3 w-3 cursor-pointer hover:opacity-70"
-                  onClick={() => removeTag(tag.id)}
-                />
+            <div key={tag.id} className="flex items-center gap-2">
+              {editingTag?.id === tag.id ? (
+                <>
+                  <Input
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    className="flex-1"
+                    onKeyPress={(e) => {
+                      if (e.key === "Enter") updateTag();
+                    }}
+                  />
+                  <input
+                    type="color"
+                    value={editColor}
+                    onChange={(e) => setEditColor(e.target.value)}
+                    className="w-10 h-10 rounded border border-border cursor-pointer"
+                  />
+                  <Button size="sm" onClick={updateTag}>
+                    <Check className="h-4 w-4" />
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => setEditingTag(null)}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Badge
+                    variant="secondary"
+                    className="py-2 px-3 text-sm flex-1 justify-start"
+                    style={{ backgroundColor: tag.color || "#10b981", color: "#fff" }}
+                  >
+                    {tag.name}
+                  </Badge>
+                  {isAdmin && (
+                    <div className="flex gap-1">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => startEditing(tag)}
+                      >
+                        <Pencil className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => removeTag(tag.id)}
+                      >
+                        <X className="h-3 w-3 text-destructive" />
+                      </Button>
+                    </div>
+                  )}
+                </>
               )}
-            </Badge>
+            </div>
           ))}
           {clientTags.length === 0 && (
             <p className="text-sm text-muted-foreground">No tags defined yet</p>
@@ -631,6 +698,8 @@ export const DictionariesSettings = () => {
 
   const DictionaryEditor = () => {
     const [newValue, setNewValue] = useState("");
+    const [editingIndex, setEditingIndex] = useState<number | null>(null);
+    const [editValue, setEditValue] = useState("");
     const currentCategory = categories.find(c => c.key === activeCategory);
 
     if (currentCategory?.type === "numeric") {
@@ -642,6 +711,141 @@ export const DictionariesSettings = () => {
     }
 
     const dictionaryKey = activeCategory as keyof Dictionary;
+
+    const updateItem = async (category: keyof Dictionary, index: number, newName: string) => {
+      if (!newName.trim()) return;
+
+      // Handle manufacturers with database
+      if (category === "manufacturers") {
+        const oldName = dictionaries.manufacturers[index];
+        const { error } = await supabase
+          .from("manufacturer_dictionary")
+          .update({ manufacturer_name: newName.trim() })
+          .eq("manufacturer_name", oldName);
+
+        if (error) {
+          console.error("Error updating manufacturer:", error);
+          toast.error("Failed to update manufacturer");
+          return;
+        }
+        await fetchManufacturers();
+        toast.success("Manufacturer updated successfully");
+        setEditingIndex(null);
+        return;
+      }
+
+      // Handle robot types with database
+      if (category === "robot_types") {
+        const oldName = dictionaries.robot_types[index];
+        const { error } = await supabase
+          .from("robot_type_dictionary")
+          .update({ type_name: newName.trim() })
+          .eq("type_name", oldName);
+
+        if (error) {
+          console.error("Error updating robot type:", error);
+          toast.error("Failed to update robot type");
+          return;
+        }
+        await fetchRobotTypes();
+        toast.success("Robot type updated successfully");
+        setEditingIndex(null);
+        return;
+      }
+
+      // Handle client types with database
+      if (category === "client_types") {
+        const item = dictionaryIds.client_types[index];
+        if (!item) return;
+        const { error } = await supabase
+          .from("client_type_dictionary")
+          .update({ name: newName.trim() })
+          .eq("id", item.id);
+
+        if (error) {
+          console.error("Error updating client type:", error);
+          toast.error("Failed to update client type");
+          return;
+        }
+        await fetchClientTypes();
+        toast.success("Client type updated successfully");
+        setEditingIndex(null);
+        return;
+      }
+
+      // Handle markets with database
+      if (category === "markets") {
+        const item = dictionaryIds.markets[index];
+        if (!item) return;
+        const { error } = await supabase
+          .from("market_dictionary")
+          .update({ name: newName.trim() })
+          .eq("id", item.id);
+
+        if (error) {
+          console.error("Error updating market:", error);
+          toast.error("Failed to update market");
+          return;
+        }
+        await fetchMarkets();
+        toast.success("Market updated successfully");
+        setEditingIndex(null);
+        return;
+      }
+
+      // Handle segments with database
+      if (category === "segments") {
+        const item = dictionaryIds.segments[index];
+        if (!item) return;
+        const { error } = await supabase
+          .from("segment_dictionary")
+          .update({ name: newName.trim() })
+          .eq("id", item.id);
+
+        if (error) {
+          console.error("Error updating segment:", error);
+          toast.error("Failed to update segment");
+          return;
+        }
+        await fetchSegments();
+        toast.success("Segment updated successfully");
+        setEditingIndex(null);
+        return;
+      }
+
+      // Handle client sizes with database
+      if (category === "client_sizes") {
+        const item = dictionaryIds.client_sizes[index];
+        if (!item) return;
+        const { error } = await supabase
+          .from("client_size_dictionary")
+          .update({ name: newName.trim() })
+          .eq("id", item.id);
+
+        if (error) {
+          console.error("Error updating client size:", error);
+          toast.error("Failed to update client size");
+          return;
+        }
+        await fetchClientSizes();
+        toast.success("Client size updated successfully");
+        setEditingIndex(null);
+        return;
+      }
+
+      // Handle other categories (client-side only for now)
+      setDictionaries((prev) => ({
+        ...prev,
+        [category]: prev[category].map((item, i) => (i === index ? newName.trim() : item)),
+      }));
+      setEditingIndex(null);
+      toast.success("Item updated successfully");
+    };
+
+    const startEditing = (index: number, currentValue: string) => {
+      setEditingIndex(index);
+      setEditValue(currentValue);
+    };
 
     return (
       <div className="space-y-6">
@@ -677,17 +881,52 @@ export const DictionariesSettings = () => {
           </Button>
         </div>
 
-        <div className="flex gap-2 flex-wrap">
+        <div className="space-y-2">
           {dictionaries[dictionaryKey]?.map((item, index) => (
-            <Badge key={index} variant="secondary" className="gap-2 py-2 px-3 text-sm">
-              {item}
-              {isAdmin && (
-                <X
-                  className="h-3 w-3 cursor-pointer hover:text-destructive"
-                  onClick={() => removeItem(dictionaryKey, index)}
-                />
+            <div key={index} className="flex items-center gap-2">
+              {editingIndex === index ? (
+                <>
+                  <Input
+                    value={editValue}
+                    onChange={(e) => setEditValue(e.target.value)}
+                    className="flex-1"
+                    onKeyPress={(e) => {
+                      if (e.key === "Enter") updateItem(dictionaryKey, index, editValue);
+                    }}
+                  />
+                  <Button size="sm" onClick={() => updateItem(dictionaryKey, index, editValue)}>
+                    <Check className="h-4 w-4" />
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => setEditingIndex(null)}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Badge variant="secondary" className="py-2 px-3 text-sm flex-1 justify-start">
+                    {item}
+                  </Badge>
+                  {isAdmin && (
+                    <div className="flex gap-1">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => startEditing(index, item)}
+                      >
+                        <Pencil className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => removeItem(dictionaryKey, index)}
+                      >
+                        <X className="h-3 w-3 text-destructive" />
+                      </Button>
+                    </div>
+                  )}
+                </>
               )}
-            </Badge>
+            </div>
           ))}
         </div>
       </div>
