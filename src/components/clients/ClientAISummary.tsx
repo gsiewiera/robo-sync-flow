@@ -149,7 +149,25 @@ export const ClientAISummary = ({
 
       {summary && !isLoading && (
         <div className="prose prose-sm dark:prose-invert max-w-none">
-          <div className="whitespace-pre-wrap text-sm leading-relaxed">{summary}</div>
+          <div className="text-sm leading-relaxed space-y-3">
+            {summary.split('\n\n').map((section, idx) => {
+              const isPositive = /strengths?|opportunit|success|achieved|exceeded|strong|excellent|positive|growth|improvement|won|closed|completed/i.test(section);
+              const isNegative = /risk|concern|attention|challenge|warning|issue|problem|delay|overdue|missed|lost|weak|decline|urgent|critical|improvement needed|areas? for improvement/i.test(section);
+              
+              return (
+                <div 
+                  key={idx} 
+                  className={`whitespace-pre-wrap ${
+                    isNegative ? 'text-destructive' : 
+                    isPositive ? 'text-success' : 
+                    'text-foreground'
+                  }`}
+                >
+                  {section}
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
 
