@@ -66,7 +66,7 @@ const formSchema = z.object({
 interface RobotSelection {
   id: string;
   robot_model: string;
-  contract_type: "purchase" | "lease";
+  contract_type: "purchase" | "lease" | "try_buy";
   lease_months?: number;
   price: number;
   warranty_months?: number;
@@ -332,7 +332,7 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer, mode = "o
     const robotSels: RobotSelection[] = items.map((item) => ({
       id: item.id,
       robot_model: item.robot_model,
-      contract_type: item.contract_type as "purchase" | "lease",
+      contract_type: item.contract_type as "purchase" | "lease" | "try_buy",
       lease_months: item.lease_months || undefined,
       price: Number(item.unit_price),
       warranty_months: item.warranty_months || undefined,
@@ -422,7 +422,7 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer, mode = "o
 
   const calculateRobotPrice = (
     robotModel: string,
-    contractType: "purchase" | "lease",
+    contractType: "purchase" | "lease" | "try_buy",
     currency: string,
     leaseMonths?: number
   ): number => {
@@ -1074,7 +1074,7 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer, mode = "o
                           <FormLabel>Contract Type *</FormLabel>
                           <Select
                             value={robot.contract_type}
-                            onValueChange={(value: "purchase" | "lease") =>
+                            onValueChange={(value: "purchase" | "lease" | "try_buy") =>
                               updateRobotSelection(robot.id, { contract_type: value })
                             }
                           >
@@ -1084,6 +1084,7 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer, mode = "o
                             <SelectContent>
                               <SelectItem value="purchase">Purchase</SelectItem>
                               <SelectItem value="lease">Lease</SelectItem>
+                              <SelectItem value="try_buy">Try&Buy</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>

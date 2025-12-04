@@ -53,7 +53,7 @@ interface ContractRobotItem {
   robotPricingId: string;
   model: string;
   quantity: number;
-  contractType: 'purchase' | 'lease';
+  contractType: 'purchase' | 'lease' | 'try_buy';
   unitPrice: number;
   leaseMonths?: number;
   monthlyPrice?: number;
@@ -512,11 +512,12 @@ export function NewContractDialog({ open, onOpenChange, onSuccess, initialClient
                         </SelectContent>
                       </Select>
                       {/* Contract Type */}
-                      <Select value={robot.contractType} onValueChange={(v) => updateRobot(robot.id, { contractType: v as 'purchase' | 'lease' })}>
+                      <Select value={robot.contractType} onValueChange={(v) => updateRobot(robot.id, { contractType: v as 'purchase' | 'lease' | 'try_buy' })}>
                         <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="purchase">{t("contracts.purchase")}</SelectItem>
                           <SelectItem value="lease">{t("contracts.lease")}</SelectItem>
+                          <SelectItem value="try_buy">{t("contracts.tryBuy")}</SelectItem>
                         </SelectContent>
                       </Select>
                       {/* Quantity */}

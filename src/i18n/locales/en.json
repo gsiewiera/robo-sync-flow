@@ -140,6 +140,7 @@
     "paymentModel": "Payment Model",
     "purchase": "Purchase",
     "lease": "Lease",
+    "tryBuy": "Try&Buy",
     "billingSchedule": "Billing Schedule",
     "terms": "Contract Terms",
     "termsPlaceholder": "Enter contract terms and conditions",
