@@ -2343,6 +2343,24 @@ export type Database = {
         }
         Relationships: []
       }
+      robot_status_dictionary: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       robot_type_dictionary: {
         Row: {
           created_at: string | null
