@@ -245,7 +245,7 @@ const Dashboard = () => {
       const { count: awaitingImplementation } = await supabase
         .from("robots")
         .select("*", { count: "exact", head: true })
-        .eq("status", "in_warehouse")
+        .eq("status", "active")
         .not("client_id", "is", null)
         .gte("warehouse_intake_date", start)
         .lte("warehouse_intake_date", end);
@@ -302,7 +302,7 @@ const Dashboard = () => {
       const { count: prevAwaitingImplementation } = await supabase
         .from("robots")
         .select("*", { count: "exact", head: true })
-        .eq("status", "in_warehouse")
+        .eq("status", "active")
         .not("client_id", "is", null)
         .gte("warehouse_intake_date", prevStart)
         .lte("warehouse_intake_date", prevEnd);

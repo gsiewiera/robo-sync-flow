@@ -3,7 +3,9 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Search, Eye, X } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Search, Eye, X, ChevronDown } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -16,13 +18,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { useSortable } from "@/hooks/use-sortable";
 import { usePagination } from "@/hooks/use-pagination";
@@ -67,10 +62,10 @@ const Robots = () => {
   const [types, setTypes] = useState<string[]>([]);
   const [statuses, setStatuses] = useState<StatusOption[]>([]);
 
-  // Selected filters
-  const [filterModel, setFilterModel] = useState<string>("");
-  const [filterType, setFilterType] = useState<string>("");
-  const [filterStatus, setFilterStatus] = useState<string>("");
+  // Selected filters (multi-select)
+  const [filterModels, setFilterModels] = useState<string[]>([]);
+  const [filterTypes, setFilterTypes] = useState<string[]>([]);
+  const [filterStatuses, setFilterStatuses] = useState<string[]>([]);
 
   const { sortField, sortDirection, handleSort, getSortIcon } = useSortable<SortField>({
     defaultField: "serial_number",
@@ -148,21 +143,40 @@ const Robots = () => {
         robot.model.toLowerCase().includes(search.toLowerCase()) ||
         robot.type.toLowerCase().includes(search.toLowerCase());
 
-      const matchesModel = !filterModel || robot.model === filterModel;
-      const matchesType = !filterType || robot.type === filterType;
-      const matchesStatus = !filterStatus || robot.status === filterStatus;
+      const matchesModel = filterModels.length === 0 || filterModels.includes(robot.model);
+      const matchesType = filterTypes.length === 0 || filterTypes.includes(robot.type);
+      const matchesStatus = filterStatuses.length === 0 || filterStatuses.includes(robot.status);
 
       return matchesSearch && matchesModel && matchesType && matchesStatus;
     });
-  }, [robots, search, filterModel, filterType, filterStatus]);
+  }, [robots, search, filterModels, filterTypes, filterStatuses]);
 
-  const hasActiveFilters = filterModel || filterType || filterStatus;
+  const hasActiveFilters = filterModels.length > 0 || filterTypes.length > 0 || filterStatuses.length > 0;
 
   const clearFilters = () => {
-    setFilterModel("");
-    setFilterType("");
-    setFilterStatus("");
+    setFilterModels([]);
+    setFilterTypes([]);
+    setFilterStatuses([]);
     resetPage();
+  };
+
+  const toggleFilter = (
+    value: string,
+    currentFilters: string[],
+    setFilters: React.Dispatch<React.SetStateAction<string[]>>
+  ) => {
+    if (currentFilters.includes(value)) {
+      setFilters(currentFilters.filter((f) => f !== value));
+    } else {
+      setFilters([...currentFilters, value]);
+    }
+    resetPage();
+  };
+
+  const getFilterLabel = (selected: string[], placeholder: string) => {
+    if (selected.length === 0) return placeholder;
+    if (selected.length === 1) return selected[0].replace(/_/g, " ");
+    return `${selected.length} selected`;
   };
 
   const currentRecords = getPaginatedData(filteredRobots);
@@ -172,83 +186,111 @@ const Robots = () => {
     <Layout>
       <div className="space-y-6">
         <Card className="p-4">
-          <div className="flex flex-col gap-3">
-            <div className="flex items-center gap-2">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                <Input
-                  placeholder="Search by serial number, model, or type..."
-                  value={search}
-                  onChange={(e) => {
-                    setSearch(e.target.value);
-                    resetPage();
-                  }}
-                  className="pl-10"
-                />
-              </div>
-              <ColumnVisibilityToggle
-                columns={COLUMNS}
-                visibleColumns={visibleColumns}
-                onToggleColumn={toggleColumn}
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="relative flex-1 min-w-[200px]">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+              <Input
+                placeholder="Search by serial number, model, or type..."
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  resetPage();
+                }}
+                className="pl-10"
               />
             </div>
-            
-            <div className="flex flex-wrap items-center gap-2">
-              <Select value={filterModel || "all"} onValueChange={(val) => { setFilterModel(val === "all" ? "" : val); resetPage(); }}>
-                <SelectTrigger className="w-[160px] h-8 text-sm">
-                  <SelectValue placeholder="All Models" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Models</SelectItem>
-                  {models.map((model) => (
-                    <SelectItem key={model} value={model}>
-                      {model}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
 
-              <Select value={filterType || "all"} onValueChange={(val) => { setFilterType(val === "all" ? "" : val); resetPage(); }}>
-                <SelectTrigger className="w-[160px] h-8 text-sm">
-                  <SelectValue placeholder="All Types" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  {types.map((type) => (
-                    <SelectItem key={type} value={type}>
-                      {type}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Select value={filterStatus || "all"} onValueChange={(val) => { setFilterStatus(val === "all" ? "" : val); resetPage(); }}>
-                <SelectTrigger className="w-[160px] h-8 text-sm">
-                  <SelectValue placeholder="All Statuses" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  {statuses.map((status) => (
-                    <SelectItem key={status.name} value={status.name}>
-                      <div className="flex items-center gap-2">
-                        <div 
-                          className="w-2.5 h-2.5 rounded-full" 
-                          style={{ backgroundColor: status.color || "#6b7280" }}
-                        />
-                        {status.name.replace(/_/g, " ")}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {hasActiveFilters && (
-                <Button variant="ghost" size="sm" onClick={clearFilters} className="h-8 px-2 text-sm">
-                  <X className="w-3.5 h-3.5 mr-1" />
-                  Clear
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="h-9 gap-1 text-sm">
+                  {getFilterLabel(filterModels, "All Models")}
+                  <ChevronDown className="h-3.5 w-3.5 opacity-50" />
                 </Button>
-              )}
-            </div>
+              </PopoverTrigger>
+              <PopoverContent className="w-[200px] p-2 bg-popover" align="start">
+                <div className="space-y-1 max-h-[200px] overflow-auto">
+                  {models.map((model) => (
+                    <label
+                      key={model}
+                      className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-accent cursor-pointer text-sm"
+                    >
+                      <Checkbox
+                        checked={filterModels.includes(model)}
+                        onCheckedChange={() => toggleFilter(model, filterModels, setFilterModels)}
+                      />
+                      {model}
+                    </label>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
+
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="h-9 gap-1 text-sm">
+                  {getFilterLabel(filterTypes, "All Types")}
+                  <ChevronDown className="h-3.5 w-3.5 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[200px] p-2 bg-popover" align="start">
+                <div className="space-y-1 max-h-[200px] overflow-auto">
+                  {types.map((type) => (
+                    <label
+                      key={type}
+                      className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-accent cursor-pointer text-sm"
+                    >
+                      <Checkbox
+                        checked={filterTypes.includes(type)}
+                        onCheckedChange={() => toggleFilter(type, filterTypes, setFilterTypes)}
+                      />
+                      {type}
+                    </label>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
+
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="h-9 gap-1 text-sm">
+                  {getFilterLabel(filterStatuses, "All Statuses")}
+                  <ChevronDown className="h-3.5 w-3.5 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[200px] p-2 bg-popover" align="start">
+                <div className="space-y-1 max-h-[200px] overflow-auto">
+                  {statuses.map((status) => (
+                    <label
+                      key={status.name}
+                      className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-accent cursor-pointer text-sm"
+                    >
+                      <Checkbox
+                        checked={filterStatuses.includes(status.name)}
+                        onCheckedChange={() => toggleFilter(status.name, filterStatuses, setFilterStatuses)}
+                      />
+                      <div
+                        className="w-2.5 h-2.5 rounded-full shrink-0"
+                        style={{ backgroundColor: status.color || "#6b7280" }}
+                      />
+                      {status.name.replace(/_/g, " ")}
+                    </label>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
+
+            {hasActiveFilters && (
+              <Button variant="ghost" size="sm" onClick={clearFilters} className="h-9 px-2 text-sm">
+                <X className="w-3.5 h-3.5 mr-1" />
+                Clear
+              </Button>
+            )}
+
+            <ColumnVisibilityToggle
+              columns={COLUMNS}
+              visibleColumns={visibleColumns}
+              onToggleColumn={toggleColumn}
+            />
           </div>
         </Card>
 
