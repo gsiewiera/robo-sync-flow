@@ -7,8 +7,9 @@ import {
   ArrowLeft, Mail, Phone, MapPin, FileText, ShoppingCart, Bot, 
   Globe, Edit, DollarSign, Receipt, CreditCard, CheckSquare, Calendar,
   Users, Plus, Trash2, Pencil, Upload, File, Download, FolderOpen, User, MapPinned,
-  StickyNote, Wrench
+  StickyNote, Wrench, Sparkles
 } from "lucide-react";
+import { ClientAISummary } from "@/components/clients/ClientAISummary";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useParams, useNavigate } from "react-router-dom";
@@ -965,6 +966,10 @@ const ClientDetail = () => {
 
         <Tabs defaultValue="notes" className="w-full">
           <TabsList className="flex-wrap">
+            <TabsTrigger value="ai">
+              <Sparkles className="w-4 h-4 mr-2" />
+              AI
+            </TabsTrigger>
             <TabsTrigger value="notes">
               <StickyNote className="w-4 h-4 mr-2" />
               Notes ({notes.length})
@@ -1006,6 +1011,19 @@ const ClientDetail = () => {
               Addresses ({addresses.length})
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="ai" className="space-y-4">
+            <ClientAISummary
+              clientId={client.id}
+              clientName={client.name}
+              notes={notes}
+              tasks={tasks}
+              offers={offers}
+              contracts={contracts}
+              robots={robots}
+              tickets={tickets}
+            />
+          </TabsContent>
 
           <TabsContent value="notes" className="space-y-4">
             <div className="flex justify-end">
