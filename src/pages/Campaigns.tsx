@@ -142,6 +142,8 @@ const Campaigns = () => {
   const [statsDialogOpen, setStatsDialogOpen] = useState(false);
   const [statsMailing, setStatsMailing] = useState<Mailing | null>(null);
   const [mailingLogs, setMailingLogs] = useState<any[]>([]);
+  const [templatePreviewOpen, setTemplatePreviewOpen] = useState(false);
+  const [previewTemplate, setPreviewTemplate] = useState<EmailTemplate | null>(null);
   
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -980,6 +982,18 @@ const Campaigns = () => {
                               </TableCell>
                               <TableCell className="text-right">
                                 <div className="flex justify-end gap-1">
+                                  <Button 
+                                    variant="ghost" 
+                                    size="icon" 
+                                    className="h-7 w-7" 
+                                    onClick={() => {
+                                      setPreviewTemplate(template);
+                                      setTemplatePreviewOpen(true);
+                                    }}
+                                    title="Preview"
+                                  >
+                                    <Eye className="w-3.5 h-3.5" />
+                                  </Button>
                                   <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => editTemplate(template)}>
                                     <Pencil className="w-3.5 h-3.5" />
                                   </Button>
@@ -1325,6 +1339,33 @@ const Campaigns = () => {
                 )}
               </div>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Template Preview Dialog */}
+      <Dialog open={templatePreviewOpen} onOpenChange={setTemplatePreviewOpen}>
+        <DialogContent className="max-w-3xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle>Template Preview - {previewTemplate?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label className="text-muted-foreground">Subject</Label>
+              <p className="font-medium">{previewTemplate?.subject || "-"}</p>
+            </div>
+            <div>
+              <Label className="text-muted-foreground">Body</Label>
+              <div 
+                className="border rounded-md p-4 bg-background mt-1 overflow-auto max-h-[400px]"
+                dangerouslySetInnerHTML={{ 
+                  __html: previewTemplate?.body || "No content" 
+                }}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Placeholders: {"{{client_name}}"}, {"{{contact_name}}"} will be replaced with actual data when sent.
+            </p>
           </div>
         </DialogContent>
       </Dialog>
