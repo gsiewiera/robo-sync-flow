@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.86.0";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -7,13 +8,31 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-interface SendOfferEmailRequest {
-  offerNumber: string;
-  versionId: string;
-  clientEmail: string;
-  clientName: string;
-  filePath: string;
-}
+// Input validation schema
+const requestSchema = z.object({
+  offerNumber: z.string().min(1).max(100),
+  versionId: z.string().uuid(),
+  clientEmail: z.string().email().max(255),
+  clientName: z.string().min(1).max(200),
+  filePath: z.string().min(1).max(500).refine(
+    (path) => /^[a-zA-Z0-9\-_\/\.]+$/.test(path) && !path.includes('..'),
+    { message: "Invalid file path format" }
+  ),
+});
+
+// HTML sanitization helper
+const sanitizeHtml = (str: string): string => {
+  return str.replace(/[<>&"']/g, (char) => {
+    const entities: Record<string, string> = {
+      '<': '&lt;',
+      '>': '&gt;',
+      '&': '&amp;',
+      '"': '&quot;',
+      "'": '&#39;'
+    };
+    return entities[char] || char;
+  });
+};
 
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
@@ -22,8 +41,26 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { offerNumber, versionId, clientEmail, clientName, filePath }: SendOfferEmailRequest =
-      await req.json();
+    // Parse and validate input
+    const rawBody = await req.json();
+    const validationResult = requestSchema.safeParse(rawBody);
+    
+    if (!validationResult.success) {
+      console.error("Validation error:", validationResult.error.errors);
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          error: "Invalid input", 
+          details: validationResult.error.errors.map(e => e.message) 
+        }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
+    const { offerNumber, versionId, clientEmail, clientName, filePath } = validationResult.data;
 
     console.log("Sending offer email:", { offerNumber, versionId, clientEmail });
 
@@ -55,6 +92,10 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("PDF downloaded successfully, size:", arrayBuffer.byteLength);
 
+    // Sanitize user inputs for HTML
+    const safeOfferNumber = sanitizeHtml(offerNumber);
+    const safeClientName = sanitizeHtml(clientName);
+
     // Send email via Resend API
     const emailResponse = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -65,11 +106,11 @@ const handler = async (req: Request): Promise<Response> => {
       body: JSON.stringify({
         from: "Offers <onboarding@resend.dev>",
         to: [clientEmail],
-        subject: `Offer ${offerNumber}`,
+        subject: `Offer ${safeOfferNumber}`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h1 style="color: #333;">Your Offer ${offerNumber}</h1>
-            <p>Dear ${clientName},</p>
+            <h1 style="color: #333;">Your Offer ${safeOfferNumber}</h1>
+            <p>Dear ${safeClientName},</p>
             <p>Please find attached our offer for your review.</p>
             <p>The PDF document contains detailed information about the products and pricing.</p>
             <p>If you have any questions, please don't hesitate to contact us.</p>
@@ -79,7 +120,7 @@ const handler = async (req: Request): Promise<Response> => {
         `,
         attachments: [
           {
-            filename: `Offer_${offerNumber}.pdf`,
+            filename: `Offer_${offerNumber.replace(/[^a-zA-Z0-9\-_]/g, '_')}.pdf`,
             content: base64Pdf,
           },
         ],

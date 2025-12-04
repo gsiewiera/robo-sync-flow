@@ -26,6 +26,21 @@ interface SalespersonLeads {
   dueSoon: Lead[];
 }
 
+// HTML sanitization helper to prevent XSS
+const sanitizeHtml = (str: string | null | undefined): string => {
+  if (!str) return '';
+  return str.replace(/[<>&"']/g, (char) => {
+    const entities: Record<string, string> = {
+      '<': '&lt;',
+      '>': '&gt;',
+      '&': '&amp;',
+      '"': '&quot;',
+      "'": '&#39;'
+    };
+    return entities[char] || char;
+  });
+};
+
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -110,10 +125,10 @@ const handler = async (req: Request): Promise<Response> => {
           id: offer.id,
           offer_number: offer.offer_number,
           next_action_date: offer.next_action_date,
-          lead_status: offer.lead_status,
+          lead_status: offer.lead_status || '',
           client_name: (offer as any).clients?.name || "Unknown",
-          person_contact: offer.person_contact,
-          follow_up_notes: offer.follow_up_notes,
+          person_contact: offer.person_contact || '',
+          follow_up_notes: offer.follow_up_notes || '',
         };
 
         if (isOverdue) {
@@ -131,6 +146,9 @@ const handler = async (req: Request): Promise<Response> => {
 
         if (overdue.length === 0 && dueSoon.length === 0) return;
 
+        // Sanitize salesperson name
+        const safeFullName = sanitizeHtml(full_name);
+
         const overdueHtml = overdue.length > 0
           ? `
             <h2 style="color: #dc2626; margin-top: 24px;">⚠️ Overdue Follow-ups (${overdue.length})</h2>
@@ -146,10 +164,10 @@ const handler = async (req: Request): Promise<Response> => {
               <tbody>
                 ${overdue.map(lead => `
                   <tr>
-                    <td style="padding: 8px; border: 1px solid #e5e7eb;">${lead.offer_number}</td>
-                    <td style="padding: 8px; border: 1px solid #e5e7eb;">${lead.client_name}</td>
+                    <td style="padding: 8px; border: 1px solid #e5e7eb;">${sanitizeHtml(lead.offer_number)}</td>
+                    <td style="padding: 8px; border: 1px solid #e5e7eb;">${sanitizeHtml(lead.client_name)}</td>
                     <td style="padding: 8px; border: 1px solid #e5e7eb;">${new Date(lead.next_action_date).toLocaleDateString()}</td>
-                    <td style="padding: 8px; border: 1px solid #e5e7eb;">${lead.lead_status}</td>
+                    <td style="padding: 8px; border: 1px solid #e5e7eb;">${sanitizeHtml(lead.lead_status)}</td>
                   </tr>
                 `).join('')}
               </tbody>
@@ -172,10 +190,10 @@ const handler = async (req: Request): Promise<Response> => {
               <tbody>
                 ${dueSoon.map(lead => `
                   <tr>
-                    <td style="padding: 8px; border: 1px solid #e5e7eb;">${lead.offer_number}</td>
-                    <td style="padding: 8px; border: 1px solid #e5e7eb;">${lead.client_name}</td>
+                    <td style="padding: 8px; border: 1px solid #e5e7eb;">${sanitizeHtml(lead.offer_number)}</td>
+                    <td style="padding: 8px; border: 1px solid #e5e7eb;">${sanitizeHtml(lead.client_name)}</td>
                     <td style="padding: 8px; border: 1px solid #e5e7eb;">${new Date(lead.next_action_date).toLocaleDateString()}</td>
-                    <td style="padding: 8px; border: 1px solid #e5e7eb;">${lead.lead_status}</td>
+                    <td style="padding: 8px; border: 1px solid #e5e7eb;">${sanitizeHtml(lead.lead_status)}</td>
                   </tr>
                 `).join('')}
               </tbody>
@@ -186,7 +204,7 @@ const handler = async (req: Request): Promise<Response> => {
         const htmlBody = `
           <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto;">
             <h1 style="color: #111827;">Lead Follow-up Reminders</h1>
-            <p>Hi ${full_name},</p>
+            <p>Hi ${safeFullName},</p>
             <p>You have leads that require follow-up attention:</p>
             ${overdueHtml}
             ${dueSoonHtml}

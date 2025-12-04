@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.86.0";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -7,13 +8,31 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-interface SendContractEmailRequest {
-  contractNumber: string;
-  versionId: string;
-  clientEmail: string;
-  clientName: string;
-  filePath: string;
-}
+// Input validation schema
+const requestSchema = z.object({
+  contractNumber: z.string().min(1).max(100),
+  versionId: z.string().uuid(),
+  clientEmail: z.string().email().max(255),
+  clientName: z.string().min(1).max(200),
+  filePath: z.string().min(1).max(500).refine(
+    (path) => /^[a-zA-Z0-9\-_\/\.]+$/.test(path) && !path.includes('..'),
+    { message: "Invalid file path format" }
+  ),
+});
+
+// HTML sanitization helper
+const sanitizeHtml = (str: string): string => {
+  return str.replace(/[<>&"']/g, (char) => {
+    const entities: Record<string, string> = {
+      '<': '&lt;',
+      '>': '&gt;',
+      '&': '&amp;',
+      '"': '&quot;',
+      "'": '&#39;'
+    };
+    return entities[char] || char;
+  });
+};
 
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
@@ -21,8 +40,26 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { contractNumber, versionId, clientEmail, clientName, filePath }: SendContractEmailRequest =
-      await req.json();
+    // Parse and validate input
+    const rawBody = await req.json();
+    const validationResult = requestSchema.safeParse(rawBody);
+    
+    if (!validationResult.success) {
+      console.error("Validation error:", validationResult.error.errors);
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          error: "Invalid input", 
+          details: validationResult.error.errors.map(e => e.message) 
+        }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
+    const { contractNumber, versionId, clientEmail, clientName, filePath } = validationResult.data;
 
     console.log("Sending contract email:", { contractNumber, versionId, clientEmail });
 
@@ -51,6 +88,10 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("PDF downloaded successfully, size:", arrayBuffer.byteLength);
 
+    // Sanitize user inputs for HTML
+    const safeContractNumber = sanitizeHtml(contractNumber);
+    const safeClientName = sanitizeHtml(clientName);
+
     const emailResponse = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -60,12 +101,12 @@ const handler = async (req: Request): Promise<Response> => {
       body: JSON.stringify({
         from: "Contracts <onboarding@resend.dev>",
         to: [clientEmail],
-        subject: `Contract ${contractNumber}`,
+        subject: `Contract ${safeContractNumber}`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h1 style="color: #3b82f6;">Contract Document</h1>
-            <p>Dear ${clientName},</p>
-            <p>Please find attached the contract document <strong>${contractNumber}</strong>.</p>
+            <p>Dear ${safeClientName},</p>
+            <p>Please find attached the contract document <strong>${safeContractNumber}</strong>.</p>
             <p>If you have any questions, please don't hesitate to contact us.</p>
             <br>
             <p>Best regards,<br>RoboCRM Team</p>
@@ -73,7 +114,7 @@ const handler = async (req: Request): Promise<Response> => {
         `,
         attachments: [
           {
-            filename: `Contract_${contractNumber}.pdf`,
+            filename: `Contract_${contractNumber.replace(/[^a-zA-Z0-9\-_]/g, '_')}.pdf`,
             content: base64Pdf,
           },
         ],
@@ -107,7 +148,7 @@ const handler = async (req: Request): Promise<Response> => {
         sent_to: clientEmail,
         sent_by: userId,
         status: "sent",
-        notes: `Sent to ${clientName}`,
+        notes: `Sent to ${safeClientName}`,
       });
 
     if (historyError) {
