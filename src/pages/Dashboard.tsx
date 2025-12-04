@@ -16,6 +16,8 @@ import { RevenueChart } from "@/components/dashboard/RevenueChart";
 import { RevenueTable } from "@/components/dashboard/RevenueTable";
 import { RobotsDeliveredChart } from "@/components/dashboard/RobotsDeliveredChart";
 import { RobotsDeliveredTable } from "@/components/dashboard/RobotsDeliveredTable";
+import { SalesFunnelChart } from "@/components/dashboard/SalesFunnelChart";
+import { SalesFunnelTable } from "@/components/dashboard/SalesFunnelTable";
 import { Skeleton } from "@/components/ui/skeleton";
 
 type DateFilter = "this_month" | "last_month" | "ytd" | "custom";
@@ -394,17 +396,52 @@ const Dashboard = () => {
     fetchStats();
   }, [activeFilter, customDateRange]);
 
-  const statCards = [
+  // Grouped stat cards for better organization
+  const salesStats = [
     { title: "Open Opportunities", value: stats.openOpportunities, change: stats.changes.openOpportunities, icon: ShoppingCart, color: "text-primary" },
     { title: "Total Robots Sold", value: stats.totalRobotsSold, change: stats.changes.totalRobotsSold, icon: Bot, color: "text-success" },
     { title: "Robots Sold YTD", value: stats.robotsYTD, change: stats.changes.robotsYTD, icon: TrendingUp, color: "text-primary" },
+  ];
+
+  const deliveryStats = [
     { title: "Deployed Robots", value: stats.deployedRobots, change: stats.changes.deployedRobots, icon: Bot, color: "text-accent" },
-    { title: "Total Service Tickets", value: stats.totalServiceTickets, change: stats.changes.totalServiceTickets, icon: Wrench, color: "text-muted-foreground" },
-    { title: "Open Tickets", value: stats.openTickets, change: stats.changes.openTickets, icon: Wrench, color: "text-warning" },
-    { title: "Closed Tickets", value: stats.closedTickets, change: stats.changes.closedTickets, icon: Wrench, color: "text-success" },
     { title: "Implemented Robots", value: stats.implementedRobots, change: stats.changes.implementedRobots, icon: Bot, color: "text-success" },
     { title: "Awaiting Implementation", value: stats.awaitingImplementation, change: stats.changes.awaitingImplementation, icon: FileText, color: "text-warning" },
   ];
+
+  const serviceStats = [
+    { title: "Total Service Tickets", value: stats.totalServiceTickets, change: stats.changes.totalServiceTickets, icon: Wrench, color: "text-muted-foreground" },
+    { title: "Open Tickets", value: stats.openTickets, change: stats.changes.openTickets, icon: Wrench, color: "text-warning" },
+    { title: "Closed Tickets", value: stats.closedTickets, change: stats.changes.closedTickets, icon: Wrench, color: "text-success" },
+  ];
+
+  const renderStatCard = (stat: { title: string; value: number; change: number; icon: typeof Bot; color: string }) => {
+    const Icon = stat.icon;
+    const isPositive = stat.change >= 0;
+    const ChangeIcon = isPositive ? ArrowUp : ArrowDown;
+    const changeColor = isPositive ? "text-success" : "text-destructive";
+    
+    return (
+      <Card key={stat.title} className="transition-shadow hover:shadow-lg">
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="text-sm font-medium text-muted-foreground">
+            {stat.title}
+          </CardTitle>
+          <Icon className={cn("w-5 h-5", stat.color)} />
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-end justify-between">
+            <div className="text-3xl font-bold">{stat.value}</div>
+            <div className={cn("flex items-center gap-1 text-sm font-medium", changeColor)}>
+              <ChangeIcon className="w-4 h-4" />
+              <span>{Math.abs(stat.change).toFixed(1)}%</span>
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">vs previous period</p>
+        </CardContent>
+      </Card>
+    );
+  };
 
   return (
     <Layout>
@@ -465,64 +502,73 @@ const Dashboard = () => {
           </Popover>
         </div>
 
-        {/* Revenue Section */}
-        <div className="space-y-6">
-          <RevenueChart />
-          <RevenueTable />
+        {/* Section 1: KPI Stats - Quick Overview */}
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold text-foreground">Sales Pipeline</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {salesStats.map(renderStatCard)}
+          </div>
         </div>
 
-        {/* Robots Delivered Section */}
-        <div className="space-y-6">
-          <RobotsDeliveredChart />
-          <RobotsDeliveredTable />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="space-y-4">
+            <h2 className="text-lg font-semibold text-foreground">Delivery & Operations</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {deliveryStats.map(renderStatCard)}
+            </div>
+          </div>
+          <div className="space-y-4">
+            <h2 className="text-lg font-semibold text-foreground">Service</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {serviceStats.map(renderStatCard)}
+            </div>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {statCards.map((stat) => {
-            const Icon = stat.icon;
-            const isPositive = stat.change >= 0;
-            const ChangeIcon = isPositive ? ArrowUp : ArrowDown;
-            const changeColor = isPositive ? "text-success" : "text-destructive";
-            
-            return (
-              <Card key={stat.title} className="transition-shadow hover:shadow-lg">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    {stat.title}
-                  </CardTitle>
-                  <Icon className={cn("w-5 h-5", stat.color)} />
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-end justify-between">
-                    <div className="text-3xl font-bold">{stat.value}</div>
-                    <div className={cn("flex items-center gap-1 text-sm font-medium", changeColor)}>
-                      <ChangeIcon className="w-4 h-4" />
-                      <span>{Math.abs(stat.change).toFixed(1)}%</span>
-                    </div>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">vs previous period</p>
-                </CardContent>
-              </Card>
-            );
-          })}
+        {/* Section 2: Sales Funnel - Core CRM View */}
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold text-foreground">Sales Funnel</h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <SalesFunnelChart />
+            <SalesFunnelTable />
+          </div>
         </div>
 
-        {/* Charts Section */}
-        <div className="space-y-6">
+        {/* Section 3: Revenue Performance */}
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold text-foreground">Revenue</h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <RevenueChart />
+            <RevenueTable />
+          </div>
+        </div>
+
+        {/* Section 4: Delivery Performance */}
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold text-foreground">Robots Delivered</h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <RobotsDeliveredChart />
+            <RobotsDeliveredTable />
+          </div>
+        </div>
+
+        {/* Section 5: Activity Charts - Detailed Time-Series */}
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold text-foreground">Activity Trends</h2>
           {isLoading ? (
             <>
-              <Skeleton className="h-[350px] w-full" />
+              <Skeleton className="h-[300px] w-full" />
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Skeleton className="h-[350px] w-full" />
-                <Skeleton className="h-[350px] w-full" />
+                <Skeleton className="h-[300px] w-full" />
+                <Skeleton className="h-[300px] w-full" />
               </div>
             </>
           ) : (
             <>
               <RobotsSoldChart data={chartData.robotsSold} />
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <ServiceTicketsChart data={chartData.serviceTickets} />
                 <OpportunitiesChart data={chartData.opportunities} />
+                <ServiceTicketsChart data={chartData.serviceTickets} />
               </div>
             </>
           )}
