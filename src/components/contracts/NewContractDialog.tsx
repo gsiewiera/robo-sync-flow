@@ -446,7 +446,7 @@ export function NewContractDialog({ open, onOpenChange, onSuccess, initialClient
               ) : (
                 <div className="space-y-2">
                   {/* Header row */}
-                  <div className="grid grid-cols-[1fr_100px_60px_80px_120px_100px_32px] gap-2 px-2 text-xs font-medium text-muted-foreground">
+                  <div className="grid grid-cols-[1fr_100px_60px_80px_180px_100px_32px] gap-2 px-2 text-xs font-medium text-muted-foreground">
                     <span>{t("robots.model")}</span>
                     <span>{t("contracts.type")}</span>
                     <span>{t("contracts.qty")}</span>
@@ -456,7 +456,7 @@ export function NewContractDialog({ open, onOpenChange, onSuccess, initialClient
                     <span></span>
                   </div>
                   {contractRobots.map((robot) => (
-                    <div key={robot.id} className="grid grid-cols-[1fr_100px_60px_80px_120px_100px_32px] gap-2 items-center bg-muted/30 rounded-md p-2">
+                    <div key={robot.id} className="grid grid-cols-[1fr_100px_60px_80px_180px_100px_32px] gap-2 items-center bg-muted/30 rounded-md p-2">
                       {/* Model */}
                       <Select value={robot.robotPricingId} onValueChange={(v) => updateRobot(robot.id, { robotPricingId: v })}>
                         <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
@@ -482,7 +482,7 @@ export function NewContractDialog({ open, onOpenChange, onSuccess, initialClient
                         onChange={(e) => updateRobot(robot.id, { quantity: parseInt(e.target.value) || 1 })}
                         className="h-9 text-center px-1"
                       />
-                      {/* Lease months */}
+                      {/* Lease months - hidden when Purchase */}
                       {robot.contractType === "lease" ? (
                         <Select 
                           value={String(robot.leaseMonths || "")} 
@@ -496,10 +496,10 @@ export function NewContractDialog({ open, onOpenChange, onSuccess, initialClient
                           </SelectContent>
                         </Select>
                       ) : (
-                        <span className="text-center text-muted-foreground">—</span>
+                        <span></span>
                       )}
                       {/* Price with currency */}
-                      <div className="flex gap-1">
+                      <div className="flex gap-1 items-center">
                         <Input 
                           type="number" 
                           step="0.01" 
@@ -512,9 +512,9 @@ export function NewContractDialog({ open, onOpenChange, onSuccess, initialClient
                               updateRobot(robot.id, { monthlyPrice: val });
                             }
                           }}
-                          className="h-9 px-2 w-[70px]"
+                          className="h-9 px-2 flex-1"
                         />
-                        <span className="text-xs text-muted-foreground self-center w-[45px]">{currency}{robot.contractType === "lease" ? "/m" : ""}</span>
+                        <span className="text-xs text-muted-foreground shrink-0">{currency}{robot.contractType === "lease" ? "/m" : ""}</span>
                       </div>
                       {/* Total */}
                       <span className="text-right text-sm font-medium">
