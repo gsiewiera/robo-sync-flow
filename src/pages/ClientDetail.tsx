@@ -273,34 +273,10 @@ const ClientDetail = () => {
   const [segmentNames, setSegmentNames] = useState<string[]>([]);
   const [clientSizeName, setClientSizeName] = useState<string>("");
 
-  // Combined addresses: include client's main address if it exists
-  const allAddresses = useMemo(() => {
-    const combined: Address[] = [...addresses];
-    
-    // Add client's main address if it exists and isn't already in client_addresses
-    if (client?.address) {
-      const mainAddressExists = addresses.some(
-        a => a.address === client.address && a.city === client.city
-      );
-      
-      if (!mainAddressExists) {
-        combined.unshift({
-          id: 'main-address',
-          client_id: client.id,
-          address: client.address,
-          city: client.city,
-          postal_code: client.postal_code,
-          country: client.country,
-          label: 'Primary Location',
-          is_primary: true,
-          address_type: 'main',
-          notes: null
-        });
-      }
-    }
-    
-    return combined;
-  }, [addresses, client]);
+  // Get primary address from client_addresses table
+  const primaryAddress = useMemo(() => {
+    return addresses.find(a => a.is_primary) || addresses[0] || null;
+  }, [addresses]);
 
   useEffect(() => {
     if (id) {
@@ -942,7 +918,7 @@ const ClientDetail = () => {
             {/* Location Section */}
             <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
               <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground flex items-center gap-2">
-                {(addresses.length > 0 || client.address) ? (
+                {addresses.length > 0 ? (
                   <button
                     onClick={() => setIsMapDialogOpen(true)}
                     className="hover:text-primary transition-colors"
@@ -956,35 +932,20 @@ const ClientDetail = () => {
                 Location
               </h3>
               <div className="space-y-1">
-                {(() => {
-                  const primaryAddress = addresses.find(a => a.is_primary) || addresses[0];
-                  if (primaryAddress) {
-                    return (
-                      <>
-                        <p className="font-medium text-sm">{primaryAddress.address}</p>
-                        <p className="font-medium text-sm">
-                          {primaryAddress.postal_code} {primaryAddress.city}
-                        </p>
-                        <p className="font-medium text-sm">{primaryAddress.country}</p>
-                        {primaryAddress.label && (
-                          <Badge variant="outline" className="text-xs mt-1">{primaryAddress.label}</Badge>
-                        )}
-                      </>
-                    );
-                  } else if (client.address) {
-                    return (
-                      <>
-                        <p className="font-medium text-sm">{client.address}</p>
-                        <p className="font-medium text-sm">
-                          {client.postal_code} {client.city}
-                        </p>
-                        <p className="font-medium text-sm">{client.country}</p>
-                      </>
-                    );
-                  } else {
-                    return <p className="text-muted-foreground italic text-sm">No address set</p>;
-                  }
-                })()}
+                {primaryAddress ? (
+                  <>
+                    <p className="font-medium text-sm">{primaryAddress.address}</p>
+                    <p className="font-medium text-sm">
+                      {primaryAddress.postal_code} {primaryAddress.city}
+                    </p>
+                    <p className="font-medium text-sm">{primaryAddress.country}</p>
+                    {primaryAddress.label && (
+                      <Badge variant="outline" className="text-xs mt-1">{primaryAddress.label}</Badge>
+                    )}
+                  </>
+                ) : (
+                  <p className="text-muted-foreground italic text-sm">No address set</p>
+                )}
               </div>
             </div>
 
@@ -1634,11 +1595,11 @@ const ClientDetail = () => {
                 Add Address
               </Button>
             </div>
-            {allAddresses.length > 0 ? (
+            {addresses.length > 0 ? (
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 {/* Addresses list - 1/3 width */}
                 <div className="space-y-3">
-                  {allAddresses.map((address) => (
+                  {addresses.map((address) => (
                     <Card key={address.id} className="p-3 hover:shadow-md transition-shadow">
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex gap-2 min-w-0 flex-1">
@@ -1662,33 +1623,31 @@ const ClientDetail = () => {
                             </p>
                           </div>
                         </div>
-                        {address.id !== 'main-address' && (
-                          <div className="flex items-center gap-0.5 shrink-0">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7"
-                              onClick={() => { setEditingAddress(address); setIsAddressDialogOpen(true); }}
-                            >
-                              <Pencil className="w-3.5 h-3.5" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7"
-                              onClick={() => setAddressToDelete(address)}
-                            >
-                              <Trash2 className="w-3.5 h-3.5 text-destructive" />
-                            </Button>
-                          </div>
-                        )}
+                        <div className="flex items-center gap-0.5 shrink-0">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            onClick={() => { setEditingAddress(address); setIsAddressDialogOpen(true); }}
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            onClick={() => setAddressToDelete(address)}
+                          >
+                            <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                          </Button>
+                        </div>
                       </div>
                     </Card>
                   ))}
                 </div>
                 {/* Map - 2/3 width */}
                 <div className="lg:col-span-2">
-                  <AddressMap addresses={allAddresses} />
+                  <AddressMap addresses={addresses} />
                 </div>
               </div>
             ) : (
@@ -1778,7 +1737,7 @@ const ClientDetail = () => {
       <Dialog open={isMapDialogOpen} onOpenChange={setIsMapDialogOpen}>
         <DialogContent className="max-w-6xl max-h-[90vh]">
           <div className="h-[500px]">
-            <AddressMap addresses={allAddresses} />
+            <AddressMap addresses={addresses} />
           </div>
         </DialogContent>
       </Dialog>
