@@ -60,6 +60,7 @@ const categories = [
   { key: "client_tags", label: "Client Tags", type: "tags" },
   { key: "robot_types", label: "Robot Types", type: "list" },
   { key: "robot_statuses", label: "Robot Statuses", type: "statuses" },
+  { key: "contract_statuses", label: "Contract Statuses", type: "contract_statuses" },
   { key: "manufacturers", label: "Manufacturers", type: "list" },
   { key: "client_types", label: "Client Types", type: "list" },
   { key: "client_sizes", label: "Client Sizes", type: "list" },
@@ -108,12 +109,14 @@ export const DictionariesSettings = () => {
   });
   const [clientTags, setClientTags] = useState<ClientTag[]>([]);
   const [robotStatuses, setRobotStatuses] = useState<RobotStatus[]>([]);
+  const [contractStatuses, setContractStatuses] = useState<{ id: string; name: string; color: string | null; display_order: number }[]>([]);
 
   useEffect(() => {
     checkAdminRole();
     fetchManufacturers();
     fetchRobotTypes();
     fetchRobotStatuses();
+    fetchContractStatuses();
     fetchNumericSettings();
     fetchTextSettings();
     fetchClientTypes();
@@ -177,6 +180,17 @@ export const DictionariesSettings = () => {
         robot_statuses: data.map((s) => s.name),
       }));
       setRobotStatuses(data);
+    }
+  };
+
+  const fetchContractStatuses = async () => {
+    const { data, error } = await supabase
+      .from("contract_status_dictionary")
+      .select("*")
+      .order("display_order");
+
+    if (!error && data) {
+      setContractStatuses(data);
     }
   };
 
@@ -960,6 +974,170 @@ export const DictionariesSettings = () => {
     );
   };
 
+  const ContractStatusEditor = () => {
+    const [newStatusName, setNewStatusName] = useState("");
+    const [newStatusColor, setNewStatusColor] = useState("#6b7280");
+    const [editingStatus, setEditingStatus] = useState<{ id: string; name: string; color: string | null } | null>(null);
+    const [editName, setEditName] = useState("");
+    const [editColor, setEditColor] = useState("");
+
+    const addStatus = async () => {
+      if (!newStatusName.trim()) return;
+
+      const maxOrder = Math.max(...contractStatuses.map(s => s.display_order), 0);
+      const { error } = await supabase
+        .from("contract_status_dictionary")
+        .insert({ name: newStatusName.trim(), color: newStatusColor, display_order: maxOrder + 1 });
+
+      if (error) {
+        console.error("Error adding contract status:", error);
+        toast.error("Failed to add contract status");
+        return;
+      }
+      await fetchContractStatuses();
+      setNewStatusName("");
+      setNewStatusColor("#6b7280");
+      toast.success("Contract status added successfully");
+    };
+
+    const updateStatus = async () => {
+      if (!editingStatus || !editName.trim()) return;
+
+      const { error } = await supabase
+        .from("contract_status_dictionary")
+        .update({ name: editName.trim(), color: editColor })
+        .eq("id", editingStatus.id);
+
+      if (error) {
+        console.error("Error updating contract status:", error);
+        toast.error("Failed to update contract status");
+        return;
+      }
+      await fetchContractStatuses();
+      setEditingStatus(null);
+      toast.success("Contract status updated successfully");
+    };
+
+    const removeStatus = async (statusId: string) => {
+      const { error } = await supabase
+        .from("contract_status_dictionary")
+        .delete()
+        .eq("id", statusId);
+
+      if (error) {
+        console.error("Error removing contract status:", error);
+        toast.error("Failed to remove contract status");
+        return;
+      }
+      await fetchContractStatuses();
+      toast.success("Contract status removed successfully");
+    };
+
+    const startEditing = (status: { id: string; name: string; color: string | null }) => {
+      setEditingStatus(status);
+      setEditName(status.name);
+      setEditColor(status.color || "#6b7280");
+    };
+
+    return (
+      <div className="space-y-6">
+        <div>
+          <Label className="text-lg font-semibold">Contract Statuses</Label>
+          <p className="text-sm text-muted-foreground mt-1">
+            Manage statuses and their colors for contracts
+          </p>
+        </div>
+
+        <div className="flex gap-2 items-center">
+          <Input
+            placeholder="Status name (e.g., signed)"
+            value={newStatusName}
+            onChange={(e) => setNewStatusName(e.target.value)}
+            onKeyPress={(e) => {
+              if (e.key === "Enter") {
+                addStatus();
+              }
+            }}
+            disabled={!isAdmin}
+            className="flex-1"
+          />
+          <input
+            type="color"
+            value={newStatusColor}
+            onChange={(e) => setNewStatusColor(e.target.value)}
+            disabled={!isAdmin}
+            className="w-10 h-10 rounded border border-border cursor-pointer"
+          />
+          <Button onClick={addStatus} disabled={!isAdmin}>
+            Add
+          </Button>
+        </div>
+
+        <div className="space-y-2">
+          {contractStatuses.map((status) => (
+            <div key={status.id} className="flex items-center gap-2">
+              {editingStatus?.id === status.id ? (
+                <>
+                  <Input
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    className="flex-1"
+                    onKeyPress={(e) => {
+                      if (e.key === "Enter") updateStatus();
+                    }}
+                  />
+                  <input
+                    type="color"
+                    value={editColor}
+                    onChange={(e) => setEditColor(e.target.value)}
+                    className="w-10 h-10 rounded border border-border cursor-pointer"
+                  />
+                  <Button size="sm" onClick={updateStatus}>
+                    <Check className="h-4 w-4" />
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => setEditingStatus(null)}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Badge
+                    variant="secondary"
+                    className="py-2 px-3 text-sm flex-1 justify-start"
+                    style={{ backgroundColor: status.color || "#6b7280", color: "#fff" }}
+                  >
+                    {status.name.replace(/_/g, ' ')}
+                  </Badge>
+                  {isAdmin && (
+                    <div className="flex gap-1">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => startEditing(status)}
+                      >
+                        <Pencil className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => removeStatus(status.id)}
+                      >
+                        <X className="h-3 w-3 text-destructive" />
+                      </Button>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          ))}
+          {contractStatuses.length === 0 && (
+            <p className="text-sm text-muted-foreground">No contract statuses defined yet</p>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   const DictionaryEditor = () => {
     const [newValue, setNewValue] = useState("");
     const [editingIndex, setEditingIndex] = useState<number | null>(null);
@@ -1016,6 +1194,10 @@ export const DictionariesSettings = () => {
 
     if (currentCategory?.type === "statuses") {
       return <StatusEditor />;
+    }
+
+    if (currentCategory?.type === "contract_statuses") {
+      return <ContractStatusEditor />;
     }
 
     const dictionaryKey = activeCategory as keyof Dictionary;

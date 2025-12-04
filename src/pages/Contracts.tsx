@@ -52,18 +52,18 @@ interface Contract {
   clients: { name: string } | null;
 }
 
-const statusColors: Record<string, string> = {
-  draft: "bg-muted text-muted-foreground",
-  pending_signature: "bg-warning text-warning-foreground",
-  active: "bg-success text-success-foreground",
-  expired: "bg-destructive text-destructive-foreground",
-  cancelled: "bg-muted text-muted-foreground",
-};
+interface ContractStatus {
+  id: string;
+  name: string;
+  color: string;
+  display_order: number;
+}
 
 const Contracts = () => {
   const { t } = useTranslation();
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [clients, setClients] = useState<{ id: string; name: string }[]>([]);
+  const [contractStatuses, setContractStatuses] = useState<ContractStatus[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState<"contract_number" | "start_date" | "end_date" | "created_at">("created_at");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
@@ -76,6 +76,11 @@ const Contracts = () => {
   const [showNewContractDialog, setShowNewContractDialog] = useState(false);
   const navigate = useNavigate();
   const [pageSize, setPageSize] = useState(20);
+
+  const getStatusColor = (statusName: string) => {
+    const status = contractStatuses.find(s => s.name === statusName);
+    return status?.color || '#6b7280';
+  };
 
   const columns: ColumnConfig[] = [
     { key: "contract_number", label: t("contracts.contractNumber"), defaultVisible: true },
@@ -102,7 +107,19 @@ const Contracts = () => {
   useEffect(() => {
     fetchContracts();
     fetchClients();
+    fetchContractStatuses();
   }, []);
+
+  const fetchContractStatuses = async () => {
+    const { data } = await supabase
+      .from("contract_status_dictionary")
+      .select("*")
+      .order("display_order");
+
+    if (data) {
+      setContractStatuses(data);
+    }
+  };
 
   const fetchClients = async () => {
     const { data } = await supabase
@@ -271,11 +288,11 @@ const Contracts = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">{t("contracts.allStatuses")}</SelectItem>
-                    <SelectItem value="draft">{t("status.draft")}</SelectItem>
-                    <SelectItem value="pending_signature">{t("status.pending_signature")}</SelectItem>
-                    <SelectItem value="active">{t("status.active")}</SelectItem>
-                    <SelectItem value="expired">{t("status.expired")}</SelectItem>
-                    <SelectItem value="cancelled">{t("status.cancelled")}</SelectItem>
+                    {contractStatuses.map((status) => (
+                      <SelectItem key={status.id} value={status.name}>
+                        {t(`status.${status.name}`, status.name.replace(/_/g, ' '))}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -391,8 +408,11 @@ const Contracts = () => {
                     )}
                     {visibleColumns.includes("status") && (
                       <TableCell className="py-1.5">
-                        <Badge className={`${statusColors[contract.status]} text-xs px-1.5 py-0`}>
-                          {t(`status.${contract.status}`)}
+                        <Badge 
+                          className="text-xs px-1.5 py-0" 
+                          style={{ backgroundColor: getStatusColor(contract.status), color: '#fff' }}
+                        >
+                          {t(`status.${contract.status}`, contract.status.replace(/_/g, ' '))}
                         </Badge>
                       </TableCell>
                     )}

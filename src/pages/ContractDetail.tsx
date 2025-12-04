@@ -53,13 +53,11 @@ interface ContractLineItem {
   monthly_price: number | null;
 }
 
-const statusColors: Record<string, string> = {
-  draft: "bg-muted text-muted-foreground",
-  pending_signature: "bg-warning text-warning-foreground",
-  active: "bg-success text-success-foreground",
-  expired: "bg-destructive text-destructive-foreground",
-  cancelled: "bg-muted text-muted-foreground",
-};
+interface ContractStatus {
+  id: string;
+  name: string;
+  color: string;
+}
 
 const ContractDetail = () => {
   const { id } = useParams();
@@ -68,12 +66,30 @@ const ContractDetail = () => {
   const [client, setClient] = useState<Client | null>(null);
   const [robots, setRobots] = useState<Robot[]>([]);
   const [lineItems, setLineItems] = useState<ContractLineItem[]>([]);
+  const [contractStatuses, setContractStatuses] = useState<ContractStatus[]>([]);
+
+  const getStatusColor = (statusName: string) => {
+    const status = contractStatuses.find(s => s.name === statusName);
+    return status?.color || '#6b7280';
+  };
 
   useEffect(() => {
     if (id) {
       fetchContractData();
     }
+    fetchContractStatuses();
   }, [id]);
+
+  const fetchContractStatuses = async () => {
+    const { data } = await supabase
+      .from("contract_status_dictionary")
+      .select("*")
+      .order("display_order");
+
+    if (data) {
+      setContractStatuses(data);
+    }
+  };
 
   const fetchContractData = async () => {
     const { data: contractData } = await supabase
@@ -155,8 +171,8 @@ const ContractDetail = () => {
               </div>
               <div>
                 <h2 className="text-xl font-semibold">Contract Information</h2>
-                <Badge className={statusColors[contract.status]}>
-                  {contract.status.replace("_", " ")}
+                <Badge style={{ backgroundColor: getStatusColor(contract.status), color: '#fff' }}>
+                  {contract.status.replace(/_/g, " ")}
                 </Badge>
               </div>
             </div>
@@ -322,8 +338,8 @@ const ContractDetail = () => {
                     <h3 className="font-semibold">{robot.serial_number}</h3>
                     <p className="text-sm text-muted-foreground">{robot.model}</p>
                   </div>
-                  <Badge className={statusColors[robot.status] || "bg-muted text-muted-foreground"}>
-                    {robot.status.replace("_", " ")}
+                  <Badge className="bg-muted text-muted-foreground">
+                    {robot.status.replace(/_/g, " ")}
                   </Badge>
                 </div>
               </Card>

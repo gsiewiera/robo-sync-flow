@@ -236,6 +236,8 @@
     "inactive": "Inactive",
     "draft": "Draft",
     "pending_signature": "Pending Signature",
+    "signed": "Signed",
+    "waiting_for_deployment": "Waiting for Deployment",
     "expired": "Expired",
     "cancelled": "Cancelled",
     "pending": "Pending",

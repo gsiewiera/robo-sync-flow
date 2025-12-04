@@ -981,6 +981,30 @@ export type Database = {
           },
         ]
       }
+      contract_status_dictionary: {
+        Row: {
+          color: string | null
+          created_at: string | null
+          display_order: number | null
+          id: string
+          name: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          name: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       contract_templates: {
         Row: {
           contract_type: string
@@ -1075,7 +1099,7 @@ export type Database = {
           payment_model: string | null
           reseller_id: string | null
           start_date: string | null
-          status: Database["public"]["Enums"]["contract_status"] | null
+          status: string | null
           terms: string | null
           total_monthly_contracted: number | null
           total_purchase_value: number | null
@@ -1097,7 +1121,7 @@ export type Database = {
           payment_model?: string | null
           reseller_id?: string | null
           start_date?: string | null
-          status?: Database["public"]["Enums"]["contract_status"] | null
+          status?: string | null
           terms?: string | null
           total_monthly_contracted?: number | null
           total_purchase_value?: number | null
@@ -1119,7 +1143,7 @@ export type Database = {
           payment_model?: string | null
           reseller_id?: string | null
           start_date?: string | null
-          status?: Database["public"]["Enums"]["contract_status"] | null
+          status?: string | null
           terms?: string | null
           total_monthly_contracted?: number | null
           total_purchase_value?: number | null
