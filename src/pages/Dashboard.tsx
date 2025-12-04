@@ -525,7 +525,7 @@ const Dashboard = () => {
         {/* Section 1: KPI Stats - Quick Overview */}
         <div className="space-y-2 sm:space-y-4">
           <h2 className="text-base sm:text-lg font-semibold text-foreground">Sales Pipeline</h2>
-          <div className="grid grid-cols-3 gap-2 sm:gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4">
             {salesStats.map(renderStatCard)}
           </div>
         </div>
@@ -533,13 +533,13 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           <div className="space-y-2 sm:space-y-4">
             <h2 className="text-base sm:text-lg font-semibold text-foreground">Delivery & Operations</h2>
-            <div className="grid grid-cols-3 gap-2 sm:gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4">
               {deliveryStats.map(renderStatCard)}
             </div>
           </div>
           <div className="space-y-2 sm:space-y-4">
             <h2 className="text-base sm:text-lg font-semibold text-foreground">Service</h2>
-            <div className="grid grid-cols-3 gap-2 sm:gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4">
               {serviceStats.map(renderStatCard)}
             </div>
           </div>
