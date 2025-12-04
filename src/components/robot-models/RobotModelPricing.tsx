@@ -376,7 +376,6 @@ export const RobotModelPricing = ({ modelName, isAdmin }: RobotModelPricingProps
             </TabsContent>
 
             <TabsContent value="promo" className="mt-4 space-y-3">
-              <p className="text-xs text-muted-foreground">Optional promotional pricing</p>
               <div className="grid grid-cols-3 gap-3">
                 <div>
                   <Label className="text-xs">PLN (Net)</Label>
@@ -410,7 +409,6 @@ export const RobotModelPricing = ({ modelName, isAdmin }: RobotModelPricingProps
 
             {isAdmin && (
               <TabsContent value="evidence" className="mt-4 space-y-3">
-                <p className="text-xs text-muted-foreground">Cost/purchase price (admin-only)</p>
                 <div className="grid grid-cols-3 gap-3">
                   <div>
                     <Label className="text-xs">PLN (Net)</Label>
@@ -444,7 +442,6 @@ export const RobotModelPricing = ({ modelName, isAdmin }: RobotModelPricingProps
             )}
 
             <TabsContent value="try_buy" className="mt-4 space-y-3">
-              <p className="text-xs text-muted-foreground">Try&Buy pricing (one-time fee for trial period)</p>
               <div className="grid grid-cols-3 gap-3">
                 <div>
                   <Label className="text-xs">PLN (Net)</Label>
