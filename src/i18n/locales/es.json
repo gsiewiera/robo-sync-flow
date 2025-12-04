@@ -23,7 +23,8 @@
     "settings": "Configuración",
     "logout": "Cerrar sesión",
     "navigation": "Navegación",
-    "reports": "Informes"
+    "reports": "Informes",
+    "campaigns": "Campañas"
   },
   "reports": {
     "activity": "Actividad",

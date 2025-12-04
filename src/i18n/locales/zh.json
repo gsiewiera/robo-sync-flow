@@ -23,7 +23,8 @@
     "settings": "设置",
     "logout": "登出",
     "navigation": "导航",
-    "reports": "报告"
+    "reports": "报告",
+    "campaigns": "营销活动"
   },
   "reports": {
     "activity": "活动",
