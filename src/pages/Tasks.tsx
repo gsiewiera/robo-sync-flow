@@ -9,7 +9,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { TaskFormSheet } from "@/components/tasks/TaskFormSheet";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { TablePagination } from "@/components/ui/table-pagination";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { SearchableFilterDropdown } from "@/components/ui/searchable-filter-dropdown";
 import { ColumnVisibilityToggle, ColumnConfig } from "@/components/ui/column-visibility-toggle";
@@ -122,7 +122,7 @@ const Tasks = () => {
   const [selectedTaskId, setSelectedTaskId] = useState<string | undefined>();
   const [formMode, setFormMode] = useState<"create" | "view" | "edit">("create");
   const [visibleColumns, setVisibleColumns] = useState<string[]>(columns.filter(col => col.defaultVisible !== false).map(col => col.key));
-  const recordsPerPage = 30;
+  const [pageSize, setPageSize] = useState(20);
   useEffect(() => {
     checkUserRole();
     fetchEmployees();
@@ -253,12 +253,16 @@ const Tasks = () => {
   };
 
   // Pagination calculations
-  const indexOfLastRecord = currentPage * recordsPerPage;
-  const indexOfFirstRecord = indexOfLastRecord - recordsPerPage;
+  const indexOfLastRecord = currentPage * pageSize;
+  const indexOfFirstRecord = indexOfLastRecord - pageSize;
   const currentRecords = tasks.slice(indexOfFirstRecord, indexOfLastRecord);
-  const totalPages = Math.ceil(tasks.length / recordsPerPage);
+  const totalPages = Math.ceil(tasks.length / pageSize);
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
+  };
+  const handlePageSizeChange = (size: number) => {
+    setPageSize(size);
+    setCurrentPage(1);
   };
   const handleNewTask = () => {
     setSelectedTaskId(undefined);
@@ -491,23 +495,14 @@ const Tasks = () => {
           </Table>
         </Card>
 
-        {totalPages > 1 && <Pagination>
-            <PaginationContent>
-              <PaginationItem>
-                <PaginationPrevious onClick={() => handlePageChange(Math.max(1, currentPage - 1))} className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"} />
-              </PaginationItem>
-              {Array.from({
-            length: totalPages
-          }, (_, i) => i + 1).map(page => <PaginationItem key={page}>
-                  <PaginationLink onClick={() => handlePageChange(page)} isActive={currentPage === page} className="cursor-pointer">
-                    {page}
-                  </PaginationLink>
-                </PaginationItem>)}
-              <PaginationItem>
-                <PaginationNext onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))} className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"} />
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>}
+        <TablePagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          pageSize={pageSize}
+          totalItems={tasks.length}
+          onPageChange={handlePageChange}
+          onPageSizeChange={handlePageSizeChange}
+        />
       </div>
     </Layout>;
 };

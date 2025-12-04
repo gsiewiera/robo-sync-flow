@@ -28,14 +28,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
+import { TablePagination } from "@/components/ui/table-pagination";
 
 interface Offer {
   id: string;
@@ -90,7 +83,7 @@ const Offers = () => {
   const [isNewOfferOpen, setIsNewOfferOpen] = useState(false);
   const [editingOffer, setEditingOffer] = useState<any>(null);
   const navigate = useNavigate();
-  const recordsPerPage = 30;
+  const [pageSize, setPageSize] = useState(20);
 
   // Column visibility state with localStorage
   const [visibleColumns, setVisibleColumns] = useState<string[]>(() => {
@@ -197,13 +190,18 @@ const Offers = () => {
     setCurrentPage(1);
   }, [sortField, sortDirection, clientFilters, salespersonFilters, stageFilters, createdDateFilter]);
 
-  const indexOfLastRecord = currentPage * recordsPerPage;
-  const indexOfFirstRecord = indexOfLastRecord - recordsPerPage;
+  const indexOfLastRecord = currentPage * pageSize;
+  const indexOfFirstRecord = indexOfLastRecord - pageSize;
   const currentRecords = offers.slice(indexOfFirstRecord, indexOfLastRecord);
-  const totalPages = Math.ceil(offers.length / recordsPerPage);
+  const totalPages = Math.ceil(offers.length / pageSize);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
+  };
+
+  const handlePageSizeChange = (size: number) => {
+    setPageSize(size);
+    setCurrentPage(1);
   };
 
   const handleSort = (field: "offer_number" | "total_price" | "created_at") => {
@@ -497,35 +495,14 @@ const Offers = () => {
           </Table>
         </Card>
 
-        {totalPages > 1 && (
-          <Pagination>
-            <PaginationContent>
-              <PaginationItem>
-                <PaginationPrevious
-                  onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
-                  className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                />
-              </PaginationItem>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                <PaginationItem key={page}>
-                  <PaginationLink
-                    onClick={() => handlePageChange(page)}
-                    isActive={currentPage === page}
-                    className="cursor-pointer"
-                  >
-                    {page}
-                  </PaginationLink>
-                </PaginationItem>
-              ))}
-              <PaginationItem>
-                <PaginationNext
-                  onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
-                  className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                />
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
-        )}
+        <TablePagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          pageSize={pageSize}
+          totalItems={offers.length}
+          onPageChange={handlePageChange}
+          onPageSizeChange={handlePageSizeChange}
+        />
       </div>
 
       <NewOfferDialog

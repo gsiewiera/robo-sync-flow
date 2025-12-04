@@ -17,14 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
+import { TablePagination } from "@/components/ui/table-pagination";
 
 interface ServiceTicket {
   id: string;
@@ -59,7 +52,7 @@ const Service = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isTicketFormOpen, setIsTicketFormOpen] = useState(false);
   const navigate = useNavigate();
-  const recordsPerPage = 30;
+  const [pageSize, setPageSize] = useState(20);
 
   const columns: ColumnConfig[] = [
     { key: "ticket_number", label: "Ticket Number", defaultVisible: true },
@@ -118,13 +111,18 @@ const Service = () => {
     setCurrentPage(1);
   }, [searchQuery]);
 
-  const indexOfLastRecord = currentPage * recordsPerPage;
-  const indexOfFirstRecord = indexOfLastRecord - recordsPerPage;
+  const indexOfLastRecord = currentPage * pageSize;
+  const indexOfFirstRecord = indexOfLastRecord - pageSize;
   const currentRecords = filteredTickets.slice(indexOfFirstRecord, indexOfLastRecord);
-  const totalPages = Math.ceil(filteredTickets.length / recordsPerPage);
+  const totalPages = Math.ceil(filteredTickets.length / pageSize);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
+  };
+
+  const handlePageSizeChange = (size: number) => {
+    setPageSize(size);
+    setCurrentPage(1);
   };
 
   const handleSort = (field: "ticket_number" | "created_at") => {
@@ -299,35 +297,14 @@ const Service = () => {
           </Table>
         </Card>
 
-        {totalPages > 1 && (
-          <Pagination>
-            <PaginationContent>
-              <PaginationItem>
-                <PaginationPrevious
-                  onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
-                  className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                />
-              </PaginationItem>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                <PaginationItem key={page}>
-                  <PaginationLink
-                    onClick={() => handlePageChange(page)}
-                    isActive={currentPage === page}
-                    className="cursor-pointer"
-                  >
-                    {page}
-                  </PaginationLink>
-                </PaginationItem>
-              ))}
-              <PaginationItem>
-                <PaginationNext
-                  onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
-                  className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                />
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
-        )}
+        <TablePagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          pageSize={pageSize}
+          totalItems={filteredTickets.length}
+          onPageChange={handlePageChange}
+          onPageSizeChange={handlePageSizeChange}
+        />
 
         <TicketFormDialog
           open={isTicketFormOpen}

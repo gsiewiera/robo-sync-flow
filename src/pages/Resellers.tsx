@@ -16,14 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
+import { TablePagination } from "@/components/ui/table-pagination";
 import {
   Dialog,
   DialogContent,
@@ -77,7 +70,7 @@ const Resellers = () => {
   );
   const navigate = useNavigate();
   const { toast } = useToast();
-  const recordsPerPage = 30;
+  const [pageSize, setPageSize] = useState(20);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -232,13 +225,18 @@ const Resellers = () => {
     );
   });
 
-  const indexOfLastRecord = currentPage * recordsPerPage;
-  const indexOfFirstRecord = indexOfLastRecord - recordsPerPage;
+  const indexOfLastRecord = currentPage * pageSize;
+  const indexOfFirstRecord = indexOfLastRecord - pageSize;
   const currentRecords = filteredResellers.slice(indexOfFirstRecord, indexOfLastRecord);
-  const totalPages = Math.ceil(filteredResellers.length / recordsPerPage);
+  const totalPages = Math.ceil(filteredResellers.length / pageSize);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
+  };
+
+  const handlePageSizeChange = (size: number) => {
+    setPageSize(size);
+    setCurrentPage(1);
   };
 
   const handleSort = (field: "name" | "city" | "created_at") => {
@@ -413,32 +411,14 @@ const Resellers = () => {
           </Table>
         </Card>
 
-        {totalPages > 1 && (
-          <Pagination>
-            <PaginationContent>
-              <PaginationItem>
-                <PaginationPrevious
-                  onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
-                />
-              </PaginationItem>
-              {[...Array(totalPages)].map((_, i) => (
-                <PaginationItem key={i}>
-                  <PaginationLink
-                    onClick={() => handlePageChange(i + 1)}
-                    isActive={currentPage === i + 1}
-                  >
-                    {i + 1}
-                  </PaginationLink>
-                </PaginationItem>
-              ))}
-              <PaginationItem>
-                <PaginationNext
-                  onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
-                />
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
-        )}
+        <TablePagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          pageSize={pageSize}
+          totalItems={filteredResellers.length}
+          onPageChange={handlePageChange}
+          onPageSizeChange={handlePageSizeChange}
+        />
 
         <Dialog open={isDialogOpen} onOpenChange={handleDialogChange}>
           <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
