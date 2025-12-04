@@ -34,12 +34,10 @@ interface Robot {
 
 type SortField = "serial_number" | "model" | "working_hours" | "created_at";
 
-const STATUS_COLORS: Record<string, string> = {
-  in_warehouse: "bg-muted text-muted-foreground",
-  delivered: "bg-success text-success-foreground",
-  in_service: "bg-primary text-primary-foreground",
-  maintenance: "bg-warning text-warning-foreground",
-};
+interface RobotStatus {
+  name: string;
+  color: string | null;
+}
 
 const COLUMNS: ColumnConfig[] = [
   { key: "serial_number", label: "Serial Number", defaultVisible: true },
@@ -53,6 +51,7 @@ const COLUMNS: ColumnConfig[] = [
 
 const Robots = () => {
   const [robots, setRobots] = useState<Robot[]>([]);
+  const [statusColors, setStatusColors] = useState<Record<string, string>>({});
   const [search, setSearch] = useState("");
   const navigate = useNavigate();
 
@@ -77,6 +76,7 @@ const Robots = () => {
 
   useEffect(() => {
     fetchRobots();
+    fetchStatusColors();
   }, []);
 
   const fetchRobots = async () => {
@@ -87,6 +87,20 @@ const Robots = () => {
 
     if (data && !error) {
       setRobots(data);
+    }
+  };
+
+  const fetchStatusColors = async () => {
+    const { data, error } = await supabase
+      .from("robot_status_dictionary")
+      .select("name, color");
+
+    if (data && !error) {
+      const colors: Record<string, string> = {};
+      data.forEach((status) => {
+        colors[status.name] = status.color || "#6b7280";
+      });
+      setStatusColors(colors);
     }
   };
 
@@ -232,8 +246,14 @@ const Robots = () => {
                     )}
                     {isColumnVisible("status") && (
                       <TableCell className="py-1.5">
-                        <Badge className={`${STATUS_COLORS[robot.status]} text-xs px-1.5 py-0`}>
-                          {robot.status.replace("_", " ")}
+                        <Badge 
+                          className="text-xs px-1.5 py-0"
+                          style={{ 
+                            backgroundColor: statusColors[robot.status] || "#6b7280", 
+                            color: "#fff" 
+                          }}
+                        >
+                          {robot.status.replace(/_/g, " ")}
                         </Badge>
                       </TableCell>
                     )}

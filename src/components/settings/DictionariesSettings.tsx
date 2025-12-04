@@ -33,6 +33,12 @@ type ClientTag = {
   color: string | null;
 };
 
+type RobotStatus = {
+  id: string;
+  name: string;
+  color: string | null;
+};
+
 type DictionaryIds = {
   client_types: { id: string; name: string }[];
   markets: { id: string; name: string }[];
@@ -48,7 +54,7 @@ const categories = [
   { key: "km_rate", label: "Travel Cost (per km)", type: "numeric" },
   { key: "client_tags", label: "Client Tags", type: "tags" },
   { key: "robot_types", label: "Robot Types", type: "list" },
-  { key: "robot_statuses", label: "Robot Statuses", type: "list" },
+  { key: "robot_statuses", label: "Robot Statuses", type: "statuses" },
   { key: "manufacturers", label: "Manufacturers", type: "list" },
   { key: "client_types", label: "Client Types", type: "list" },
   { key: "client_sizes", label: "Client Sizes", type: "list" },
@@ -93,6 +99,7 @@ export const DictionariesSettings = () => {
     km_rate: 1.50,
   });
   const [clientTags, setClientTags] = useState<ClientTag[]>([]);
+  const [robotStatuses, setRobotStatuses] = useState<RobotStatus[]>([]);
 
   useEffect(() => {
     checkAdminRole();
@@ -152,7 +159,7 @@ export const DictionariesSettings = () => {
   const fetchRobotStatuses = async () => {
     const { data, error } = await supabase
       .from("robot_status_dictionary")
-      .select("name")
+      .select("id, name, color")
       .order("name");
 
     if (!error && data) {
@@ -160,6 +167,7 @@ export const DictionariesSettings = () => {
         ...prev,
         robot_statuses: data.map((s) => s.name),
       }));
+      setRobotStatuses(data);
     }
   };
 
@@ -748,6 +756,169 @@ export const DictionariesSettings = () => {
     );
   };
 
+  const StatusEditor = () => {
+    const [newStatusName, setNewStatusName] = useState("");
+    const [newStatusColor, setNewStatusColor] = useState("#6b7280");
+    const [editingStatus, setEditingStatus] = useState<RobotStatus | null>(null);
+    const [editName, setEditName] = useState("");
+    const [editColor, setEditColor] = useState("");
+
+    const addStatus = async () => {
+      if (!newStatusName.trim()) return;
+
+      const { error } = await supabase
+        .from("robot_status_dictionary")
+        .insert({ name: newStatusName.trim(), color: newStatusColor });
+
+      if (error) {
+        console.error("Error adding status:", error);
+        toast.error("Failed to add status");
+        return;
+      }
+      await fetchRobotStatuses();
+      setNewStatusName("");
+      setNewStatusColor("#6b7280");
+      toast.success("Status added successfully");
+    };
+
+    const updateStatus = async () => {
+      if (!editingStatus || !editName.trim()) return;
+
+      const { error } = await supabase
+        .from("robot_status_dictionary")
+        .update({ name: editName.trim(), color: editColor })
+        .eq("id", editingStatus.id);
+
+      if (error) {
+        console.error("Error updating status:", error);
+        toast.error("Failed to update status");
+        return;
+      }
+      await fetchRobotStatuses();
+      setEditingStatus(null);
+      toast.success("Status updated successfully");
+    };
+
+    const removeStatus = async (statusId: string) => {
+      const { error } = await supabase
+        .from("robot_status_dictionary")
+        .delete()
+        .eq("id", statusId);
+
+      if (error) {
+        console.error("Error removing status:", error);
+        toast.error("Failed to remove status");
+        return;
+      }
+      await fetchRobotStatuses();
+      toast.success("Status removed successfully");
+    };
+
+    const startEditing = (status: RobotStatus) => {
+      setEditingStatus(status);
+      setEditName(status.name);
+      setEditColor(status.color || "#6b7280");
+    };
+
+    return (
+      <div className="space-y-6">
+        <div>
+          <Label className="text-lg font-semibold">Robot Statuses</Label>
+          <p className="text-sm text-muted-foreground mt-1">
+            Manage statuses and their colors for robots
+          </p>
+        </div>
+
+        <div className="flex gap-2 items-center">
+          <Input
+            placeholder="Status name"
+            value={newStatusName}
+            onChange={(e) => setNewStatusName(e.target.value)}
+            onKeyPress={(e) => {
+              if (e.key === "Enter") {
+                addStatus();
+              }
+            }}
+            disabled={!isAdmin}
+            className="flex-1"
+          />
+          <input
+            type="color"
+            value={newStatusColor}
+            onChange={(e) => setNewStatusColor(e.target.value)}
+            disabled={!isAdmin}
+            className="w-10 h-10 rounded border border-border cursor-pointer"
+          />
+          <Button onClick={addStatus} disabled={!isAdmin}>
+            Add
+          </Button>
+        </div>
+
+        <div className="space-y-2">
+          {robotStatuses.map((status) => (
+            <div key={status.id} className="flex items-center gap-2">
+              {editingStatus?.id === status.id ? (
+                <>
+                  <Input
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    className="flex-1"
+                    onKeyPress={(e) => {
+                      if (e.key === "Enter") updateStatus();
+                    }}
+                  />
+                  <input
+                    type="color"
+                    value={editColor}
+                    onChange={(e) => setEditColor(e.target.value)}
+                    className="w-10 h-10 rounded border border-border cursor-pointer"
+                  />
+                  <Button size="sm" onClick={updateStatus}>
+                    <Check className="h-4 w-4" />
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => setEditingStatus(null)}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Badge
+                    variant="secondary"
+                    className="py-2 px-3 text-sm flex-1 justify-start"
+                    style={{ backgroundColor: status.color || "#6b7280", color: "#fff" }}
+                  >
+                    {status.name}
+                  </Badge>
+                  {isAdmin && (
+                    <div className="flex gap-1">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => startEditing(status)}
+                      >
+                        <Pencil className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => removeStatus(status.id)}
+                      >
+                        <X className="h-3 w-3 text-destructive" />
+                      </Button>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          ))}
+          {robotStatuses.length === 0 && (
+            <p className="text-sm text-muted-foreground">No statuses defined yet</p>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   const DictionaryEditor = () => {
     const [newValue, setNewValue] = useState("");
     const [editingIndex, setEditingIndex] = useState<number | null>(null);
@@ -760,6 +931,10 @@ export const DictionariesSettings = () => {
 
     if (currentCategory?.type === "tags") {
       return <TagEditor />;
+    }
+
+    if (currentCategory?.type === "statuses") {
+      return <StatusEditor />;
     }
 
     const dictionaryKey = activeCategory as keyof Dictionary;
