@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "react-i18next";
-import { Plus, Search, ArrowUpDown, ArrowUp, ArrowDown, Eye, Edit, ChevronDown } from "lucide-react";
+import { Plus, Search, ArrowUpDown, ArrowUp, ArrowDown, Eye, Edit, ChevronDown, Filter, X } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 import { ColumnVisibilityToggle, ColumnConfig } from "@/components/ui/column-visibility-toggle";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,6 +26,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { TablePagination } from "@/components/ui/table-pagination";
+import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 interface Client {
   id: string;
@@ -67,6 +75,8 @@ const Clients = () => {
   const [clientMarkets, setClientMarkets] = useState<Record<string, string[]>>({});
   const navigate = useNavigate();
   const [pageSize, setPageSize] = useState(20);
+  const isMobile = useIsMobile();
+  const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
 
   const columns: ColumnConfig[] = useMemo(() => [
     { key: "name", label: "Name", defaultVisible: true },
@@ -322,9 +332,164 @@ const Clients = () => {
       : <ArrowDown className="ml-2 h-4 w-4" />;
   };
 
+  const FilterContent = () => (
+    <div className="space-y-4">
+      <div>
+        <h4 className="text-sm font-medium mb-2">Tags</h4>
+        <div className="space-y-2 max-h-[200px] overflow-y-auto">
+          {availableTags.map((tag) => (
+            <div key={tag.id} className="flex items-center space-x-2">
+              <Checkbox
+                id={`mobile-filter-tag-${tag.id}`}
+                checked={selectedTagFilters.includes(tag.id)}
+                onCheckedChange={() => toggleTagFilter(tag.id)}
+              />
+              <label
+                htmlFor={`mobile-filter-tag-${tag.id}`}
+                className="text-sm leading-none cursor-pointer flex items-center gap-2"
+              >
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: tag.color }} />
+                {tag.name}
+              </label>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div>
+        <h4 className="text-sm font-medium mb-2">Client Type</h4>
+        <div className="space-y-2 max-h-[200px] overflow-y-auto">
+          {clientTypes.map((type) => (
+            <div key={type.id} className="flex items-center space-x-2">
+              <Checkbox
+                id={`mobile-filter-type-${type.id}`}
+                checked={selectedClientTypeFilters.includes(type.id)}
+                onCheckedChange={() => toggleClientTypeFilter(type.id)}
+              />
+              <label htmlFor={`mobile-filter-type-${type.id}`} className="text-sm leading-none cursor-pointer">
+                {type.name}
+              </label>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div>
+        <h4 className="text-sm font-medium mb-2">Market</h4>
+        <div className="space-y-2 max-h-[200px] overflow-y-auto">
+          {markets.map((market) => (
+            <div key={market.id} className="flex items-center space-x-2">
+              <Checkbox
+                id={`mobile-filter-market-${market.id}`}
+                checked={selectedMarketFilters.includes(market.id)}
+                onCheckedChange={() => toggleMarketFilter(market.id)}
+              />
+              <label htmlFor={`mobile-filter-market-${market.id}`} className="text-sm leading-none cursor-pointer">
+                {market.name}
+              </label>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div>
+        <h4 className="text-sm font-medium mb-2">Salesperson</h4>
+        <div className="space-y-2 max-h-[200px] overflow-y-auto">
+          {salespeople.map((s) => (
+            <div key={s.id} className="flex items-center space-x-2">
+              <Checkbox
+                id={`mobile-filter-sp-${s.id}`}
+                checked={salespersonFilters.includes(s.id)}
+                onCheckedChange={() => toggleSalespersonFilter(s.id)}
+              />
+              <label htmlFor={`mobile-filter-sp-${s.id}`} className="text-sm leading-none cursor-pointer">
+                {s.full_name}
+              </label>
+            </div>
+          ))}
+        </div>
+      </div>
+      {hasActiveFilters && (
+        <Button variant="outline" onClick={clearFilters} className="w-full">
+          <X className="w-4 h-4 mr-2" />
+          Clear All Filters
+        </Button>
+      )}
+    </div>
+  );
+
+  const MobileClientCard = ({ client }: { client: Client }) => (
+    <Card
+      className="p-4 cursor-pointer active:bg-muted/50"
+      onClick={() => navigate(`/clients/${client.id}`)}
+    >
+      <div className="flex justify-between items-start gap-3">
+        <div className="flex-1 min-w-0">
+          <h3 className="font-medium text-base truncate">{client.name}</h3>
+          {client.city && (
+            <p className="text-sm text-muted-foreground">{client.city}</p>
+          )}
+          {client.nip && (
+            <p className="text-xs text-muted-foreground mt-1">NIP: {client.nip}</p>
+          )}
+        </div>
+        <div className="flex gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 w-8 p-0"
+            onClick={() => navigate(`/clients/${client.id}`)}
+          >
+            <Eye className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 w-8 p-0"
+            onClick={() => {
+              setEditingClient(client);
+              setIsClientDialogOpen(true);
+            }}
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+      
+      {clientTags[client.id]?.length > 0 && (
+        <div className="flex flex-wrap gap-1 mt-2">
+          {clientTags[client.id].map((tag) => (
+            <Badge
+              key={tag.id}
+              style={{ backgroundColor: tag.color }}
+              className="text-white text-[10px] px-1.5 py-0"
+            >
+              {tag.name}
+            </Badge>
+          ))}
+        </div>
+      )}
+      
+      {(client.primary_contact_name || client.primary_contact_email) && (
+        <div className="mt-3 pt-3 border-t border-border">
+          <p className="text-xs text-muted-foreground">Contact</p>
+          {client.primary_contact_name && (
+            <p className="text-sm font-medium">{client.primary_contact_name}</p>
+          )}
+          {client.primary_contact_email && (
+            <p className="text-xs text-muted-foreground truncate">{client.primary_contact_email}</p>
+          )}
+        </div>
+      )}
+      
+      {client.assigned_salesperson_id && salespersonMap[client.assigned_salesperson_id] && (
+        <div className="mt-2 text-xs text-muted-foreground">
+          Sales: {salespersonMap[client.assigned_salesperson_id]}
+        </div>
+      )}
+    </Card>
+  );
+
   return (
     <Layout>
-      <div className="space-y-6">
+      <div className="space-y-4 md:space-y-6">
         <div className="flex items-center justify-end">
           <Button size="sm" onClick={() => setIsClientDialogOpen(true)}>
             <Plus className="w-3.5 h-3.5 mr-1.5" />
@@ -332,270 +497,336 @@ const Clients = () => {
           </Button>
         </div>
 
-        <Card className="p-4">
-          <div className="flex gap-4 items-center">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-              <Input
-                placeholder="Search clients by name or NIP..."
-                value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                  setCurrentPage(1);
-                }}
-                className="pl-10"
-              />
+        {/* Mobile Search & Filters */}
+        {isMobile ? (
+          <div className="space-y-3">
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                <Input
+                  placeholder="Search clients..."
+                  value={search}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="pl-10"
+                />
+              </div>
+              <Sheet open={isFilterSheetOpen} onOpenChange={setIsFilterSheetOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="outline" size="icon" className="relative shrink-0">
+                    <Filter className="h-4 w-4" />
+                    {hasActiveFilters && (
+                      <span className="absolute -top-1 -right-1 h-4 w-4 bg-primary text-primary-foreground text-[10px] rounded-full flex items-center justify-center">
+                        {selectedTagFilters.length + selectedClientTypeFilters.length + selectedMarketFilters.length + salespersonFilters.length}
+                      </span>
+                    )}
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="bottom" className="h-[80vh]">
+                  <SheetHeader>
+                    <SheetTitle>Filters</SheetTitle>
+                  </SheetHeader>
+                  <div className="mt-4 overflow-y-auto h-[calc(100%-60px)]">
+                    <FilterContent />
+                  </div>
+                </SheetContent>
+              </Sheet>
             </div>
             
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="w-[180px] justify-between">
-                  Tags {selectedTagFilters.length > 0 && `(${selectedTagFilters.length})`}
-                  <ChevronDown className="ml-2 h-4 w-4" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-[250px] p-3 bg-background z-50">
-                <div className="space-y-2 max-h-[300px] overflow-y-auto">
-                  {availableTags.map((tag) => (
-                    <div key={tag.id} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`filter-tag-${tag.id}`}
-                        checked={selectedTagFilters.includes(tag.id)}
-                        onCheckedChange={() => toggleTagFilter(tag.id)}
-                      />
-                      <label
-                        htmlFor={`filter-tag-${tag.id}`}
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex items-center gap-2"
-                      >
-                        <div
-                          className="w-3 h-3 rounded-full"
-                          style={{ backgroundColor: tag.color }}
-                        />
-                        {tag.name}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </PopoverContent>
-            </Popover>
-
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="w-[180px] justify-between">
-                  Client Type {selectedClientTypeFilters.length > 0 && `(${selectedClientTypeFilters.length})`}
-                  <ChevronDown className="ml-2 h-4 w-4" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-[250px] p-3 bg-background z-50">
-                <div className="space-y-2 max-h-[300px] overflow-y-auto">
-                  {clientTypes.map((type) => (
-                    <div key={type.id} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`filter-type-${type.id}`}
-                        checked={selectedClientTypeFilters.includes(type.id)}
-                        onCheckedChange={() => toggleClientTypeFilter(type.id)}
-                      />
-                      <label
-                        htmlFor={`filter-type-${type.id}`}
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                      >
-                        {type.name}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </PopoverContent>
-            </Popover>
-
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="w-[180px] justify-between">
-                  Market {selectedMarketFilters.length > 0 && `(${selectedMarketFilters.length})`}
-                  <ChevronDown className="ml-2 h-4 w-4" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-[250px] p-3 bg-background z-50">
-                <div className="space-y-2 max-h-[300px] overflow-y-auto">
-                  {markets.map((market) => (
-                    <div key={market.id} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`filter-market-${market.id}`}
-                        checked={selectedMarketFilters.includes(market.id)}
-                        onCheckedChange={() => toggleMarketFilter(market.id)}
-                      />
-                      <label
-                        htmlFor={`filter-market-${market.id}`}
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                      >
-                        {market.name}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </PopoverContent>
-            </Popover>
-
-            <SearchableFilterDropdown
-              options={salespeople.map((s) => ({ id: s.id, label: s.full_name }))}
-              selectedValues={salespersonFilters}
-              onToggle={toggleSalespersonFilter}
-              placeholder="Salesperson"
-              searchPlaceholder="Search salesperson..."
-            />
-
+            {/* Active filters indicator */}
             {hasActiveFilters && (
-              <Button variant="ghost" onClick={clearFilters}>
-                Clear Filters
-              </Button>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span>{filteredClients.length} results</span>
+                <Button variant="link" size="sm" onClick={clearFilters} className="h-auto p-0 text-xs">
+                  Clear filters
+                </Button>
+              </div>
             )}
-
-            <ColumnVisibilityToggle
-              columns={columns}
-              visibleColumns={visibleColumns}
-              onToggleColumn={toggleColumn}
-            />
           </div>
-        </Card>
+        ) : (
+          /* Desktop Search & Filters */
+          <Card className="p-4">
+            <div className="flex gap-4 items-center flex-wrap">
+              <div className="relative flex-1 min-w-[200px]">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                <Input
+                  placeholder="Search clients by name or NIP..."
+                  value={search}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="pl-10"
+                />
+              </div>
+              
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="w-[180px] justify-between">
+                    Tags {selectedTagFilters.length > 0 && `(${selectedTagFilters.length})`}
+                    <ChevronDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[250px] p-3 bg-background z-50">
+                  <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                    {availableTags.map((tag) => (
+                      <div key={tag.id} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`filter-tag-${tag.id}`}
+                          checked={selectedTagFilters.includes(tag.id)}
+                          onCheckedChange={() => toggleTagFilter(tag.id)}
+                        />
+                        <label
+                          htmlFor={`filter-tag-${tag.id}`}
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex items-center gap-2"
+                        >
+                          <div
+                            className="w-3 h-3 rounded-full"
+                            style={{ backgroundColor: tag.color }}
+                          />
+                          {tag.name}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
 
-        <Card>
-          <Table className="text-sm">
-            <TableHeader>
-              <TableRow className="h-9">
-                {isColumnVisible("name") && (
-                  <TableHead className="py-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleSort("name")}
-                      className="h-7 px-2 -ml-2 font-medium hover:bg-transparent text-xs"
-                    >
-                      Name
-                      {getSortIcon("name")}
-                    </Button>
-                  </TableHead>
-                )}
-                {isColumnVisible("nip") && <TableHead className="py-2 text-xs">NIP</TableHead>}
-                {isColumnVisible("city") && (
-                  <TableHead className="py-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleSort("city")}
-                      className="h-7 px-2 -ml-2 font-medium hover:bg-transparent text-xs"
-                    >
-                      City
-                      {getSortIcon("city")}
-                    </Button>
-                  </TableHead>
-                )}
-                {isColumnVisible("tags") && <TableHead className="py-2 text-xs">Tags</TableHead>}
-                {isColumnVisible("salesperson") && <TableHead className="py-2 text-xs">Salesperson</TableHead>}
-                {isColumnVisible("contact") && <TableHead className="py-2 text-xs">Contact</TableHead>}
-                {isColumnVisible("created") && (
-                  <TableHead className="py-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleSort("created_at")}
-                      className="h-7 px-2 -ml-2 font-medium hover:bg-transparent text-xs"
-                    >
-                      Created
-                      {getSortIcon("created_at")}
-                    </Button>
-                  </TableHead>
-                )}
-                {isColumnVisible("actions") && <TableHead className="w-24 py-2 text-xs">Actions</TableHead>}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {currentRecords.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={visibleColumns.length} className="text-center py-6 text-muted-foreground">
-                    No clients found
-                  </TableCell>
-                </TableRow>
-              ) : (
-                currentRecords.map((client) => (
-                  <TableRow 
-                    key={client.id} 
-                    className="h-9 cursor-pointer hover:bg-muted/50"
-                    onClick={() => navigate(`/clients/${client.id}`)}
-                  >
-                    {isColumnVisible("name") && <TableCell className="font-medium py-1.5">{client.name}</TableCell>}
-                    {isColumnVisible("nip") && <TableCell className="py-1.5">{client.nip || "-"}</TableCell>}
-                    {isColumnVisible("city") && <TableCell className="py-1.5">{client.city || "-"}</TableCell>}
-                    {isColumnVisible("tags") && (
-                      <TableCell className="py-1.5">
-                        <div className="flex flex-wrap gap-0.5">
-                          {clientTags[client.id]?.map((tag) => (
-                            <Badge
-                              key={tag.id}
-                              style={{ backgroundColor: tag.color }}
-                              className="text-white text-[10px] px-1.5 py-0"
-                            >
-                              {tag.name}
-                            </Badge>
-                          ))}
-                        </div>
-                      </TableCell>
-                    )}
-                    {isColumnVisible("salesperson") && (
-                      <TableCell className="py-1.5">
-                        {client.assigned_salesperson_id && salespersonMap[client.assigned_salesperson_id]
-                          ? salespersonMap[client.assigned_salesperson_id]
-                          : "-"}
-                      </TableCell>
-                    )}
-                    {isColumnVisible("contact") && (
-                      <TableCell className="py-1.5">
-                        <div className="text-xs leading-tight">
-                          {client.primary_contact_name && (
-                            <div className="font-medium">{client.primary_contact_name}</div>
-                          )}
-                          {client.primary_contact_email && (
-                            <div className="text-muted-foreground truncate max-w-[180px]">{client.primary_contact_email}</div>
-                          )}
-                        </div>
-                      </TableCell>
-                    )}
-                    {isColumnVisible("created") && (
-                      <TableCell className="py-1.5">
-                        {client.created_at
-                          ? new Date(client.created_at).toLocaleDateString()
-                          : "-"}
-                      </TableCell>
-                    )}
-                    {isColumnVisible("actions") && (
-                      <TableCell onClick={(e) => e.stopPropagation()} className="py-1.5">
-                        <div className="flex gap-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 w-7 p-0"
-                            onClick={() => navigate(`/clients/${client.id}`)}
-                          >
-                            <Eye className="h-3.5 w-3.5" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 w-7 p-0"
-                            onClick={() => {
-                              setEditingClient(client);
-                              setIsClientDialogOpen(true);
-                            }}
-                          >
-                            <Edit className="h-3.5 w-3.5" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    )}
-                  </TableRow>
-                ))
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="w-[180px] justify-between">
+                    Client Type {selectedClientTypeFilters.length > 0 && `(${selectedClientTypeFilters.length})`}
+                    <ChevronDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[250px] p-3 bg-background z-50">
+                  <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                    {clientTypes.map((type) => (
+                      <div key={type.id} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`filter-type-${type.id}`}
+                          checked={selectedClientTypeFilters.includes(type.id)}
+                          onCheckedChange={() => toggleClientTypeFilter(type.id)}
+                        />
+                        <label
+                          htmlFor={`filter-type-${type.id}`}
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                        >
+                          {type.name}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
+
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="w-[180px] justify-between">
+                    Market {selectedMarketFilters.length > 0 && `(${selectedMarketFilters.length})`}
+                    <ChevronDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[250px] p-3 bg-background z-50">
+                  <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                    {markets.map((market) => (
+                      <div key={market.id} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`filter-market-${market.id}`}
+                          checked={selectedMarketFilters.includes(market.id)}
+                          onCheckedChange={() => toggleMarketFilter(market.id)}
+                        />
+                        <label
+                          htmlFor={`filter-market-${market.id}`}
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                        >
+                          {market.name}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
+
+              <SearchableFilterDropdown
+                options={salespeople.map((s) => ({ id: s.id, label: s.full_name }))}
+                selectedValues={salespersonFilters}
+                onToggle={toggleSalespersonFilter}
+                placeholder="Salesperson"
+                searchPlaceholder="Search salesperson..."
+              />
+
+              {hasActiveFilters && (
+                <Button variant="ghost" onClick={clearFilters}>
+                  Clear Filters
+                </Button>
               )}
-            </TableBody>
-          </Table>
-        </Card>
+
+              <ColumnVisibilityToggle
+                columns={columns}
+                visibleColumns={visibleColumns}
+                onToggleColumn={toggleColumn}
+              />
+            </div>
+          </Card>
+        )}
+
+        {/* Mobile List / Desktop Table */}
+        {isMobile ? (
+          <div className="space-y-3">
+            {currentRecords.length === 0 ? (
+              <Card className="p-8 text-center text-muted-foreground">
+                No clients found
+              </Card>
+            ) : (
+              currentRecords.map((client) => (
+                <MobileClientCard key={client.id} client={client} />
+              ))
+            )}
+          </div>
+        ) : (
+          <Card>
+            <Table className="text-sm">
+              <TableHeader>
+                <TableRow className="h-9">
+                  {isColumnVisible("name") && (
+                    <TableHead className="py-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleSort("name")}
+                        className="h-7 px-2 -ml-2 font-medium hover:bg-transparent text-xs"
+                      >
+                        Name
+                        {getSortIcon("name")}
+                      </Button>
+                    </TableHead>
+                  )}
+                  {isColumnVisible("nip") && <TableHead className="py-2 text-xs">NIP</TableHead>}
+                  {isColumnVisible("city") && (
+                    <TableHead className="py-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleSort("city")}
+                        className="h-7 px-2 -ml-2 font-medium hover:bg-transparent text-xs"
+                      >
+                        City
+                        {getSortIcon("city")}
+                      </Button>
+                    </TableHead>
+                  )}
+                  {isColumnVisible("tags") && <TableHead className="py-2 text-xs">Tags</TableHead>}
+                  {isColumnVisible("salesperson") && <TableHead className="py-2 text-xs">Salesperson</TableHead>}
+                  {isColumnVisible("contact") && <TableHead className="py-2 text-xs">Contact</TableHead>}
+                  {isColumnVisible("created") && (
+                    <TableHead className="py-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleSort("created_at")}
+                        className="h-7 px-2 -ml-2 font-medium hover:bg-transparent text-xs"
+                      >
+                        Created
+                        {getSortIcon("created_at")}
+                      </Button>
+                    </TableHead>
+                  )}
+                  {isColumnVisible("actions") && <TableHead className="w-24 py-2 text-xs">Actions</TableHead>}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {currentRecords.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={visibleColumns.length} className="text-center py-6 text-muted-foreground">
+                      No clients found
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  currentRecords.map((client) => (
+                    <TableRow 
+                      key={client.id} 
+                      className="h-9 cursor-pointer hover:bg-muted/50"
+                      onClick={() => navigate(`/clients/${client.id}`)}
+                    >
+                      {isColumnVisible("name") && <TableCell className="font-medium py-1.5">{client.name}</TableCell>}
+                      {isColumnVisible("nip") && <TableCell className="py-1.5">{client.nip || "-"}</TableCell>}
+                      {isColumnVisible("city") && <TableCell className="py-1.5">{client.city || "-"}</TableCell>}
+                      {isColumnVisible("tags") && (
+                        <TableCell className="py-1.5">
+                          <div className="flex flex-wrap gap-0.5">
+                            {clientTags[client.id]?.map((tag) => (
+                              <Badge
+                                key={tag.id}
+                                style={{ backgroundColor: tag.color }}
+                                className="text-white text-[10px] px-1.5 py-0"
+                              >
+                                {tag.name}
+                              </Badge>
+                            ))}
+                          </div>
+                        </TableCell>
+                      )}
+                      {isColumnVisible("salesperson") && (
+                        <TableCell className="py-1.5">
+                          {client.assigned_salesperson_id && salespersonMap[client.assigned_salesperson_id]
+                            ? salespersonMap[client.assigned_salesperson_id]
+                            : "-"}
+                        </TableCell>
+                      )}
+                      {isColumnVisible("contact") && (
+                        <TableCell className="py-1.5">
+                          <div className="text-xs leading-tight">
+                            {client.primary_contact_name && (
+                              <div className="font-medium">{client.primary_contact_name}</div>
+                            )}
+                            {client.primary_contact_email && (
+                              <div className="text-muted-foreground truncate max-w-[180px]">{client.primary_contact_email}</div>
+                            )}
+                          </div>
+                        </TableCell>
+                      )}
+                      {isColumnVisible("created") && (
+                        <TableCell className="py-1.5">
+                          {client.created_at
+                            ? new Date(client.created_at).toLocaleDateString()
+                            : "-"}
+                        </TableCell>
+                      )}
+                      {isColumnVisible("actions") && (
+                        <TableCell onClick={(e) => e.stopPropagation()} className="py-1.5">
+                          <div className="flex gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 w-7 p-0"
+                              onClick={() => navigate(`/clients/${client.id}`)}
+                            >
+                              <Eye className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 w-7 p-0"
+                              onClick={() => {
+                                setEditingClient(client);
+                                setIsClientDialogOpen(true);
+                              }}
+                            >
+                              <Edit className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </Card>
+        )}
 
         <TablePagination
           currentPage={currentPage}
