@@ -2371,6 +2371,9 @@ export type Database = {
           sale_price_eur_net: number
           sale_price_pln_net: number
           sale_price_usd_net: number
+          try_buy_price_eur_net: number | null
+          try_buy_price_pln_net: number | null
+          try_buy_price_usd_net: number | null
           updated_at: string | null
         }
         Insert: {
@@ -2389,6 +2392,9 @@ export type Database = {
           sale_price_eur_net: number
           sale_price_pln_net: number
           sale_price_usd_net: number
+          try_buy_price_eur_net?: number | null
+          try_buy_price_pln_net?: number | null
+          try_buy_price_usd_net?: number | null
           updated_at?: string | null
         }
         Update: {
@@ -2407,6 +2413,9 @@ export type Database = {
           sale_price_eur_net?: number
           sale_price_pln_net?: number
           sale_price_usd_net?: number
+          try_buy_price_eur_net?: number | null
+          try_buy_price_pln_net?: number | null
+          try_buy_price_usd_net?: number | null
           updated_at?: string | null
         }
         Relationships: []
