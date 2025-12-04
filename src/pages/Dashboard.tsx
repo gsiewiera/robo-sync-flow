@@ -423,21 +423,21 @@ const Dashboard = () => {
     
     return (
       <Card key={stat.title} className="transition-shadow hover:shadow-lg">
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">
+        <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
+          <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground line-clamp-1">
             {stat.title}
           </CardTitle>
-          <Icon className={cn("w-5 h-5", stat.color)} />
+          <Icon className={cn("w-4 h-4 sm:w-5 sm:h-5 shrink-0", stat.color)} />
         </CardHeader>
-        <CardContent>
-          <div className="flex items-end justify-between">
-            <div className="text-3xl font-bold">{stat.value}</div>
-            <div className={cn("flex items-center gap-1 text-sm font-medium", changeColor)}>
-              <ChangeIcon className="w-4 h-4" />
+        <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+          <div className="flex items-end justify-between gap-2">
+            <div className="text-2xl sm:text-3xl font-bold">{stat.value}</div>
+            <div className={cn("flex items-center gap-0.5 sm:gap-1 text-xs sm:text-sm font-medium shrink-0", changeColor)}>
+              <ChangeIcon className="w-3 h-3 sm:w-4 sm:h-4" />
               <span>{Math.abs(stat.change).toFixed(1)}%</span>
             </div>
           </div>
-          <p className="text-xs text-muted-foreground mt-1">vs previous period</p>
+          <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">vs previous period</p>
         </CardContent>
       </Card>
     );
@@ -445,25 +445,31 @@ const Dashboard = () => {
 
   return (
     <Layout>
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
 
         {/* Date Filter Buttons */}
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-1.5 sm:gap-2">
           <Button
             variant={activeFilter === "this_month" ? "default" : "outline"}
             onClick={() => setActiveFilter("this_month")}
+            size="sm"
+            className="text-xs sm:text-sm h-8 sm:h-9 px-2.5 sm:px-4"
           >
             This Month
           </Button>
           <Button
             variant={activeFilter === "last_month" ? "default" : "outline"}
             onClick={() => setActiveFilter("last_month")}
+            size="sm"
+            className="text-xs sm:text-sm h-8 sm:h-9 px-2.5 sm:px-4"
           >
             Last Month
           </Button>
           <Button
             variant={activeFilter === "ytd" ? "default" : "outline"}
             onClick={() => setActiveFilter("ytd")}
+            size="sm"
+            className="text-xs sm:text-sm h-8 sm:h-9 px-2.5 sm:px-4"
           >
             YTD
           </Button>
@@ -472,15 +478,16 @@ const Dashboard = () => {
             <PopoverTrigger asChild>
               <Button
                 variant={activeFilter === "custom" ? "default" : "outline"}
-                className={cn("justify-start text-left font-normal")}
+                size="sm"
+                className={cn("justify-start text-left font-normal text-xs sm:text-sm h-8 sm:h-9 px-2.5 sm:px-4")}
               >
-                <CalendarIcon className="mr-2 h-4 w-4" />
+                <CalendarIcon className="mr-1.5 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 {activeFilter === "custom" ? (
-                  <>
-                    {format(customDateRange.from, "PP")} - {format(customDateRange.to, "PP")}
-                  </>
+                  <span className="truncate max-w-[120px] sm:max-w-none">
+                    {format(customDateRange.from, "MMM d")} - {format(customDateRange.to, "MMM d")}
+                  </span>
                 ) : (
-                  "Custom Range"
+                  "Custom"
                 )}
               </Button>
             </PopoverTrigger>
@@ -495,78 +502,91 @@ const Dashboard = () => {
                   }
                 }}
                 initialFocus
+                numberOfMonths={1}
+                className="pointer-events-auto sm:hidden"
+              />
+              <Calendar
+                mode="range"
+                selected={{ from: customDateRange.from, to: customDateRange.to }}
+                onSelect={(range) => {
+                  if (range?.from && range?.to) {
+                    setCustomDateRange({ from: range.from, to: range.to });
+                    setActiveFilter("custom");
+                  }
+                }}
+                initialFocus
                 numberOfMonths={2}
-                className="pointer-events-auto"
+                className="pointer-events-auto hidden sm:block"
               />
             </PopoverContent>
           </Popover>
         </div>
 
         {/* Section 1: KPI Stats - Quick Overview */}
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-foreground">Sales Pipeline</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="space-y-2 sm:space-y-4">
+          <h2 className="text-base sm:text-lg font-semibold text-foreground">Sales Pipeline</h2>
+          <div className="grid grid-cols-3 gap-2 sm:gap-4">
             {salesStats.map(renderStatCard)}
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-foreground">Delivery & Operations</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+          <div className="space-y-2 sm:space-y-4">
+            <h2 className="text-base sm:text-lg font-semibold text-foreground">Delivery & Operations</h2>
+            <div className="grid grid-cols-3 gap-2 sm:gap-4">
               {deliveryStats.map(renderStatCard)}
             </div>
           </div>
-          <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-foreground">Service</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="space-y-2 sm:space-y-4">
+            <h2 className="text-base sm:text-lg font-semibold text-foreground">Service</h2>
+            <div className="grid grid-cols-3 gap-2 sm:gap-4">
               {serviceStats.map(renderStatCard)}
             </div>
           </div>
         </div>
 
         {/* Section 2: Sales Funnel - Core CRM View */}
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-foreground">Sales Funnel</h2>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="space-y-2 sm:space-y-4">
+          <h2 className="text-base sm:text-lg font-semibold text-foreground">Sales Funnel</h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             <SalesFunnelChart />
             <SalesFunnelTable />
           </div>
         </div>
 
         {/* Section 3: Revenue Performance */}
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-foreground">Revenue</h2>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="space-y-2 sm:space-y-4">
+          <h2 className="text-base sm:text-lg font-semibold text-foreground">Revenue</h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             <RevenueChart />
             <RevenueTable />
           </div>
         </div>
 
         {/* Section 4: Delivery Performance */}
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-foreground">Robots Delivered</h2>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="space-y-2 sm:space-y-4">
+          <h2 className="text-base sm:text-lg font-semibold text-foreground">Robots Delivered</h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             <RobotsDeliveredChart />
             <RobotsDeliveredTable />
           </div>
         </div>
 
         {/* Section 5: Activity Charts - Detailed Time-Series */}
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-foreground">Activity Trends</h2>
+        <div className="space-y-2 sm:space-y-4">
+          <h2 className="text-base sm:text-lg font-semibold text-foreground">Activity Trends</h2>
           {isLoading ? (
             <>
-              <Skeleton className="h-[300px] w-full" />
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Skeleton className="h-[300px] w-full" />
-                <Skeleton className="h-[300px] w-full" />
+              <Skeleton className="h-[200px] sm:h-[300px] w-full" />
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+                <Skeleton className="h-[200px] sm:h-[300px] w-full" />
+                <Skeleton className="h-[200px] sm:h-[300px] w-full" />
               </div>
             </>
           ) : (
             <>
               <RobotsSoldChart data={chartData.robotsSold} />
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                 <OpportunitiesChart data={chartData.opportunities} />
                 <ServiceTicketsChart data={chartData.serviceTickets} />
               </div>
