@@ -444,10 +444,8 @@ const Tasks = () => {
                     No tasks found
                   </TableCell>
                 </TableRow> : currentRecords.map(task => <TableRow key={task.id} className="h-9 cursor-pointer hover:bg-muted/50" onClick={() => handleViewTask(task.id)}>
-                    <TableCell className="py-1.5" onClick={e => e.stopPropagation()}>
-                      <button onClick={() => handleMarkComplete(task.id)} disabled={task.status === "completed"}>
-                        {task.status === "completed" ? <CheckCircle className="w-3.5 h-3.5 text-success" /> : <Circle className="w-3.5 h-3.5 text-muted-foreground hover:text-primary" />}
-                      </button>
+                    <TableCell className="py-1.5">
+                      {task.status === "completed" ? <CheckCircle className="w-3.5 h-3.5 text-success" /> : <Circle className="w-3.5 h-3.5 text-muted-foreground" />}
                     </TableCell>
                     {visibleColumns.includes("title") && <TableCell className="py-1.5">
                         <span className="text-sm font-medium">{task.title}</span>
