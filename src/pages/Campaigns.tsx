@@ -39,7 +39,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Pencil, Trash2, Send, Download, Mail, Megaphone, FileText, Users, ArrowLeft } from "lucide-react";
+import { Plus, Pencil, Trash2, Send, Download, Mail, Megaphone, FileText, Users, ArrowLeft, Eye, BarChart3 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -132,6 +132,16 @@ const Campaigns = () => {
   // Delete state
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<{type: string; id: string; name: string} | null>(null);
+  
+  // Preview and client list dialogs
+  const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
+  const [previewMailing, setPreviewMailing] = useState<Mailing | null>(null);
+  const [clientListDialogOpen, setClientListDialogOpen] = useState(false);
+  const [clientListCampaign, setClientListCampaign] = useState<Campaign | null>(null);
+  const [campaignClients, setCampaignClients] = useState<Client[]>([]);
+  const [statsDialogOpen, setStatsDialogOpen] = useState(false);
+  const [statsMailing, setStatsMailing] = useState<Mailing | null>(null);
+  const [mailingLogs, setMailingLogs] = useState<any[]>([]);
   
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -563,6 +573,43 @@ const Campaigns = () => {
     setTemplateViewMode("form");
   };
 
+  const viewCampaignClients = async (campaign: Campaign) => {
+    setClientListCampaign(campaign);
+    // Fetch clients for this campaign
+    const { data: campaignClientData } = await supabase
+      .from("campaign_clients")
+      .select(`
+        client:clients(id, name, general_email, city)
+      `)
+      .eq("campaign_id", campaign.id);
+    
+    if (campaignClientData) {
+      setCampaignClients(campaignClientData.map(cc => cc.client as any).filter(Boolean));
+    }
+    setClientListDialogOpen(true);
+  };
+
+  const viewEmailPreview = (mailing: Mailing) => {
+    setPreviewMailing(mailing);
+    setPreviewDialogOpen(true);
+  };
+
+  const viewMailingStats = async (mailing: Mailing) => {
+    setStatsMailing(mailing);
+    // Fetch mailing logs
+    const { data: logs } = await supabase
+      .from("campaign_mailing_logs")
+      .select(`
+        *,
+        client:clients(id, name, general_email)
+      `)
+      .eq("mailing_id", mailing.id)
+      .order("sent_at", { ascending: false });
+    
+    setMailingLogs(logs || []);
+    setStatsDialogOpen(true);
+  };
+
   // Pagination for current tab
   const getCurrentItems = () => {
     if (activeTab === "campaigns") return campaigns;
@@ -795,6 +842,9 @@ const Campaigns = () => {
                               </TableCell>
                               <TableCell className="text-right">
                                 <div className="flex justify-end gap-1">
+                                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => viewCampaignClients(campaign)} title="View Clients">
+                                    <Users className="w-3.5 h-3.5" />
+                                  </Button>
                                   <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => editCampaign(campaign)}>
                                     <Pencil className="w-3.5 h-3.5" />
                                   </Button>
@@ -1070,6 +1120,24 @@ const Campaigns = () => {
                           </TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-1">
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-7 w-7"
+                                onClick={() => viewEmailPreview(mailing)}
+                                title="Preview Email"
+                              >
+                                <Eye className="w-3.5 h-3.5" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-7 w-7"
+                                onClick={() => viewMailingStats(mailing)}
+                                title="View Stats"
+                              >
+                                <BarChart3 className="w-3.5 h-3.5" />
+                              </Button>
                               {mailing.status === "draft" && (
                                 <Button 
                                   variant="ghost" 
@@ -1128,6 +1196,138 @@ const Campaigns = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Client List Dialog */}
+      <Dialog open={clientListDialogOpen} onOpenChange={setClientListDialogOpen}>
+        <DialogContent className="max-w-3xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle>Clients in "{clientListCampaign?.name}"</DialogTitle>
+          </DialogHeader>
+          <div className="overflow-y-auto max-h-[60vh]">
+            {campaignClients.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">No clients in this campaign</p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Client Name</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>City</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {campaignClients.map(client => (
+                    <TableRow key={client.id}>
+                      <TableCell className="font-medium">{client.name}</TableCell>
+                      <TableCell className="text-sm">{client.general_email || "-"}</TableCell>
+                      <TableCell className="text-sm">{client.city || "-"}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </div>
+          <div className="text-sm text-muted-foreground mt-2">
+            Total: {campaignClients.length} clients
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Email Preview Dialog */}
+      <Dialog open={previewDialogOpen} onOpenChange={setPreviewDialogOpen}>
+        <DialogContent className="max-w-3xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle>Email Preview - {previewMailing?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label className="text-muted-foreground">Subject</Label>
+              <p className="font-medium">{(previewMailing?.template as any)?.subject || "-"}</p>
+            </div>
+            <div>
+              <Label className="text-muted-foreground">Body</Label>
+              <div 
+                className="border rounded-md p-4 bg-background mt-1 overflow-auto max-h-[400px]"
+                dangerouslySetInnerHTML={{ 
+                  __html: templates.find(t => t.id === previewMailing?.template_id)?.body || "No template content" 
+                }}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Note: Placeholders like {"{{client_name}}"} and {"{{contact_name}}"} will be replaced with actual data when sent.
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Stats Dialog */}
+      <Dialog open={statsDialogOpen} onOpenChange={setStatsDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle>Mailing Stats - {statsMailing?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-3 gap-4">
+              <Card>
+                <CardContent className="pt-4">
+                  <div className="text-2xl font-bold text-green-600">{statsMailing?.sent_count || 0}</div>
+                  <p className="text-sm text-muted-foreground">Sent</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-4">
+                  <div className="text-2xl font-bold text-red-600">{statsMailing?.failed_count || 0}</div>
+                  <p className="text-sm text-muted-foreground">Failed</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-4">
+                  <div className="text-2xl font-bold">{statsMailing?.total_count || 0}</div>
+                  <p className="text-sm text-muted-foreground">Total</p>
+                </CardContent>
+              </Card>
+            </div>
+            
+            <div>
+              <Label className="text-muted-foreground mb-2 block">Delivery Log</Label>
+              <div className="overflow-y-auto max-h-[300px]">
+                {mailingLogs.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">No delivery logs yet</p>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Client</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Sent At</TableHead>
+                        <TableHead>Error</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {mailingLogs.map(log => (
+                        <TableRow key={log.id}>
+                          <TableCell className="font-medium">{(log.client as any)?.name || "-"}</TableCell>
+                          <TableCell className="text-sm">{log.email}</TableCell>
+                          <TableCell>
+                            <Badge variant={log.status === "sent" ? "default" : log.status === "failed" ? "destructive" : "secondary"}>
+                              {log.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-sm">
+                            {log.sent_at ? format(new Date(log.sent_at), "MMM dd, HH:mm") : "-"}
+                          </TableCell>
+                          <TableCell className="text-sm text-red-600">{log.error || "-"}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 };
