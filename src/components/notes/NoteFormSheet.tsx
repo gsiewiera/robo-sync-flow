@@ -17,6 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ClientCombobox } from "@/components/ui/client-combobox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -245,23 +246,14 @@ export const NoteFormSheet = ({
             <div className="grid grid-cols-4 gap-4">
               <div className="space-y-2">
                 <Label>{t("notes.client", "Client")}</Label>
-                <Select
+                <ClientCombobox
+                  clients={clients}
                   value={formData.client_id}
                   onValueChange={(value) =>
                     setFormData({ ...formData, client_id: value, offer_id: "" })
                   }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={t("notes.selectClient", "Select client")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {clients.map((client) => (
-                      <SelectItem key={client.id} value={client.id}>
-                        {client.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  placeholder={t("notes.selectClient", "Select client")}
+                />
               </div>
 
               <div className="space-y-2">
