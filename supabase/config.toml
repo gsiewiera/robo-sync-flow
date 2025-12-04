@@ -8,3 +8,6 @@ verify_jwt = true
 
 [functions.client-ai-summary]
 verify_jwt = true
+
+[functions.salesperson-ai-summary]
+verify_jwt = true

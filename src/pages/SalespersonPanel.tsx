@@ -19,11 +19,13 @@ import {
   UserPlus,
   Eye,
   DollarSign,
-  CalendarIcon
+  CalendarIcon,
+  Sparkles
 } from "lucide-react";
 import { format, subDays, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { cn } from "@/lib/utils";
 import { DateRange } from "react-day-picker";
+import { SalespersonAISummary } from "@/components/salesperson/SalespersonAISummary";
 
 interface Profile {
   id: string;
@@ -439,14 +441,32 @@ const SalespersonPanel = () => {
         </div>
 
         {/* Tabs with detailed data */}
-        <Tabs defaultValue="tasks" className="space-y-4">
+        <Tabs defaultValue="ai" className="space-y-4">
           <TabsList>
+            <TabsTrigger value="ai">
+              <Sparkles className="w-4 h-4 mr-2" />
+              AI
+            </TabsTrigger>
             <TabsTrigger value="tasks">Tasks ({tasks.length})</TabsTrigger>
             <TabsTrigger value="leads">Leads ({leads.length})</TabsTrigger>
             <TabsTrigger value="offers">Offers ({offers.length})</TabsTrigger>
             <TabsTrigger value="contracts">Contracts ({contracts.length})</TabsTrigger>
             <TabsTrigger value="clients">Clients ({clients.length})</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="ai">
+            <SalespersonAISummary
+              salespersonName={salespeople.find(sp => sp.id === selectedSalesperson)?.full_name || ""}
+              salespersonEmail={salespeople.find(sp => sp.id === selectedSalesperson)?.email || ""}
+              dateRange={dateRange?.from && dateRange?.to ? { from: dateRange.from, to: dateRange.to } : undefined}
+              kpiData={kpiData}
+              tasks={tasks}
+              leads={leads}
+              offers={offers}
+              contracts={contracts}
+              clients={clients}
+            />
+          </TabsContent>
 
           <TabsContent value="tasks">
             <Card>
