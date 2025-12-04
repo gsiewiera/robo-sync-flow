@@ -2848,10 +2848,8 @@ export type Database = {
         | "cancelled"
       offer_status: "draft" | "sent" | "modified" | "accepted" | "rejected"
       robot_status:
-        | "in_warehouse"
         | "delivered"
         | "in_service"
-        | "maintenance"
         | "active"
         | "decommissioned"
         | "try_and_buy"
@@ -2994,10 +2992,8 @@ export const Constants = {
       ],
       offer_status: ["draft", "sent", "modified", "accepted", "rejected"],
       robot_status: [
-        "in_warehouse",
         "delivered",
         "in_service",
-        "maintenance",
         "active",
         "decommissioned",
         "try_and_buy",
