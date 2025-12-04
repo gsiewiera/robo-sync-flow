@@ -11,11 +11,13 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { FileText, Filter, CalendarIcon, X, Check, ChevronsUpDown } from "lucide-react";
+import { FileText, CalendarIcon, X, Check, ChevronsUpDown } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { ColumnVisibilityToggle, ColumnConfig } from "@/components/ui/column-visibility-toggle";
 import { TablePagination } from "@/components/ui/table-pagination";
+import { usePagination } from "@/hooks/use-pagination";
+import { useColumnVisibility } from "@/hooks/use-column-visibility";
 
 interface Invoice {
   id: string;
@@ -37,6 +39,17 @@ interface Client {
   name: string;
 }
 
+const COLUMNS: ColumnConfig[] = [
+  { key: "invoice_number", label: "Invoice #", defaultVisible: true },
+  { key: "client", label: "Client", defaultVisible: true },
+  { key: "issue_date", label: "Issue Date", defaultVisible: true },
+  { key: "due_date", label: "Due Date", defaultVisible: true },
+  { key: "amount_net", label: "Amount (Net)", defaultVisible: true },
+  { key: "amount_gross", label: "Amount (Gross)", defaultVisible: true },
+  { key: "status", label: "Status", defaultVisible: true },
+  { key: "paid_date", label: "Paid Date", defaultVisible: false },
+];
+
 const Invoices = () => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
@@ -46,32 +59,21 @@ const Invoices = () => {
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [endDate, setEndDate] = useState<Date | undefined>();
   const [clientPopoverOpen, setClientPopoverOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
   const { toast } = useToast();
 
-  const columns: ColumnConfig[] = [
-    { key: "invoice_number", label: "Invoice #", defaultVisible: true },
-    { key: "client", label: "Client", defaultVisible: true },
-    { key: "issue_date", label: "Issue Date", defaultVisible: true },
-    { key: "due_date", label: "Due Date", defaultVisible: true },
-    { key: "amount_net", label: "Amount (Net)", defaultVisible: true },
-    { key: "amount_gross", label: "Amount (Gross)", defaultVisible: true },
-    { key: "status", label: "Status", defaultVisible: true },
-    { key: "paid_date", label: "Paid Date", defaultVisible: false },
-  ];
+  const {
+    currentPage,
+    pageSize,
+    handlePageChange,
+    handlePageSizeChange,
+    resetPage,
+    getPaginatedData,
+    getTotalPages,
+  } = usePagination<Invoice>();
 
-  const [visibleColumns, setVisibleColumns] = useState<string[]>(
-    columns.filter((col) => col.defaultVisible).map((col) => col.key)
-  );
-
-  const toggleColumn = (columnKey: string) => {
-    setVisibleColumns((prev) =>
-      prev.includes(columnKey)
-        ? prev.filter((key) => key !== columnKey)
-        : [...prev, columnKey]
-    );
-  };
+  const { visibleColumns, toggleColumn, isColumnVisible } = useColumnVisibility({
+    columns: COLUMNS,
+  });
 
   useEffect(() => {
     fetchClients();
@@ -79,6 +81,7 @@ const Invoices = () => {
 
   useEffect(() => {
     fetchInvoices();
+    resetPage();
   }, [selectedClient, selectedStatus, startDate, endDate]);
 
   const fetchClients = async () => {
@@ -149,10 +152,8 @@ const Invoices = () => {
     }
   };
 
-  // Pagination
-  const totalPages = Math.ceil(invoices.length / pageSize);
-  const startIndex = (currentPage - 1) * pageSize;
-  const paginatedInvoices = invoices.slice(startIndex, startIndex + pageSize);
+  const paginatedInvoices = getPaginatedData(invoices);
+  const totalPages = getTotalPages(invoices.length);
 
   const getStatusBadge = (status: string, paidDate: string | null) => {
     if (paidDate) {
@@ -178,29 +179,26 @@ const Invoices = () => {
     setEndDate(undefined);
   };
 
-  const hasActiveFilters = 
-    selectedClient !== "all" || 
-    selectedStatus !== "all" || 
-    startDate !== undefined || 
+  const hasActiveFilters =
+    selectedClient !== "all" ||
+    selectedStatus !== "all" ||
+    startDate !== undefined ||
     endDate !== undefined;
 
   const getClientName = (clientId: string) => {
-    return clients.find(c => c.id === clientId)?.name || "Unknown Client";
+    return clients.find((c) => c.id === clientId)?.name || "Unknown Client";
   };
 
   return (
     <Layout>
       <div className="space-y-6">
-        <div className="flex items-center justify-end">
-        </div>
+        <div className="flex items-center justify-end"></div>
 
         <Card className="shadow-lg border-primary/20">
           <CardContent className="pt-6 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="space-y-2">
-                <Label className="text-sm font-medium">
-                  Client
-                </Label>
+                <Label className="text-sm font-medium">Client</Label>
                 <Popover open={clientPopoverOpen} onOpenChange={setClientPopoverOpen}>
                   <PopoverTrigger asChild>
                     <Button
@@ -211,7 +209,8 @@ const Invoices = () => {
                     >
                       {selectedClient === "all"
                         ? "All Clients"
-                        : clients.find((client) => client.id === selectedClient)?.name || "Select client"}
+                        : clients.find((client) => client.id === selectedClient)?.name ||
+                          "Select client"}
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </PopoverTrigger>
@@ -327,7 +326,7 @@ const Invoices = () => {
                       onSelect={setEndDate}
                       initialFocus
                       className="pointer-events-auto"
-                      disabled={(date) => startDate ? date < startDate : false}
+                      disabled={(date) => (startDate ? date < startDate : false)}
                     />
                   </PopoverContent>
                 </Popover>
@@ -373,12 +372,7 @@ const Invoices = () => {
                     />
                   </Badge>
                 )}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={clearFilters}
-                  className="h-6 text-xs"
-                >
+                <Button variant="ghost" size="sm" onClick={clearFilters} className="h-6 text-xs">
                   Clear All
                 </Button>
               </div>
@@ -388,7 +382,7 @@ const Invoices = () => {
 
         <Card className="shadow-lg">
           <CardHeader>
-              <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between">
               <CardTitle>Invoice List</CardTitle>
               <div className="flex items-center gap-2">
                 {!isLoading && invoices.length > 0 && (
@@ -397,7 +391,7 @@ const Invoices = () => {
                   </Badge>
                 )}
                 <ColumnVisibilityToggle
-                  columns={columns}
+                  columns={COLUMNS}
                   visibleColumns={visibleColumns}
                   onToggleColumn={toggleColumn}
                 />
@@ -413,9 +407,7 @@ const Invoices = () => {
             ) : invoices.length === 0 ? (
               <div className="text-center py-12">
                 <FileText className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
-                <p className="text-lg font-medium text-muted-foreground mb-2">
-                  No invoices found
-                </p>
+                <p className="text-lg font-medium text-muted-foreground mb-2">No invoices found</p>
                 {hasActiveFilters && (
                   <p className="text-sm text-muted-foreground mb-4">
                     Try adjusting your filters to see more results
@@ -433,69 +425,71 @@ const Invoices = () => {
                   <Table>
                     <TableHeader>
                       <TableRow className="h-9">
-                        {visibleColumns.includes("invoice_number") && (
+                        {isColumnVisible("invoice_number") && (
                           <TableHead className="py-1.5 text-xs">Invoice #</TableHead>
                         )}
-                        {visibleColumns.includes("client") && (
+                        {isColumnVisible("client") && (
                           <TableHead className="py-1.5 text-xs">Client</TableHead>
                         )}
-                        {visibleColumns.includes("issue_date") && (
+                        {isColumnVisible("issue_date") && (
                           <TableHead className="py-1.5 text-xs">Issue Date</TableHead>
                         )}
-                        {visibleColumns.includes("due_date") && (
+                        {isColumnVisible("due_date") && (
                           <TableHead className="py-1.5 text-xs">Due Date</TableHead>
                         )}
-                        {visibleColumns.includes("amount_net") && (
+                        {isColumnVisible("amount_net") && (
                           <TableHead className="py-1.5 text-xs">Amount (Net)</TableHead>
                         )}
-                        {visibleColumns.includes("amount_gross") && (
+                        {isColumnVisible("amount_gross") && (
                           <TableHead className="py-1.5 text-xs">Amount (Gross)</TableHead>
                         )}
-                        {visibleColumns.includes("status") && (
+                        {isColumnVisible("status") && (
                           <TableHead className="py-1.5 text-xs">Status</TableHead>
                         )}
-                        {visibleColumns.includes("paid_date") && (
+                        {isColumnVisible("paid_date") && (
                           <TableHead className="py-1.5 text-xs">Paid Date</TableHead>
                         )}
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {paginatedInvoices.map((invoice) => (
-                        <TableRow key={invoice.id} className="h-9 hover:bg-muted/50">
-                          {visibleColumns.includes("invoice_number") && (
-                            <TableCell className="py-1.5 text-sm font-medium">
+                        <TableRow key={invoice.id} className="h-9">
+                          {isColumnVisible("invoice_number") && (
+                            <TableCell className="font-medium py-1.5 text-sm">
                               {invoice.invoice_number}
                             </TableCell>
                           )}
-                          {visibleColumns.includes("client") && (
-                            <TableCell className="py-1.5 text-sm">{invoice.clients?.name || "N/A"}</TableCell>
+                          {isColumnVisible("client") && (
+                            <TableCell className="py-1.5 text-sm">
+                              {invoice.clients?.name || "-"}
+                            </TableCell>
                           )}
-                          {visibleColumns.includes("issue_date") && (
+                          {isColumnVisible("issue_date") && (
                             <TableCell className="py-1.5 text-sm">
                               {format(new Date(invoice.issue_date), "MMM dd, yyyy")}
                             </TableCell>
                           )}
-                          {visibleColumns.includes("due_date") && (
+                          {isColumnVisible("due_date") && (
                             <TableCell className="py-1.5 text-sm">
                               {format(new Date(invoice.due_date), "MMM dd, yyyy")}
                             </TableCell>
                           )}
-                          {visibleColumns.includes("amount_net") && (
+                          {isColumnVisible("amount_net") && (
                             <TableCell className="py-1.5 text-sm">
                               {invoice.amount_net.toLocaleString()} {invoice.currency}
                             </TableCell>
                           )}
-                          {visibleColumns.includes("amount_gross") && (
-                            <TableCell className="py-1.5 text-sm">
+                          {isColumnVisible("amount_gross") && (
+                            <TableCell className="font-medium py-1.5 text-sm">
                               {invoice.amount_gross.toLocaleString()} {invoice.currency}
                             </TableCell>
                           )}
-                          {visibleColumns.includes("status") && (
+                          {isColumnVisible("status") && (
                             <TableCell className="py-1.5">
                               {getStatusBadge(invoice.status, invoice.paid_date)}
                             </TableCell>
                           )}
-                          {visibleColumns.includes("paid_date") && (
+                          {isColumnVisible("paid_date") && (
                             <TableCell className="py-1.5 text-sm">
                               {invoice.paid_date
                                 ? format(new Date(invoice.paid_date), "MMM dd, yyyy")
@@ -507,13 +501,14 @@ const Invoices = () => {
                     </TableBody>
                   </Table>
                 </div>
+
                 <TablePagination
                   currentPage={currentPage}
                   totalPages={totalPages}
                   pageSize={pageSize}
                   totalItems={invoices.length}
-                  onPageChange={setCurrentPage}
-                  onPageSizeChange={(size) => { setPageSize(size); setCurrentPage(1); }}
+                  onPageChange={handlePageChange}
+                  onPageSizeChange={handlePageSizeChange}
                 />
               </>
             )}

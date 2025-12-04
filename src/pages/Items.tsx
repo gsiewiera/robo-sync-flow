@@ -35,6 +35,8 @@ import { Package, Plus, Pencil, Trash2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { ColumnVisibilityToggle, ColumnConfig } from "@/components/ui/column-visibility-toggle";
 import { TablePagination } from "@/components/ui/table-pagination";
+import { usePagination } from "@/hooks/use-pagination";
+import { useColumnVisibility } from "@/hooks/use-column-visibility";
 
 interface Item {
   id: string;
@@ -47,35 +49,34 @@ interface Item {
   created_at: string;
 }
 
+const COLUMNS: ColumnConfig[] = [
+  { key: "name", label: "Name", defaultVisible: true },
+  { key: "type", label: "Type", defaultVisible: true },
+  { key: "price_net", label: "Price (Net)", defaultVisible: true },
+  { key: "vat_rate", label: "VAT Rate", defaultVisible: true },
+  { key: "price_gross", label: "Price (Gross)", defaultVisible: true },
+  { key: "status", label: "Status", defaultVisible: true },
+];
+
 const Items = () => {
   const [items, setItems] = useState<Item[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Item | null>(null);
   const [loading, setLoading] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
   const { toast } = useToast();
 
-  const columns: ColumnConfig[] = [
-    { key: "name", label: "Name", defaultVisible: true },
-    { key: "type", label: "Type", defaultVisible: true },
-    { key: "price_net", label: "Price (Net)", defaultVisible: true },
-    { key: "vat_rate", label: "VAT Rate", defaultVisible: true },
-    { key: "price_gross", label: "Price (Gross)", defaultVisible: true },
-    { key: "status", label: "Status", defaultVisible: true },
-  ];
+  const {
+    currentPage,
+    pageSize,
+    handlePageChange,
+    handlePageSizeChange,
+    getPaginatedData,
+    getTotalPages,
+  } = usePagination<Item>();
 
-  const [visibleColumns, setVisibleColumns] = useState<string[]>(
-    columns.filter((col) => col.defaultVisible).map((col) => col.key)
-  );
-
-  const toggleColumn = (columnKey: string) => {
-    setVisibleColumns((prev) =>
-      prev.includes(columnKey)
-        ? prev.filter((key) => key !== columnKey)
-        : [...prev, columnKey]
-    );
-  };
+  const { visibleColumns, toggleColumn, isColumnVisible } = useColumnVisibility({
+    columns: COLUMNS,
+  });
 
   const [formData, setFormData] = useState({
     name: "",
@@ -86,10 +87,8 @@ const Items = () => {
     is_active: true,
   });
 
-  // Pagination
-  const totalPages = Math.ceil(items.length / pageSize);
-  const startIndex = (currentPage - 1) * pageSize;
-  const paginatedItems = items.slice(startIndex, startIndex + pageSize);
+  const paginatedItems = getPaginatedData(items);
+  const totalPages = getTotalPages(items.length);
 
   useEffect(() => {
     fetchItems();
@@ -225,18 +224,18 @@ const Items = () => {
     <Layout>
       <div className="space-y-6">
         <div className="flex items-center justify-end gap-2">
-            <ColumnVisibilityToggle
-              columns={columns}
-              visibleColumns={visibleColumns}
-              onToggleColumn={toggleColumn}
-            />
-            <Dialog open={isDialogOpen} onOpenChange={handleDialogChange}>
-              <DialogTrigger asChild>
-                <Button size="sm">
-                  <Plus className="w-3.5 h-3.5 mr-1.5" />
-                  Add Item
-                </Button>
-              </DialogTrigger>
+          <ColumnVisibilityToggle
+            columns={COLUMNS}
+            visibleColumns={visibleColumns}
+            onToggleColumn={toggleColumn}
+          />
+          <Dialog open={isDialogOpen} onOpenChange={handleDialogChange}>
+            <DialogTrigger asChild>
+              <Button size="sm">
+                <Plus className="w-3.5 h-3.5 mr-1.5" />
+                Add Item
+              </Button>
+            </DialogTrigger>
             <DialogContent className="max-w-2xl">
               <DialogHeader>
                 <DialogTitle>
@@ -359,22 +358,22 @@ const Items = () => {
             <Table>
               <TableHeader>
                 <TableRow className="h-9">
-                  {visibleColumns.includes("name") && (
+                  {isColumnVisible("name") && (
                     <TableHead className="py-1.5 text-xs">Name</TableHead>
                   )}
-                  {visibleColumns.includes("type") && (
+                  {isColumnVisible("type") && (
                     <TableHead className="py-1.5 text-xs">Type</TableHead>
                   )}
-                  {visibleColumns.includes("price_net") && (
+                  {isColumnVisible("price_net") && (
                     <TableHead className="py-1.5 text-xs">Price (Net)</TableHead>
                   )}
-                  {visibleColumns.includes("vat_rate") && (
+                  {isColumnVisible("vat_rate") && (
                     <TableHead className="py-1.5 text-xs">VAT Rate</TableHead>
                   )}
-                  {visibleColumns.includes("price_gross") && (
+                  {isColumnVisible("price_gross") && (
                     <TableHead className="py-1.5 text-xs">Price (Gross)</TableHead>
                   )}
-                  {visibleColumns.includes("status") && (
+                  {isColumnVisible("status") && (
                     <TableHead className="py-1.5 text-xs">Status</TableHead>
                   )}
                   <TableHead className="text-right py-1.5 text-xs">Actions</TableHead>
@@ -396,7 +395,7 @@ const Items = () => {
                     const priceGross = item.price_net * (1 + item.vat_rate / 100);
                     return (
                       <TableRow key={item.id} className="h-9">
-                        {visibleColumns.includes("name") && (
+                        {isColumnVisible("name") && (
                           <TableCell className="py-1.5">
                             <div>
                               <div className="text-sm font-medium">{item.name}</div>
@@ -408,23 +407,27 @@ const Items = () => {
                             </div>
                           </TableCell>
                         )}
-                        {visibleColumns.includes("type") && (
+                        {isColumnVisible("type") && (
                           <TableCell className="py-1.5">
-                            <Badge variant="outline" className="text-xs px-1.5 py-0">{item.item_type}</Badge>
+                            <Badge variant="outline" className="text-xs px-1.5 py-0">
+                              {item.item_type}
+                            </Badge>
                           </TableCell>
                         )}
-                        {visibleColumns.includes("price_net") && (
-                          <TableCell className="py-1.5 text-sm">{formatMoney(item.price_net)} PLN</TableCell>
+                        {isColumnVisible("price_net") && (
+                          <TableCell className="py-1.5 text-sm">
+                            {formatMoney(item.price_net)} PLN
+                          </TableCell>
                         )}
-                        {visibleColumns.includes("vat_rate") && (
+                        {isColumnVisible("vat_rate") && (
                           <TableCell className="py-1.5 text-sm">{item.vat_rate}%</TableCell>
                         )}
-                        {visibleColumns.includes("price_gross") && (
+                        {isColumnVisible("price_gross") && (
                           <TableCell className="py-1.5 text-sm font-medium">
                             {formatMoney(priceGross)} PLN
                           </TableCell>
                         )}
-                        {visibleColumns.includes("status") && (
+                        {isColumnVisible("status") && (
                           <TableCell className="py-1.5">
                             <Badge
                               variant={item.is_active ? "default" : "secondary"}
@@ -457,22 +460,22 @@ const Items = () => {
                   })
                 )}
               </TableBody>
-              </Table>
-            </div>
-            {items.length > 0 && (
-              <TablePagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                pageSize={pageSize}
-                totalItems={items.length}
-                onPageChange={setCurrentPage}
-                onPageSizeChange={(size) => { setPageSize(size); setCurrentPage(1); }}
-              />
-            )}
-          </Card>
-        </div>
-      </Layout>
-    );
-  };
+            </Table>
+          </div>
+          {items.length > 0 && (
+            <TablePagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              pageSize={pageSize}
+              totalItems={items.length}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
+            />
+          )}
+        </Card>
+      </div>
+    </Layout>
+  );
+};
 
 export default Items;
