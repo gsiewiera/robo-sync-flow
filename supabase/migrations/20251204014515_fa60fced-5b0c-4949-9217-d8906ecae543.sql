@@ -1,0 +1,1 @@
+ALTER TABLE public.clients DROP COLUMN IF EXISTS is_reference;
