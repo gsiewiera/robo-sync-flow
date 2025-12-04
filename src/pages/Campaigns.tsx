@@ -101,17 +101,17 @@ const Campaigns = () => {
   const [selectedClients, setSelectedClients] = useState<Client[]>([]);
   const [allClients, setAllClients] = useState<Client[]>([]);
   
-  // Filter state
+  // Filter state - now arrays for multi-select
   const [clientTypes, setClientTypes] = useState<{id: string; name: string}[]>([]);
   const [segments, setSegments] = useState<{id: string; name: string}[]>([]);
   const [markets, setMarkets] = useState<{id: string; name: string}[]>([]);
   const [sizes, setSizes] = useState<{id: string; name: string}[]>([]);
-  const [selectedClientType, setSelectedClientType] = useState<string>("all");
-  const [selectedSegment, setSelectedSegment] = useState<string>("all");
-  const [selectedMarket, setSelectedMarket] = useState<string>("all");
-  const [selectedSize, setSelectedSize] = useState<string>("all");
-  const [selectedCity, setSelectedCity] = useState<string>("all");
-  const [selectedDealStatus, setSelectedDealStatus] = useState<string>("all");
+  const [selectedClientTypes, setSelectedClientTypes] = useState<string[]>([]);
+  const [selectedSegments, setSelectedSegments] = useState<string[]>([]);
+  const [selectedMarkets, setSelectedMarkets] = useState<string[]>([]);
+  const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
+  const [selectedCities, setSelectedCities] = useState<string[]>([]);
+  const [selectedDealStatuses, setSelectedDealStatuses] = useState<string[]>([]);
   const [cities, setCities] = useState<string[]>([]);
   
   // Template form state
@@ -139,6 +139,13 @@ const Campaigns = () => {
     fetchData();
     fetchFilterOptions();
   }, []);
+
+  // Auto-apply filters when any filter changes
+  useEffect(() => {
+    if (campaignViewMode === "form") {
+      applyFilters();
+    }
+  }, [selectedClientTypes, selectedSegments, selectedMarkets, selectedSizes, selectedCities, selectedDealStatuses, campaignViewMode]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -212,57 +219,57 @@ const Campaigns = () => {
   const applyFilters = async () => {
     let query = supabase.from("clients").select("id, name, general_email, city");
 
-    if (selectedCity !== "all") {
-      query = query.eq("city", selectedCity);
+    if (selectedCities.length > 0) {
+      query = query.in("city", selectedCities);
     }
 
     const { data: clients, error } = await query;
 
     if (error) {
-      toast.error("Failed to filter clients");
+      console.error("Failed to filter clients");
       return;
     }
 
     let filteredClients = clients || [];
 
     // Additional filtering based on junction tables
-    if (selectedClientType !== "all") {
+    if (selectedClientTypes.length > 0) {
       const { data: typeClients } = await supabase
         .from("client_client_types")
         .select("client_id")
-        .eq("client_type_id", selectedClientType);
+        .in("client_type_id", selectedClientTypes);
       const typeClientIds = typeClients?.map(tc => tc.client_id) || [];
       filteredClients = filteredClients.filter(c => typeClientIds.includes(c.id));
     }
 
-    if (selectedSegment !== "all") {
+    if (selectedSegments.length > 0) {
       const { data: segmentClients } = await supabase
         .from("client_segments")
         .select("client_id")
-        .eq("segment_id", selectedSegment);
+        .in("segment_id", selectedSegments);
       const segmentClientIds = segmentClients?.map(sc => sc.client_id) || [];
       filteredClients = filteredClients.filter(c => segmentClientIds.includes(c.id));
     }
 
-    if (selectedMarket !== "all") {
+    if (selectedMarkets.length > 0) {
       const { data: marketClients } = await supabase
         .from("client_markets")
         .select("client_id")
-        .eq("market_id", selectedMarket);
+        .in("market_id", selectedMarkets);
       const marketClientIds = marketClients?.map(mc => mc.client_id) || [];
       filteredClients = filteredClients.filter(c => marketClientIds.includes(c.id));
     }
 
-    if (selectedSize !== "all") {
+    if (selectedSizes.length > 0) {
       const { data: sizeClients } = await supabase
         .from("client_sizes")
         .select("client_id")
-        .eq("size_id", selectedSize);
+        .in("size_id", selectedSizes);
       const sizeClientIds = sizeClients?.map(sc => sc.client_id) || [];
       filteredClients = filteredClients.filter(c => sizeClientIds.includes(c.id));
     }
 
-    if (selectedDealStatus !== "all") {
+    if (selectedDealStatuses.length > 0) {
       const { data: offers } = await supabase
         .from("offers")
         .select("client_id, stage");
@@ -272,20 +279,24 @@ const Campaigns = () => {
         const lostClientIds = offers.filter(o => o.stage === "lost").map(o => o.client_id);
         const leadClientIds = offers.filter(o => o.stage === "leads").map(o => o.client_id);
         
-        if (selectedDealStatus === "won") {
-          filteredClients = filteredClients.filter(c => wonClientIds.includes(c.id));
-        } else if (selectedDealStatus === "lost") {
-          filteredClients = filteredClients.filter(c => lostClientIds.includes(c.id));
-        } else if (selectedDealStatus === "lead") {
-          filteredClients = filteredClients.filter(c => leadClientIds.includes(c.id));
-        } else if (selectedDealStatus === "existing") {
-          filteredClients = filteredClients.filter(c => wonClientIds.includes(c.id));
+        let statusFilteredIds: string[] = [];
+        if (selectedDealStatuses.includes("won")) {
+          statusFilteredIds = [...statusFilteredIds, ...wonClientIds];
         }
+        if (selectedDealStatuses.includes("lost")) {
+          statusFilteredIds = [...statusFilteredIds, ...lostClientIds];
+        }
+        if (selectedDealStatuses.includes("lead")) {
+          statusFilteredIds = [...statusFilteredIds, ...leadClientIds];
+        }
+        if (selectedDealStatuses.includes("existing")) {
+          statusFilteredIds = [...statusFilteredIds, ...wonClientIds];
+        }
+        filteredClients = filteredClients.filter(c => statusFilteredIds.includes(c.id));
       }
     }
 
     setSelectedClients(filteredClients);
-    toast.success(`Found ${filteredClients.length} clients matching filters`);
   };
 
   const saveCampaign = async () => {
@@ -302,12 +313,12 @@ const Campaigns = () => {
     const { data: { user } } = await supabase.auth.getUser();
 
     const filters = {
-      clientType: selectedClientType,
-      segment: selectedSegment,
-      market: selectedMarket,
-      size: selectedSize,
-      city: selectedCity,
-      dealStatus: selectedDealStatus,
+      clientTypes: selectedClientTypes,
+      segments: selectedSegments,
+      markets: selectedMarkets,
+      sizes: selectedSizes,
+      cities: selectedCities,
+      dealStatuses: selectedDealStatuses,
     };
 
     if (editingCampaign) {
@@ -501,12 +512,12 @@ const Campaigns = () => {
     setEditingCampaign(null);
     setCampaignName("");
     setSelectedClients([]);
-    setSelectedClientType("all");
-    setSelectedSegment("all");
-    setSelectedMarket("all");
-    setSelectedSize("all");
-    setSelectedCity("all");
-    setSelectedDealStatus("all");
+    setSelectedClientTypes([]);
+    setSelectedSegments([]);
+    setSelectedMarkets([]);
+    setSelectedSizes([]);
+    setSelectedCities([]);
+    setSelectedDealStatuses([]);
   };
 
   const resetTemplateForm = () => {
@@ -529,12 +540,12 @@ const Campaigns = () => {
     setCampaignName(campaign.name);
     
     const filters = campaign.filters as any;
-    setSelectedClientType(filters.clientType || "all");
-    setSelectedSegment(filters.segment || "all");
-    setSelectedMarket(filters.market || "all");
-    setSelectedSize(filters.size || "all");
-    setSelectedCity(filters.city || "all");
-    setSelectedDealStatus(filters.dealStatus || "all");
+    setSelectedClientTypes(filters.clientTypes || filters.clientType ? [filters.clientType].filter(v => v && v !== "all") : []);
+    setSelectedSegments(filters.segments || filters.segment ? [filters.segment].filter(v => v && v !== "all") : []);
+    setSelectedMarkets(filters.markets || filters.market ? [filters.market].filter(v => v && v !== "all") : []);
+    setSelectedSizes(filters.sizes || filters.size ? [filters.size].filter(v => v && v !== "all") : []);
+    setSelectedCities(filters.cities || filters.city ? [filters.city].filter(v => v && v !== "all") : []);
+    setSelectedDealStatuses(filters.dealStatuses || filters.dealStatus ? [filters.dealStatus].filter(v => v && v !== "all") : []);
     
     // Load campaign clients
     const { data: campaignClients } = await supabase
@@ -636,113 +647,101 @@ const Campaigns = () => {
                   
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label>Client Type</Label>
-                      <Select value={selectedClientType} onValueChange={setSelectedClientType}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="All Types" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All Types</SelectItem>
-                          {clientTypes.map(t => (
-                            <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Label className="mb-2 block">Client Type</Label>
+                      <SearchableFilterDropdown
+                        options={clientTypes.map(t => ({ id: t.id, label: t.name }))}
+                        selectedValues={selectedClientTypes}
+                        onToggle={(id) => {
+                          setSelectedClientTypes(prev => 
+                            prev.includes(id) ? prev.filter(v => v !== id) : [...prev, id]
+                          );
+                        }}
+                        placeholder="All Types"
+                        className="w-full"
+                      />
                     </div>
                     <div>
-                      <Label>Segment</Label>
-                      <Select value={selectedSegment} onValueChange={setSelectedSegment}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="All Segments" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All Segments</SelectItem>
-                          {segments.map(s => (
-                            <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Label className="mb-2 block">Segment</Label>
+                      <SearchableFilterDropdown
+                        options={segments.map(s => ({ id: s.id, label: s.name }))}
+                        selectedValues={selectedSegments}
+                        onToggle={(id) => {
+                          setSelectedSegments(prev => 
+                            prev.includes(id) ? prev.filter(v => v !== id) : [...prev, id]
+                          );
+                        }}
+                        placeholder="All Segments"
+                        className="w-full"
+                      />
                     </div>
                     <div>
-                      <Label>Market</Label>
-                      <Select value={selectedMarket} onValueChange={setSelectedMarket}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="All Markets" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All Markets</SelectItem>
-                          {markets.map(m => (
-                            <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Label className="mb-2 block">Market</Label>
+                      <SearchableFilterDropdown
+                        options={markets.map(m => ({ id: m.id, label: m.name }))}
+                        selectedValues={selectedMarkets}
+                        onToggle={(id) => {
+                          setSelectedMarkets(prev => 
+                            prev.includes(id) ? prev.filter(v => v !== id) : [...prev, id]
+                          );
+                        }}
+                        placeholder="All Markets"
+                        className="w-full"
+                      />
                     </div>
                     <div>
-                      <Label>Size</Label>
-                      <Select value={selectedSize} onValueChange={setSelectedSize}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="All Sizes" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All Sizes</SelectItem>
-                          {sizes.map(s => (
-                            <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Label className="mb-2 block">Size</Label>
+                      <SearchableFilterDropdown
+                        options={sizes.map(s => ({ id: s.id, label: s.name }))}
+                        selectedValues={selectedSizes}
+                        onToggle={(id) => {
+                          setSelectedSizes(prev => 
+                            prev.includes(id) ? prev.filter(v => v !== id) : [...prev, id]
+                          );
+                        }}
+                        placeholder="All Sizes"
+                        className="w-full"
+                      />
                     </div>
                     <div>
-                      <Label>City</Label>
-                      <Select value={selectedCity} onValueChange={setSelectedCity}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="All Cities" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All Cities</SelectItem>
-                          {cities.map(c => (
-                            <SelectItem key={c} value={c}>{c}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Label className="mb-2 block">City</Label>
+                      <SearchableFilterDropdown
+                        options={cities.map(c => ({ id: c, label: c }))}
+                        selectedValues={selectedCities}
+                        onToggle={(id) => {
+                          setSelectedCities(prev => 
+                            prev.includes(id) ? prev.filter(v => v !== id) : [...prev, id]
+                          );
+                        }}
+                        placeholder="All Cities"
+                        className="w-full"
+                      />
                     </div>
                     <div>
-                      <Label>Deal Status</Label>
-                      <Select value={selectedDealStatus} onValueChange={setSelectedDealStatus}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="All Statuses" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All Statuses</SelectItem>
-                          <SelectItem value="existing">Existing Client</SelectItem>
-                          <SelectItem value="won">Deal Won</SelectItem>
-                          <SelectItem value="lost">Deal Lost</SelectItem>
-                          <SelectItem value="lead">Existing Lead</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <Label className="mb-2 block">Deal Status</Label>
+                      <SearchableFilterDropdown
+                        options={[
+                          { id: "existing", label: "Existing Client" },
+                          { id: "won", label: "Deal Won" },
+                          { id: "lost", label: "Deal Lost" },
+                          { id: "lead", label: "Existing Lead" },
+                        ]}
+                        selectedValues={selectedDealStatuses}
+                        onToggle={(id) => {
+                          setSelectedDealStatuses(prev => 
+                            prev.includes(id) ? prev.filter(v => v !== id) : [...prev, id]
+                          );
+                        }}
+                        placeholder="All Statuses"
+                        className="w-full"
+                      />
                     </div>
                   </div>
 
-                  <Button onClick={applyFilters} variant="outline" className="w-full">
-                    Apply Filters ({selectedClients.length} clients selected)
-                  </Button>
-
-                  {selectedClients.length > 0 && (
-                    <div className="border rounded-md p-3 max-h-40 overflow-y-auto">
-                      <p className="text-sm text-muted-foreground mb-2">Selected Clients:</p>
-                      <div className="flex flex-wrap gap-1">
-                        {selectedClients.slice(0, 20).map(client => (
-                          <Badge key={client.id} variant="secondary" className="text-xs">
-                            {client.name}
-                          </Badge>
-                        ))}
-                        {selectedClients.length > 20 && (
-                          <Badge variant="outline" className="text-xs">
-                            +{selectedClients.length - 20} more
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  )}
+                  <div className="border rounded-md p-4 bg-muted/30">
+                    <p className="text-sm font-medium text-center">
+                      {selectedClients.length} clients match current filters
+                    </p>
+                  </div>
 
                   <div className="flex justify-end gap-2">
                     <Button variant="outline" onClick={resetCampaignForm}>Cancel</Button>
