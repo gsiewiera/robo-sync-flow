@@ -234,16 +234,16 @@ export const NoteFormSheet = ({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-4xl max-h-[90vh] p-0">
-          <DialogHeader className="px-6 pt-6">
+        <DialogContent className="max-w-4xl max-h-[90vh] p-0 w-[95vw] sm:w-auto">
+          <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6">
             <DialogTitle>
               {note ? t("notes.editNote", "Edit Note") : t("notes.addNote", "Add Note")}
             </DialogTitle>
           </DialogHeader>
 
-        <ScrollArea className="max-h-[calc(90vh-120px)] px-6">
+        <ScrollArea className="max-h-[calc(90vh-120px)] px-4 sm:px-6">
           <form onSubmit={handleSubmit} className="space-y-4 pb-6">
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="space-y-2">
                 <Label>{t("notes.client", "Client")}</Label>
                 <ClientCombobox
@@ -324,7 +324,7 @@ export const NoteFormSheet = ({
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label>{t("notes.salesperson", "Salesperson")}</Label>
                 <Select
@@ -395,7 +395,7 @@ export const NoteFormSheet = ({
               />
             </div>
 
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="space-y-2">
                 <Label>{t("notes.needs", "Needs")}</Label>
                 <Textarea
@@ -443,7 +443,7 @@ export const NoteFormSheet = ({
               </div>
             </div>
 
-            <div className="grid grid-cols-[1fr_1fr_auto] gap-4 items-end">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>{t("notes.risks", "Risks")}</Label>
                 <Textarea
@@ -465,18 +465,18 @@ export const NoteFormSheet = ({
                   rows={2}
                 />
               </div>
-
-              <Button
-                type="button"
-                onClick={handleCreateTask}
-                className="h-[68px]"
-              >
-                <ListTodo className="h-4 w-4 mr-2" />
-                {t("notes.createTask", "Create Task")}
-              </Button>
             </div>
 
-            <div className="flex justify-end gap-2 pt-4 border-t">
+            <Button
+              type="button"
+              onClick={handleCreateTask}
+              className="w-full sm:w-auto"
+            >
+              <ListTodo className="h-4 w-4 mr-2" />
+              {t("notes.createTask", "Create Task")}
+            </Button>
+
+            <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-4 border-t">
               <Button
                 type="button"
                 variant="outline"
