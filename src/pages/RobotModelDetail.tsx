@@ -27,7 +27,7 @@ import {
   FormMessage,
   FormDescription,
 } from "@/components/ui/form";
-import { ArrowLeft, Pencil, Cpu, Save, X, ImageIcon } from "lucide-react";
+import { ArrowLeft, Pencil, Cpu, Save, X, ImageIcon, DollarSign, Box, Package, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -35,6 +35,8 @@ import { RobotModelPricing } from "@/components/robot-models/RobotModelPricing";
 import { RobotModelUnits } from "@/components/robot-models/RobotModelUnits";
 import { RobotModelStock } from "@/components/robot-models/RobotModelStock";
 import { RobotModelDocuments } from "@/components/robot-models/RobotModelDocuments";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const formSchema = z.object({
   model_name: z.string().min(1, "Model name is required").max(100),
@@ -61,6 +63,7 @@ interface RobotModel {
 const RobotModelDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [model, setModel] = useState<RobotModel | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -286,35 +289,36 @@ const RobotModelDetail = () => {
 
   return (
     <Layout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={() => navigate("/robot-models")}>
+      <div className="space-y-4 md:space-y-6">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div className="flex items-center gap-2 md:gap-3">
+            <Button variant="ghost" size="icon" className="h-8 w-8 md:h-9 md:w-9 shrink-0" onClick={() => navigate("/robot-models")}>
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <div className="flex items-center gap-2">
-              <Cpu className="h-5 w-5 text-muted-foreground" />
-              <h1 className="text-2xl font-semibold">{model.model_name}</h1>
+            <div className="flex items-center gap-2 min-w-0">
+              <Cpu className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground shrink-0" />
+              <h1 className="text-lg md:text-2xl font-semibold truncate">{model.model_name}</h1>
             </div>
-            <Badge variant={model.is_active ? "default" : "secondary"}>
+            <Badge variant={model.is_active ? "default" : "secondary"} className="shrink-0 text-xs">
               {model.is_active ? "Active" : "Inactive"}
             </Badge>
           </div>
           {isAdmin && !isEditing && (
-            <Button size="sm" onClick={() => setIsEditing(true)}>
+            <Button size="sm" onClick={() => setIsEditing(true)} className="self-end md:self-auto">
               <Pencil className="h-4 w-4 mr-1" />
-              Edit
+              <span className="hidden md:inline">Edit</span>
             </Button>
           )}
           {isEditing && (
-            <div className="flex gap-2">
+            <div className="flex gap-2 self-end md:self-auto">
               <Button size="sm" variant="outline" onClick={handleCancel}>
-                <X className="h-4 w-4 mr-1" />
-                Cancel
+                <X className="h-4 w-4 md:mr-1" />
+                <span className="hidden md:inline">Cancel</span>
               </Button>
               <Button size="sm" onClick={form.handleSubmit(onSubmit)} disabled={saving}>
-                <Save className="h-4 w-4 mr-1" />
-                {saving ? "Saving..." : "Save"}
+                <Save className="h-4 w-4 md:mr-1" />
+                <span className="hidden md:inline">{saving ? "Saving..." : "Save"}</span>
               </Button>
             </div>
           )}
@@ -544,12 +548,27 @@ const RobotModelDetail = () => {
 
         {/* Tabs Section */}
         <Tabs defaultValue="pricing" className="w-full">
-          <TabsList>
-            <TabsTrigger value="pricing">Pricing</TabsTrigger>
-            <TabsTrigger value="units">Units</TabsTrigger>
-            <TabsTrigger value="stock">Stock</TabsTrigger>
-            <TabsTrigger value="documents">Documents</TabsTrigger>
-          </TabsList>
+          <ScrollArea className="w-full">
+            <TabsList className="w-max md:w-full inline-flex md:flex">
+              <TabsTrigger value="pricing" className="shrink-0">
+                <DollarSign className="h-4 w-4 md:mr-1" />
+                <span className="hidden md:inline">Pricing</span>
+              </TabsTrigger>
+              <TabsTrigger value="units" className="shrink-0">
+                <Package className="h-4 w-4 md:mr-1" />
+                <span className="hidden md:inline">Units</span>
+              </TabsTrigger>
+              <TabsTrigger value="stock" className="shrink-0">
+                <Box className="h-4 w-4 md:mr-1" />
+                <span className="hidden md:inline">Stock</span>
+              </TabsTrigger>
+              <TabsTrigger value="documents" className="shrink-0">
+                <FileText className="h-4 w-4 md:mr-1" />
+                <span className="hidden md:inline">Documents</span>
+              </TabsTrigger>
+            </TabsList>
+            <ScrollBar orientation="horizontal" className="md:hidden" />
+          </ScrollArea>
           <TabsContent value="pricing" className="mt-4">
             <RobotModelPricing modelName={model.model_name} isAdmin={isAdmin} />
           </TabsContent>
