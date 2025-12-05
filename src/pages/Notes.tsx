@@ -300,8 +300,8 @@ const Notes = () => {
             <TabsList className="w-full sm:w-auto grid grid-cols-3 sm:flex">
               <TabsTrigger value="table" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
                 <TableIcon className="h-4 w-4" />
-                <span className="hidden sm:inline">{t("notes.tableView", "Table View")}</span>
-                <span className="sm:hidden">{t("notes.table", "Table")}</span>
+                <span className="hidden sm:inline">{t("notes.tableView", "List")}</span>
+                <span className="sm:hidden">{t("notes.table", "List")}</span>
               </TabsTrigger>
               <TabsTrigger value="grouped" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
                 <Users className="h-4 w-4" />
