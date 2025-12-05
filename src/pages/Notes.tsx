@@ -240,12 +240,33 @@ const Notes = () => {
       byType: Record<string, number>;
     }> = {};
 
+    // Initialize with all profiles (salespeople + SDMs)
+    salespeople.forEach(person => {
+      salespersonMap[person.id] = {
+        id: person.id,
+        name: person.full_name,
+        dailyCounts: {},
+        total: 0,
+        byType: {}
+      };
+    });
+
+    // Add unassigned category
+    salespersonMap['unassigned'] = {
+      id: 'unassigned',
+      name: t("notes.unassigned", "Unassigned"),
+      dailyCounts: {},
+      total: 0,
+      byType: {}
+    };
+
     notesForRange.forEach(note => {
       const salespersonId = note.salesperson_id || 'unassigned';
-      const salespersonName = note.profiles?.full_name || t("notes.unassigned", "Unassigned");
       const noteDay = format(new Date(note.note_date), 'yyyy-MM-dd');
 
+      // If person not in map (shouldn't happen but safety check), add them
       if (!salespersonMap[salespersonId]) {
+        const salespersonName = note.profiles?.full_name || t("notes.unassigned", "Unassigned");
         salespersonMap[salespersonId] = {
           id: salespersonId,
           name: salespersonName,
@@ -260,7 +281,10 @@ const Notes = () => {
       salespersonMap[salespersonId].byType[note.contact_type] = (salespersonMap[salespersonId].byType[note.contact_type] || 0) + 1;
     });
 
-    const salespersons = Object.values(salespersonMap).sort((a, b) => b.total - a.total);
+    // Filter out people with 0 notes and sort by total
+    const salespersons = Object.values(salespersonMap)
+      .filter(sp => sp.total > 0)
+      .sort((a, b) => b.total - a.total);
     const totalNotes = notesForRange.length;
     const avgPerDay = days.length > 0 ? totalNotes / days.length : 0;
     const avgPerSalesperson = salespersons.length > 0 ? totalNotes / salespersons.length : 0;
@@ -272,7 +296,7 @@ const Notes = () => {
       avgPerDay,
       avgPerSalesperson
     };
-  }, [notes, dateFrom, dateTo, t]);
+  }, [notes, dateFrom, dateTo, t, salespeople]);
 
   const getPriorityBadge = (priority: string) => {
     return priority === "high" ? (
