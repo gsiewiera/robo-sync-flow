@@ -604,33 +604,65 @@ const Notes = () => {
               </div>
             ) : (
               <>
-                <div className="space-y-4">
-                  <h3 className="text-sm font-semibold text-foreground">
-                    {t("notes.byContactType", "By Contact Type")}
-                  </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {groupedNotes.map((group) => {
-                      const contactTypeCounts: Record<string, number> = {};
-                      group.notes.forEach(note => {
-                        contactTypeCounts[note.contact_type] = (contactTypeCounts[note.contact_type] || 0) + 1;
-                      });
-                      return (
-                        <Card key={group.salesperson} className="bg-muted/30">
-                          <CardContent className="p-4">
-                            <h4 className="font-semibold text-foreground mb-3">{group.salesperson}</h4>
-                            <div className="flex flex-wrap gap-2">
-                              {Object.entries(contactTypeCounts).map(([type, count]) => (
-                                <Badge key={type} variant="secondary" className="text-xs">
-                                  {type}: {count}
-                                </Badge>
+                {(() => {
+                  const contactTypes = ["email", "call", "sms", "meeting", "other"];
+                  const salespersonData = groupedNotes.map(group => {
+                    const counts: Record<string, number> = {};
+                    contactTypes.forEach(type => counts[type] = 0);
+                    group.notes.forEach(note => {
+                      if (contactTypes.includes(note.contact_type)) {
+                        counts[note.contact_type]++;
+                      } else {
+                        counts["other"]++;
+                      }
+                    });
+                    return { name: group.salesperson, counts, total: group.notes.length };
+                  });
+                  const totals: Record<string, number> = {};
+                  contactTypes.forEach(type => totals[type] = 0);
+                  salespersonData.forEach(sp => {
+                    contactTypes.forEach(type => totals[type] += sp.counts[type]);
+                  });
+                  const grandTotal = salespersonData.reduce((sum, sp) => sum + sp.total, 0);
+
+                  return (
+                    <div className="border rounded-lg overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="h-9">
+                            <TableHead className="py-1.5 text-xs font-semibold">{t("notes.salesperson", "Salesperson")}</TableHead>
+                            {contactTypes.map(type => (
+                              <TableHead key={type} className="py-1.5 text-xs text-center capitalize">{type}</TableHead>
+                            ))}
+                            <TableHead className="py-1.5 text-xs text-center font-semibold">{t("notes.total", "Total")}</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {salespersonData.map(sp => (
+                            <TableRow key={sp.name} className="h-9">
+                              <TableCell className="py-1.5 text-sm font-medium">{sp.name}</TableCell>
+                              {contactTypes.map(type => (
+                                <TableCell key={type} className="py-1.5 text-sm text-center">
+                                  {sp.counts[type] > 0 ? sp.counts[type] : "-"}
+                                </TableCell>
                               ))}
-                            </div>
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
-                  </div>
-                </div>
+                              <TableCell className="py-1.5 text-sm text-center font-semibold">{sp.total}</TableCell>
+                            </TableRow>
+                          ))}
+                          <TableRow className="h-9 bg-muted/50 font-semibold">
+                            <TableCell className="py-1.5 text-sm">{t("notes.total", "Total")}</TableCell>
+                            {contactTypes.map(type => (
+                              <TableCell key={type} className="py-1.5 text-sm text-center">
+                                {totals[type] > 0 ? totals[type] : "-"}
+                              </TableCell>
+                            ))}
+                            <TableCell className="py-1.5 text-sm text-center">{grandTotal}</TableCell>
+                          </TableRow>
+                        </TableBody>
+                      </Table>
+                    </div>
+                  );
+                })()}
                 <div className="space-y-4 sm:space-y-6">
                 {groupedNotes.map((group) => (
                   <Card key={group.salesperson}>
