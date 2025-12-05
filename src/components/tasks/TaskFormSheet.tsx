@@ -133,10 +133,10 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
   const [isEditing, setIsEditing] = useState(mode === "edit");
   const [isLoading, setIsLoading] = useState(false);
   const [taskCreatedAt, setTaskCreatedAt] = useState<string | null>(null);
-  const [customerSectionOpen, setCustomerSectionOpen] = useState(true);
-  const [meetingSectionOpen, setMeetingSectionOpen] = useState(true);
-  const [resourcesSectionOpen, setResourcesSectionOpen] = useState(true);
-  const [managementSectionOpen, setManagementSectionOpen] = useState(true);
+  const [customerSectionOpen, setCustomerSectionOpen] = useState(false);
+  const [meetingSectionOpen, setMeetingSectionOpen] = useState(false);
+  const [resourcesSectionOpen, setResourcesSectionOpen] = useState(false);
+  const [managementSectionOpen, setManagementSectionOpen] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<TaskFormValues>({
@@ -519,7 +519,7 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" aria-describedby={undefined}>
+      <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto" aria-describedby={undefined}>
         <DialogHeader>
           <div className="flex items-start justify-between">
             <DialogTitle>
@@ -542,9 +542,9 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
         ) : (
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 mt-6">
-            {/* Basic Info - Always visible */}
-            <div className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3 mt-4">
+            {/* Basic Info - Two column layout */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="title"
@@ -623,7 +623,7 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
                       </div>
                     ) : (
                       <FormControl>
-                        <Textarea {...field} placeholder="Task description (optional)" rows={2} />
+                        <Textarea {...field} placeholder="Task description (optional)" rows={1} />
                       </FormControl>
                     )}
                     <FormMessage />
@@ -636,15 +636,15 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
             {(showOfferField || showContractField) && (
               <Collapsible open={customerSectionOpen} onOpenChange={setCustomerSectionOpen}>
                 <CollapsibleTrigger asChild>
-                  <Button variant="ghost" className="w-full justify-between p-3 h-auto border rounded-lg hover:bg-muted/50">
+                  <Button variant="ghost" className="w-full justify-between p-2 h-auto border rounded-lg hover:bg-muted/50">
                     <div className="flex items-center gap-2">
                       <Users className="h-4 w-4 text-primary" />
-                      <span className="font-medium">Related Items</span>
+                      <span className="font-medium text-sm">Related Items</span>
                     </div>
                     {customerSectionOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                   </Button>
                 </CollapsibleTrigger>
-                <CollapsibleContent className="space-y-4 pt-4">
+                <CollapsibleContent className="space-y-3 pt-3">
                   {(isViewMode ? (showOfferField && form.watch("offer_id")) : (selectedClientId && showOfferField && filteredOffers.length > 0)) && (
                     <FormField
                       control={form.control}
@@ -718,15 +718,15 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
             {(showMeetingTypeField || showPersonToMeetField || showMeetingDateTimeField || showPlaceField || showReminderField) && (
               <Collapsible open={meetingSectionOpen} onOpenChange={setMeetingSectionOpen}>
                 <CollapsibleTrigger asChild>
-                  <Button variant="ghost" className="w-full justify-between p-3 h-auto border rounded-lg hover:bg-muted/50">
+                  <Button variant="ghost" className="w-full justify-between p-2 h-auto border rounded-lg hover:bg-muted/50">
                     <div className="flex items-center gap-2">
                       <CalendarIconOutline className="h-4 w-4 text-primary" />
-                      <span className="font-medium">Meeting Details</span>
+                      <span className="font-medium text-sm">Meeting Details</span>
                     </div>
                     {meetingSectionOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                   </Button>
                 </CollapsibleTrigger>
-                <CollapsibleContent className="space-y-4 pt-4">
+                <CollapsibleContent className="space-y-3 pt-3">
                   {(isViewMode ? (showMeetingTypeField && form.watch("meeting_type")) : showMeetingTypeField) && (
                     <FormField
                       control={form.control}
@@ -925,15 +925,15 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
             {(isViewMode ? (showRobotsField && (form.watch("robot_ids")?.length ?? 0) > 0) : (selectedClientId && showRobotsField && filteredRobots.length > 0)) && (
               <Collapsible open={resourcesSectionOpen} onOpenChange={setResourcesSectionOpen}>
                 <CollapsibleTrigger asChild>
-                  <Button variant="ghost" className="w-full justify-between p-3 h-auto border rounded-lg hover:bg-muted/50">
+                  <Button variant="ghost" className="w-full justify-between p-2 h-auto border rounded-lg hover:bg-muted/50">
                     <div className="flex items-center gap-2">
                       <Briefcase className="h-4 w-4 text-primary" />
-                      <span className="font-medium">Resources</span>
+                      <span className="font-medium text-sm">Resources</span>
                     </div>
                     {resourcesSectionOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                   </Button>
                 </CollapsibleTrigger>
-                <CollapsibleContent className="space-y-4 pt-4">
+                <CollapsibleContent className="space-y-3 pt-3">
                   <FormField
                     control={form.control}
                     name="robot_ids"
@@ -987,15 +987,15 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
             {/* Task Management Section */}
             <Collapsible open={managementSectionOpen} onOpenChange={setManagementSectionOpen}>
               <CollapsibleTrigger asChild>
-                <Button variant="ghost" className="w-full justify-between p-3 h-auto border rounded-lg hover:bg-muted/50">
+                <Button variant="ghost" className="w-full justify-between p-2 h-auto border rounded-lg hover:bg-muted/50">
                   <div className="flex items-center gap-2">
                     <ClipboardList className="h-4 w-4 text-primary" />
-                    <span className="font-medium">Task Management</span>
+                    <span className="font-medium text-sm">Task Management</span>
                   </div>
                   {managementSectionOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                 </Button>
               </CollapsibleTrigger>
-              <CollapsibleContent className="space-y-4 pt-4">
+              <CollapsibleContent className="space-y-3 pt-3">
                 {(isViewMode ? (showDueDateField && form.watch("due_date")) : showDueDateField) && (
                   <FormField
                     control={form.control}
@@ -1053,7 +1053,7 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
                           </div>
                         ) : (
                           <FormControl>
-                            <Textarea {...field} placeholder="Add notes..." rows={3} />
+                            <Textarea {...field} placeholder="Add notes..." rows={2} />
                           </FormControl>
                         )}
                         <FormMessage />
