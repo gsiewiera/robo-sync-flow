@@ -41,6 +41,7 @@ export function ClientInlineEdit({ client, onSave, onCancel }: ClientInlineEditP
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [resellers, setResellers] = useState<any[]>([]);
   const [salespeople, setSalespeople] = useState<{ id: string; full_name: string }[]>([]);
+  const [sdmList, setSdmList] = useState<{ id: string; full_name: string }[]>([]);
 
   // Dictionary data
   const [clientTypes, setClientTypes] = useState<DictionaryItem[]>([]);
@@ -69,12 +70,14 @@ export function ClientInlineEdit({ client, onSave, onCancel }: ClientInlineEditP
     status: "active",
     reseller_id: "",
     assigned_salesperson_id: "",
+    assigned_sdm_id: "",
   });
 
   useEffect(() => {
     fetchTags();
     fetchResellers();
     fetchSalespeople();
+    fetchSdmList();
     fetchDictionaries();
     fetchClientTags();
     fetchClientClassifications();
@@ -94,6 +97,7 @@ export function ClientInlineEdit({ client, onSave, onCancel }: ClientInlineEditP
       status: client.status || "active",
       reseller_id: client.reseller_id || "",
       assigned_salesperson_id: client.assigned_salesperson_id || "",
+      assigned_sdm_id: client.assigned_sdm_id || "",
     });
   }, [client]);
 
@@ -131,6 +135,24 @@ export function ClientInlineEdit({ client, onSave, onCancel }: ClientInlineEditP
       .select("id, full_name")
       .order("full_name");
     if (data) setSalespeople(data);
+  };
+
+  const fetchSdmList = async () => {
+    const { data: roleData } = await supabase
+      .from("user_roles")
+      .select("user_id")
+      .eq("role", "service_delivery_manager");
+    
+    if (roleData && roleData.length > 0) {
+      const userIds = roleData.map(r => r.user_id);
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, full_name")
+        .in("id", userIds)
+        .order("full_name");
+      
+      if (data) setSdmList(data);
+    }
   };
 
   const fetchTags = async () => {
@@ -247,6 +269,7 @@ export function ClientInlineEdit({ client, onSave, onCancel }: ClientInlineEditP
         status: formData.status,
         reseller_id: formData.reseller_id || null,
         assigned_salesperson_id: formData.assigned_salesperson_id || null,
+        assigned_sdm_id: formData.assigned_sdm_id || null,
       };
 
       const { error } = await supabase
@@ -349,7 +372,7 @@ export function ClientInlineEdit({ client, onSave, onCancel }: ClientInlineEditP
 
       <div className="space-y-6">
         {/* Assignment */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label>Assigned Salesperson</Label>
               <Select
@@ -364,6 +387,27 @@ export function ClientInlineEdit({ client, onSave, onCancel }: ClientInlineEditP
                 <SelectContent>
                   <SelectItem value="__none__">None</SelectItem>
                   {salespeople.map((person) => (
+                    <SelectItem key={person.id} value={person.id}>
+                      {person.full_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Service Delivery Manager</Label>
+              <Select
+                value={formData.assigned_sdm_id || "__none__"}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, assigned_sdm_id: value === "__none__" ? "" : value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select SDM" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">None</SelectItem>
+                  {sdmList.map((person) => (
                     <SelectItem key={person.id} value={person.id}>
                       {person.full_name}
                     </SelectItem>
