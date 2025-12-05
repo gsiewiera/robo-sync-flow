@@ -92,9 +92,9 @@ const Notes = () => {
   const [clientFilter, setClientFilter] = useState<string>("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [salespersonFilter, setSalespersonFilter] = useState<string>("all");
-  const [dateFrom, setDateFrom] = useState<Date>(startOfDay(new Date()));
+  const [dateFrom, setDateFrom] = useState<Date>(subWeeks(startOfDay(new Date()), 1));
   const [dateTo, setDateTo] = useState<Date>(endOfDay(new Date()));
-  const [datePreset, setDatePreset] = useState<DatePreset>("today");
+  const [datePreset, setDatePreset] = useState<DatePreset>("lastWeek");
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editingNote, setEditingNote] = useState<Note | null>(null);
   const [viewMode, setViewMode] = useState<"table" | "grouped" | "stats">("table");
