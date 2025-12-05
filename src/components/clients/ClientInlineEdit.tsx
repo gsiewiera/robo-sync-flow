@@ -371,73 +371,6 @@ export function ClientInlineEdit({ client, onSave, onCancel }: ClientInlineEditP
       </div>
 
       <div className="space-y-6">
-        {/* Assignment */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label>Assigned Salesperson</Label>
-              <Select
-                value={formData.assigned_salesperson_id || "__none__"}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, assigned_salesperson_id: value === "__none__" ? "" : value })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select salesperson" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none__">None</SelectItem>
-                  {salespeople.map((person) => (
-                    <SelectItem key={person.id} value={person.id}>
-                      {person.full_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Service Delivery Manager</Label>
-              <Select
-                value={formData.assigned_sdm_id || "__none__"}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, assigned_sdm_id: value === "__none__" ? "" : value })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select SDM" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none__">None</SelectItem>
-                  {sdmList.map((person) => (
-                    <SelectItem key={person.id} value={person.id}>
-                      {person.full_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Reseller</Label>
-              <Select
-                value={formData.reseller_id || "__none__"}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, reseller_id: value === "__none__" ? "" : value })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select reseller" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none__">None</SelectItem>
-                  {resellers.map((reseller) => (
-                    <SelectItem key={reseller.id} value={reseller.id}>
-                      {reseller.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-        </div>
-
         {/* Company Information */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
@@ -516,6 +449,73 @@ export function ClientInlineEdit({ client, onSave, onCancel }: ClientInlineEditP
               onToggle={toggleSegment}
               placeholder="Select segments"
           />
+        </div>
+
+        {/* Assignment */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label>Assigned Salesperson</Label>
+              <Select
+                value={formData.assigned_salesperson_id || "__none__"}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, assigned_salesperson_id: value === "__none__" ? "" : value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select salesperson" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">None</SelectItem>
+                  {salespeople.map((person) => (
+                    <SelectItem key={person.id} value={person.id}>
+                      {person.full_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Service Delivery Manager</Label>
+              <Select
+                value={formData.assigned_sdm_id || "__none__"}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, assigned_sdm_id: value === "__none__" ? "" : value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select SDM" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">None</SelectItem>
+                  {sdmList.map((person) => (
+                    <SelectItem key={person.id} value={person.id}>
+                      {person.full_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Reseller</Label>
+              <Select
+                value={formData.reseller_id || "__none__"}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, reseller_id: value === "__none__" ? "" : value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select reseller" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">None</SelectItem>
+                  {resellers.map((reseller) => (
+                    <SelectItem key={reseller.id} value={reseller.id}>
+                      {reseller.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
         </div>
 
         {/* Tags */}
