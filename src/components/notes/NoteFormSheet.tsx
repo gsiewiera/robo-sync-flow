@@ -87,6 +87,7 @@ export const NoteFormSheet = ({
 }: NoteFormSheetProps) => {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [offers, setOffers] = useState<Offer[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [taskFormOpen, setTaskFormOpen] = useState(false);
@@ -108,6 +109,17 @@ export const NoteFormSheet = ({
     next_step: "",
   });
 
+  // Get current user on mount
+  useEffect(() => {
+    const getCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setCurrentUserId(user.id);
+      }
+    };
+    getCurrentUser();
+  }, []);
+
   useEffect(() => {
     if (note) {
       setFormData({
@@ -128,11 +140,15 @@ export const NoteFormSheet = ({
       });
     } else {
       resetForm();
+      // Set current user as default salesperson for new notes
+      if (currentUserId) {
+        setFormData(prev => ({ ...prev, salesperson_id: currentUserId }));
+      }
       if (initialClientId) {
         setFormData(prev => ({ ...prev, client_id: initialClientId }));
       }
     }
-  }, [note, open, initialClientId]);
+  }, [note, open, initialClientId, currentUserId]);
 
   useEffect(() => {
     if (formData.client_id) {
@@ -168,7 +184,7 @@ export const NoteFormSheet = ({
       contact_person: "",
       offer_id: "",
       note_date: new Date().toISOString().split("T")[0],
-      salesperson_id: "",
+      salesperson_id: currentUserId || "",
       priority: "normal",
       contact_type: "other",
       note: "",
@@ -183,6 +199,13 @@ export const NoteFormSheet = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate that salesperson is assigned
+    if (!formData.salesperson_id) {
+      toast.error(t("notes.salespersonRequired", "Please assign a person to this note"));
+      return;
+    }
+    
     setLoading(true);
 
     try {
@@ -191,7 +214,7 @@ export const NoteFormSheet = ({
         contact_person: formData.contact_person || null,
         offer_id: formData.offer_id || null,
         note_date: formData.note_date,
-        salesperson_id: formData.salesperson_id || null,
+        salesperson_id: formData.salesperson_id,
         priority: formData.priority,
         contact_type: formData.contact_type,
         note: formData.note || null,
@@ -326,15 +349,15 @@ export const NoteFormSheet = ({
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label>{t("notes.salesperson", "Salesperson")}</Label>
+                <Label>{t("notes.person", "Person")} <span className="text-destructive">*</span></Label>
                 <Select
                   value={formData.salesperson_id}
                   onValueChange={(value) =>
                     setFormData({ ...formData, salesperson_id: value })
                   }
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder={t("notes.selectSalesperson", "Select")} />
+                  <SelectTrigger className={!formData.salesperson_id ? "border-destructive" : ""}>
+                    <SelectValue placeholder={t("notes.selectPerson", "Select person")} />
                   </SelectTrigger>
                   <SelectContent>
                     {salespeople.map((sp) => (
