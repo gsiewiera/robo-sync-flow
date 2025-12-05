@@ -66,6 +66,7 @@ const formSchema = z.object({
   status: z.enum(["active", "inactive", "blocked"]).default("active"),
   reseller_id: z.string().optional(),
   assigned_salesperson_id: z.string().optional(),
+  assigned_sdm_id: z.string().optional(),
 });
 
 interface DictionaryItem {
@@ -89,6 +90,7 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [resellers, setResellers] = useState<any[]>([]);
   const [salespeople, setSalespeople] = useState<{ id: string; full_name: string }[]>([]);
+  const [sdmList, setSdmList] = useState<{ id: string; full_name: string }[]>([]);
   
   // Dictionary data
   const [clientTypes, setClientTypes] = useState<DictionaryItem[]>([]);
@@ -130,6 +132,7 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
       fetchTags();
       fetchResellers();
       fetchSalespeople();
+      fetchSdmList();
       fetchDictionaries();
       if (client) {
         fetchClientTags();
@@ -154,6 +157,7 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
           status: client.status || "active",
           reseller_id: client.reseller_id || "",
           assigned_salesperson_id: client.assigned_salesperson_id || "",
+          assigned_sdm_id: client.assigned_sdm_id || "",
       });
     } else {
       setSelectedTags([]);
@@ -181,6 +185,7 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
         status: "active",
         reseller_id: "",
         assigned_salesperson_id: "",
+        assigned_sdm_id: "",
       });
     }
     }
@@ -224,6 +229,27 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
 
     if (data && !error) {
       setSalespeople(data);
+    }
+  };
+
+  const fetchSdmList = async () => {
+    // Get users with service_delivery_manager role
+    const { data: roleData } = await supabase
+      .from("user_roles")
+      .select("user_id")
+      .eq("role", "service_delivery_manager");
+    
+    if (roleData && roleData.length > 0) {
+      const userIds = roleData.map(r => r.user_id);
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, full_name")
+        .in("id", userIds)
+        .order("full_name");
+      
+      if (data) {
+        setSdmList(data);
+      }
     }
   };
 
@@ -420,6 +446,7 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
         status: values.status,
         reseller_id: values.reseller_id || null,
         assigned_salesperson_id: values.assigned_salesperson_id || null,
+        assigned_sdm_id: values.assigned_sdm_id || null,
       };
 
       if (isEditMode) {
@@ -1003,6 +1030,35 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
                           <SelectContent>
                             <SelectItem value="__none__">None</SelectItem>
                             {salespeople.map((person) => (
+                              <SelectItem key={person.id} value={person.id}>
+                                {person.full_name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="assigned_sdm_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Service Delivery Manager</FormLabel>
+                        <Select 
+                          onValueChange={(value) => field.onChange(value === "__none__" ? "" : value)} 
+                          value={field.value || "__none__"}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select SDM" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="__none__">None</SelectItem>
+                            {sdmList.map((person) => (
                               <SelectItem key={person.id} value={person.id}>
                                 {person.full_name}
                               </SelectItem>

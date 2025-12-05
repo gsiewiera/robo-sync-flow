@@ -623,6 +623,7 @@ export type Database = {
         Row: {
           address: string | null
           assigned_salesperson_id: string | null
+          assigned_sdm_id: string | null
           balance: number | null
           billing_person_email: string | null
           billing_person_name: string | null
@@ -650,6 +651,7 @@ export type Database = {
         Insert: {
           address?: string | null
           assigned_salesperson_id?: string | null
+          assigned_sdm_id?: string | null
           balance?: number | null
           billing_person_email?: string | null
           billing_person_name?: string | null
@@ -677,6 +679,7 @@ export type Database = {
         Update: {
           address?: string | null
           assigned_salesperson_id?: string | null
+          assigned_sdm_id?: string | null
           balance?: number | null
           billing_person_email?: string | null
           billing_person_name?: string | null

@@ -64,6 +64,7 @@ interface Client {
   status: string | null;
   reseller_id: string | null;
   assigned_salesperson_id: string | null;
+  assigned_sdm_id: string | null;
   client_type: string | null;
   market: string | null;
   segment: string | null;
@@ -248,6 +249,7 @@ const ClientDetail = () => {
   const [contactToDelete, setContactToDelete] = useState<Contact | null>(null);
   const [roleOptions, setRoleOptions] = useState<string[]>(DEFAULT_ROLES);
   const [salesperson, setSalesperson] = useState<{ id: string; full_name: string } | null>(null);
+  const [sdm, setSdm] = useState<{ id: string; full_name: string } | null>(null);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [documentCategories, setDocumentCategories] = useState<string[]>([]);
@@ -456,6 +458,21 @@ const ClientDetail = () => {
         }
       } else {
         setSalesperson(null);
+      }
+
+      // Fetch SDM if present
+      if (clientData.assigned_sdm_id) {
+        const { data: sdmData } = await supabase
+          .from("profiles")
+          .select("id, full_name")
+          .eq("id", clientData.assigned_sdm_id)
+          .single();
+
+        if (sdmData) {
+          setSdm(sdmData);
+        }
+      } else {
+        setSdm(null);
       }
     }
 
@@ -962,6 +979,10 @@ const ClientDetail = () => {
                 <div>
                   <p className="text-xs text-muted-foreground">Salesperson</p>
                   <p className="font-medium text-sm">{salesperson?.full_name || <span className="text-muted-foreground italic">Unassigned</span>}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Service Delivery Manager</p>
+                  <p className="font-medium text-sm">{sdm?.full_name || <span className="text-muted-foreground italic">Unassigned</span>}</p>
                 </div>
                 {reseller && (
                   <div>
