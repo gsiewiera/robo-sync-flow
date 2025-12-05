@@ -604,18 +604,32 @@ const Notes = () => {
               </div>
             ) : (
               <>
-                <div className="flex flex-wrap gap-2 sm:gap-3 p-3 sm:p-4 rounded-lg bg-muted/50 border">
-                  <span className="text-sm font-medium text-muted-foreground mr-2 w-full sm:w-auto">
-                    {t("notes.summary", "Summary")}:
-                  </span>
-                  {groupedNotes.map((group) => (
-                    <Badge key={group.salesperson} variant="outline" className="text-xs sm:text-sm">
-                      {group.salesperson}: {group.notes.length}
-                    </Badge>
-                  ))}
-                  <Badge variant="default" className="sm:ml-auto">
-                    {t("notes.total", "Total")}: {groupedNotes.reduce((sum, g) => sum + g.notes.length, 0)}
-                  </Badge>
+                <div className="space-y-4">
+                  <h3 className="text-sm font-semibold text-foreground">
+                    {t("notes.byContactType", "By Contact Type")}
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {groupedNotes.map((group) => {
+                      const contactTypeCounts: Record<string, number> = {};
+                      group.notes.forEach(note => {
+                        contactTypeCounts[note.contact_type] = (contactTypeCounts[note.contact_type] || 0) + 1;
+                      });
+                      return (
+                        <Card key={group.salesperson} className="bg-muted/30">
+                          <CardContent className="p-4">
+                            <h4 className="font-semibold text-foreground mb-3">{group.salesperson}</h4>
+                            <div className="flex flex-wrap gap-2">
+                              {Object.entries(contactTypeCounts).map(([type, count]) => (
+                                <Badge key={type} variant="secondary" className="text-xs">
+                                  {type}: {count}
+                                </Badge>
+                              ))}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
                 </div>
                 <div className="space-y-4 sm:space-y-6">
                 {groupedNotes.map((group) => (
