@@ -305,7 +305,7 @@ const Notes = () => {
               </TabsTrigger>
               <TabsTrigger value="grouped" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
                 <Users className="h-4 w-4" />
-                <span className="hidden sm:inline">{t("notes.groupedView", "By Salesperson")}</span>
+                <span className="hidden sm:inline">{t("notes.groupedView", "By Person")}</span>
                 <span className="sm:hidden">{t("notes.grouped", "Grouped")}</span>
               </TabsTrigger>
               <TabsTrigger value="stats" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
@@ -363,10 +363,10 @@ const Notes = () => {
               <div className="grid grid-cols-2 sm:flex gap-3 sm:gap-4">
                 <Select value={salespersonFilter} onValueChange={setSalespersonFilter}>
                   <SelectTrigger className="w-full sm:w-[180px]">
-                    <SelectValue placeholder={t("notes.allSalespeople", "All Salespeople")} />
+                    <SelectValue placeholder={t("notes.allPeople", "All People")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">{t("notes.allSalespeople", "All Salespeople")}</SelectItem>
+                    <SelectItem value="all">{t("notes.allPeople", "All People")}</SelectItem>
                     {salespeople.map((sp) => (
                       <SelectItem key={sp.id} value={sp.id}>
                         {sp.full_name}
@@ -456,7 +456,7 @@ const Notes = () => {
                     <TableHead className="py-1.5 text-xs">{t("notes.contactPerson", "Contact Person")}</TableHead>
                     <TableHead className="py-1.5 text-xs hidden sm:table-cell">{t("notes.offer", "Offer")}</TableHead>
                     <TableHead className="py-1.5 text-xs">{t("common.date")}</TableHead>
-                    <TableHead className="py-1.5 text-xs hidden md:table-cell">{t("notes.salesperson", "Salesperson")}</TableHead>
+                    <TableHead className="py-1.5 text-xs hidden md:table-cell">{t("notes.person", "Person")}</TableHead>
                     <TableHead className="py-1.5 text-xs hidden lg:table-cell">{t("common.priority")}</TableHead>
                     <TableHead className="py-1.5 text-xs hidden lg:table-cell">{t("notes.contactType", "Contact Type")}</TableHead>
                     <TableHead className="py-1.5 text-xs hidden md:table-cell">{t("tasks.task", "Task")}</TableHead>
@@ -630,7 +630,7 @@ const Notes = () => {
                       <Table>
                         <TableHeader>
                           <TableRow className="h-9">
-                            <TableHead className="py-1.5 text-xs font-semibold">{t("notes.salesperson", "Salesperson")}</TableHead>
+                            <TableHead className="py-1.5 text-xs font-semibold">{t("notes.person", "Person")}</TableHead>
                             {contactTypes.map(type => (
                               <TableHead key={type} className="py-1.5 text-xs text-center capitalize">{type}</TableHead>
                             ))}
@@ -781,7 +781,7 @@ const Notes = () => {
               <Card>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground">
-                    {t("notes.avgPerSalesperson", "Avg per Salesperson")}
+                    {t("notes.avgPerPerson", "Avg per Person")}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -795,7 +795,7 @@ const Notes = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="sticky left-0 bg-background z-10">{t("notes.salesperson", "Salesperson")}</TableHead>
+                    <TableHead className="sticky left-0 bg-background z-10">{t("notes.person", "Person")}</TableHead>
                     {statsData.days.map(day => (
                       <TableHead key={day.toISOString()} className="text-center min-w-[80px]">
                         {format(day, "MMM d")}
@@ -878,7 +878,7 @@ const Notes = () => {
                       <Table>
                         <TableHeader>
                           <TableRow className="h-9">
-                            <TableHead className="py-1.5 text-xs font-semibold">{t("notes.salesperson", "Salesperson")}</TableHead>
+                            <TableHead className="py-1.5 text-xs font-semibold">{t("notes.person", "Person")}</TableHead>
                             {contactTypes.map(type => (
                               <TableHead key={type} className="py-1.5 text-xs text-center capitalize">{type}</TableHead>
                             ))}
