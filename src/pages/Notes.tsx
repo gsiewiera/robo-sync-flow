@@ -864,22 +864,53 @@ const Notes = () => {
             {statsData.salespersons.length > 0 && (
               <div className="mt-6">
                 <h3 className="text-lg font-semibold mb-4">{t("notes.byContactType", "By Contact Type")}</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {statsData.salespersons.map(sp => (
-                    <Card key={sp.id}>
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm">{sp.name}</CardTitle>
-                      </CardHeader>
-                      <CardContent className="flex flex-wrap gap-2">
-                        {Object.entries(sp.byType).map(([type, count]) => (
-                          <Badge key={type} variant="outline">
-                            {type}: {count}
-                          </Badge>
-                        ))}
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
+                {(() => {
+                  const contactTypes = ["email", "call", "sms", "meeting", "other"];
+                  const totals: Record<string, number> = {};
+                  contactTypes.forEach(type => totals[type] = 0);
+                  statsData.salespersons.forEach(sp => {
+                    contactTypes.forEach(type => totals[type] += (sp.byType[type] || 0));
+                  });
+                  const grandTotal = statsData.salespersons.reduce((sum, sp) => sum + sp.total, 0);
+
+                  return (
+                    <div className="border rounded-lg overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="h-9">
+                            <TableHead className="py-1.5 text-xs font-semibold">{t("notes.salesperson", "Salesperson")}</TableHead>
+                            {contactTypes.map(type => (
+                              <TableHead key={type} className="py-1.5 text-xs text-center capitalize">{type}</TableHead>
+                            ))}
+                            <TableHead className="py-1.5 text-xs text-center font-semibold">{t("notes.total", "Total")}</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {statsData.salespersons.map(sp => (
+                            <TableRow key={sp.id} className="h-9">
+                              <TableCell className="py-1.5 text-sm font-medium">{sp.name}</TableCell>
+                              {contactTypes.map(type => (
+                                <TableCell key={type} className="py-1.5 text-sm text-center">
+                                  {(sp.byType[type] || 0) > 0 ? sp.byType[type] : "-"}
+                                </TableCell>
+                              ))}
+                              <TableCell className="py-1.5 text-sm text-center font-semibold">{sp.total}</TableCell>
+                            </TableRow>
+                          ))}
+                          <TableRow className="h-9 bg-muted/50 font-semibold">
+                            <TableCell className="py-1.5 text-sm">{t("notes.total", "Total")}</TableCell>
+                            {contactTypes.map(type => (
+                              <TableCell key={type} className="py-1.5 text-sm text-center">
+                                {totals[type] > 0 ? totals[type] : "-"}
+                              </TableCell>
+                            ))}
+                            <TableCell className="py-1.5 text-sm text-center">{grandTotal}</TableCell>
+                          </TableRow>
+                        </TableBody>
+                      </Table>
+                    </div>
+                  );
+                })()}
               </div>
             )}
           </>
