@@ -281,10 +281,16 @@ const Notes = () => {
       salespersonMap[salespersonId].byType[note.contact_type] = (salespersonMap[salespersonId].byType[note.contact_type] || 0) + 1;
     });
 
-    // Filter out people with 0 notes and sort by total
+    // Filter out people with 0 notes and sort: Unassigned first, then by name
     const salespersons = Object.values(salespersonMap)
       .filter(sp => sp.total > 0)
-      .sort((a, b) => b.total - a.total);
+      .sort((a, b) => {
+        // Unassigned always first
+        if (a.id === 'unassigned') return -1;
+        if (b.id === 'unassigned') return 1;
+        // Then sort alphabetically by name
+        return a.name.localeCompare(b.name);
+      });
     const totalNotes = notesForRange.length;
     const avgPerDay = days.length > 0 ? totalNotes / days.length : 0;
     const avgPerSalesperson = salespersons.length > 0 ? totalNotes / salespersons.length : 0;
