@@ -46,13 +46,14 @@ interface UserProfile {
   roles: string[];
 }
 
-const AVAILABLE_ROLES = ["admin", "manager", "salesperson", "technician"];
+const AVAILABLE_ROLES = ["admin", "manager", "salesperson", "technician", "service_delivery_manager"];
 
-const ROLE_DESCRIPTIONS = {
+const ROLE_DESCRIPTIONS: Record<string, string> = {
   admin: "Full system access and user management",
   manager: "Manage all data, view all reports",
   salesperson: "Manage own clients, offers, and tasks",
   technician: "Manage service tickets and robots",
+  service_delivery_manager: "Manage service delivery and customer success",
 };
 
 const columns: ColumnConfig[] = [
