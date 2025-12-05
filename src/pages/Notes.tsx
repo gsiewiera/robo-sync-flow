@@ -209,19 +209,25 @@ const Notes = () => {
       const noteDate = new Date(note.note_date);
       return noteDate >= startOfDay(dateFrom) && noteDate <= endOfDay(dateTo);
     });
-    const grouped: Record<string, { salesperson: string; notes: Note[] }> = {};
+    const grouped: Record<string, { id: string; salesperson: string; notes: Note[] }> = {};
     
     notesForRange.forEach(note => {
       const salespersonId = note.salesperson_id || 'unassigned';
       const salespersonName = note.profiles?.full_name || t("notes.unassigned", "Unassigned");
       
       if (!grouped[salespersonId]) {
-        grouped[salespersonId] = { salesperson: salespersonName, notes: [] };
+        grouped[salespersonId] = { id: salespersonId, salesperson: salespersonName, notes: [] };
       }
       grouped[salespersonId].notes.push(note);
     });
     
-    return Object.values(grouped).sort((a, b) => a.salesperson.localeCompare(b.salesperson));
+    return Object.values(grouped).sort((a, b) => {
+      // Unassigned always first
+      if (a.id === 'unassigned') return -1;
+      if (b.id === 'unassigned') return 1;
+      // Then sort alphabetically
+      return a.salesperson.localeCompare(b.salesperson);
+    });
   }, [notes, dateFrom, dateTo, t]);
 
   // Calculate stats per salesperson and day
