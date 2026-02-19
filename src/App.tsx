@@ -2,79 +2,62 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { Session } from "@supabase/supabase-js";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { lazy, Suspense } from "react";
 import "@/i18n/config";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+
+// Eager-loaded (landing + auth)
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
-import Dashboard from "./pages/Dashboard";
-import Clients from "./pages/Clients";
-import ClientDetail from "./pages/ClientDetail";
-import Resellers from "./pages/Resellers";
-import ResellerDetail from "./pages/ResellerDetail";
-import Robots from "./pages/Robots";
-import RobotDetail from "./pages/RobotDetail";
-import Tasks from "./pages/Tasks";
-import Contracts from "./pages/Contracts";
-import ContractDetail from "./pages/ContractDetail";
-import Offers from "./pages/Offers";
-import OfferDetail from "./pages/OfferDetail";
-import Funnel from "./pages/Funnel";
-import Service from "./pages/Service";
-import ServiceDetail from "./pages/ServiceDetail";
-import Items from "./pages/Items";
-import Pricing from "./pages/Pricing";
-import RobotModels from "./pages/RobotModels";
-import RobotModelDetail from "./pages/RobotModelDetail";
-import Invoices from "./pages/Invoices";
-import Leads from "./pages/Leads";
-import Notes from "./pages/Notes";
-import AdminUsers from "./pages/AdminUsers";
-import UserProfile from "./pages/UserProfile";
-import Leaderboard from "./pages/Leaderboard";
-import Goals from "./pages/Goals";
-import SalespersonPanel from "./pages/SalespersonPanel";
-import Settings from "./pages/Settings";
-import Campaigns from "./pages/Campaigns";
-import ActivityReport from "./pages/reports/ActivityReport";
-import SalesReport from "./pages/reports/SalesReport";
-import ResellerReport from "./pages/reports/ResellerReport";
-import EndingReport from "./pages/reports/EndingReport";
-import NotFound from "./pages/NotFound";
+
+// Lazy-loaded pages
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Clients = lazy(() => import("./pages/Clients"));
+const ClientDetail = lazy(() => import("./pages/ClientDetail"));
+const Resellers = lazy(() => import("./pages/Resellers"));
+const ResellerDetail = lazy(() => import("./pages/ResellerDetail"));
+const Robots = lazy(() => import("./pages/Robots"));
+const RobotDetail = lazy(() => import("./pages/RobotDetail"));
+const Tasks = lazy(() => import("./pages/Tasks"));
+const Contracts = lazy(() => import("./pages/Contracts"));
+const ContractDetail = lazy(() => import("./pages/ContractDetail"));
+const Offers = lazy(() => import("./pages/Offers"));
+const OfferDetail = lazy(() => import("./pages/OfferDetail"));
+const Funnel = lazy(() => import("./pages/Funnel"));
+const Service = lazy(() => import("./pages/Service"));
+const ServiceDetail = lazy(() => import("./pages/ServiceDetail"));
+const Items = lazy(() => import("./pages/Items"));
+const Pricing = lazy(() => import("./pages/Pricing"));
+const RobotModels = lazy(() => import("./pages/RobotModels"));
+const RobotModelDetail = lazy(() => import("./pages/RobotModelDetail"));
+const Invoices = lazy(() => import("./pages/Invoices"));
+const Leads = lazy(() => import("./pages/Leads"));
+const Notes = lazy(() => import("./pages/Notes"));
+const AdminUsers = lazy(() => import("./pages/AdminUsers"));
+const UserProfile = lazy(() => import("./pages/UserProfile"));
+const Leaderboard = lazy(() => import("./pages/Leaderboard"));
+const Goals = lazy(() => import("./pages/Goals"));
+const SalespersonPanel = lazy(() => import("./pages/SalespersonPanel"));
+const Settings = lazy(() => import("./pages/Settings"));
+const Campaigns = lazy(() => import("./pages/Campaigns"));
+const ActivityReport = lazy(() => import("./pages/reports/ActivityReport"));
+const SalesReport = lazy(() => import("./pages/reports/SalesReport"));
+const ResellerReport = lazy(() => import("./pages/reports/ResellerReport"));
+const EndingReport = lazy(() => import("./pages/reports/EndingReport"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
 
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
+const PageLoader = () => (
+  <div className="flex items-center justify-center min-h-screen">Loading...</div>
+);
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setLoading(false);
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  if (loading) {
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
-  }
-
-  if (!session) {
-    return <Navigate to="/auth" replace />;
-  }
-
-  return <>{children}</>;
-};
+const Protected = ({ children }: { children: React.ReactNode }) => (
+  <ProtectedRoute>
+    <Suspense fallback={<PageLoader />}>{children}</Suspense>
+  </ProtectedRoute>
+);
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -82,44 +65,46 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-          <Route path="/clients" element={<ProtectedRoute><Clients /></ProtectedRoute>} />
-          <Route path="/clients/:id" element={<ProtectedRoute><ClientDetail /></ProtectedRoute>} />
-          <Route path="/resellers" element={<ProtectedRoute><Resellers /></ProtectedRoute>} />
-          <Route path="/resellers/:id" element={<ProtectedRoute><ResellerDetail /></ProtectedRoute>} />
-          <Route path="/campaigns" element={<ProtectedRoute><Campaigns /></ProtectedRoute>} />
-          <Route path="/robots" element={<ProtectedRoute><Robots /></ProtectedRoute>} />
-          <Route path="/robots/:id" element={<ProtectedRoute><RobotDetail /></ProtectedRoute>} />
-          <Route path="/tasks" element={<ProtectedRoute><Tasks /></ProtectedRoute>} />
-          <Route path="/contracts" element={<ProtectedRoute><Contracts /></ProtectedRoute>} />
-          <Route path="/contracts/:id" element={<ProtectedRoute><ContractDetail /></ProtectedRoute>} />
-          <Route path="/offers" element={<ProtectedRoute><Offers /></ProtectedRoute>} />
-          <Route path="/offers/:id" element={<ProtectedRoute><OfferDetail /></ProtectedRoute>} />
-          <Route path="/funnel" element={<ProtectedRoute><Funnel /></ProtectedRoute>} />
-          <Route path="/service" element={<ProtectedRoute><Service /></ProtectedRoute>} />
-          <Route path="/service/:id" element={<ProtectedRoute><ServiceDetail /></ProtectedRoute>} />
-          <Route path="/items" element={<ProtectedRoute><Items /></ProtectedRoute>} />
-          <Route path="/pricing" element={<ProtectedRoute><Pricing /></ProtectedRoute>} />
-          <Route path="/robot-models" element={<ProtectedRoute><RobotModels /></ProtectedRoute>} />
-          <Route path="/robot-models/:id" element={<ProtectedRoute><RobotModelDetail /></ProtectedRoute>} />
-          <Route path="/invoices" element={<ProtectedRoute><Invoices /></ProtectedRoute>} />
-          <Route path="/leads" element={<ProtectedRoute><Leads /></ProtectedRoute>} />
-          <Route path="/notes" element={<ProtectedRoute><Notes /></ProtectedRoute>} />
-          <Route path="/admin/users" element={<ProtectedRoute><AdminUsers /></ProtectedRoute>} />
-          <Route path="/admin/users/:id" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
-          <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
-          <Route path="/goals" element={<ProtectedRoute><Goals /></ProtectedRoute>} />
-          <Route path="/admin/salesperson-panel" element={<ProtectedRoute><SalespersonPanel /></ProtectedRoute>} />
-          <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-          <Route path="/reports/activity" element={<ProtectedRoute><ActivityReport /></ProtectedRoute>} />
-          <Route path="/reports/sales" element={<ProtectedRoute><SalesReport /></ProtectedRoute>} />
-          <Route path="/reports/reseller" element={<ProtectedRoute><ResellerReport /></ProtectedRoute>} />
-          <Route path="/reports/ending" element={<ProtectedRoute><EndingReport /></ProtectedRoute>} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/dashboard" element={<Protected><Dashboard /></Protected>} />
+            <Route path="/clients" element={<Protected><Clients /></Protected>} />
+            <Route path="/clients/:id" element={<Protected><ClientDetail /></Protected>} />
+            <Route path="/resellers" element={<Protected><Resellers /></Protected>} />
+            <Route path="/resellers/:id" element={<Protected><ResellerDetail /></Protected>} />
+            <Route path="/campaigns" element={<Protected><Campaigns /></Protected>} />
+            <Route path="/robots" element={<Protected><Robots /></Protected>} />
+            <Route path="/robots/:id" element={<Protected><RobotDetail /></Protected>} />
+            <Route path="/tasks" element={<Protected><Tasks /></Protected>} />
+            <Route path="/contracts" element={<Protected><Contracts /></Protected>} />
+            <Route path="/contracts/:id" element={<Protected><ContractDetail /></Protected>} />
+            <Route path="/offers" element={<Protected><Offers /></Protected>} />
+            <Route path="/offers/:id" element={<Protected><OfferDetail /></Protected>} />
+            <Route path="/funnel" element={<Protected><Funnel /></Protected>} />
+            <Route path="/service" element={<Protected><Service /></Protected>} />
+            <Route path="/service/:id" element={<Protected><ServiceDetail /></Protected>} />
+            <Route path="/items" element={<Protected><Items /></Protected>} />
+            <Route path="/pricing" element={<Protected><Pricing /></Protected>} />
+            <Route path="/robot-models" element={<Protected><RobotModels /></Protected>} />
+            <Route path="/robot-models/:id" element={<Protected><RobotModelDetail /></Protected>} />
+            <Route path="/invoices" element={<Protected><Invoices /></Protected>} />
+            <Route path="/leads" element={<Protected><Leads /></Protected>} />
+            <Route path="/notes" element={<Protected><Notes /></Protected>} />
+            <Route path="/admin/users" element={<Protected><AdminUsers /></Protected>} />
+            <Route path="/admin/users/:id" element={<Protected><UserProfile /></Protected>} />
+            <Route path="/leaderboard" element={<Protected><Leaderboard /></Protected>} />
+            <Route path="/goals" element={<Protected><Goals /></Protected>} />
+            <Route path="/admin/salesperson-panel" element={<Protected><SalespersonPanel /></Protected>} />
+            <Route path="/settings" element={<Protected><Settings /></Protected>} />
+            <Route path="/reports/activity" element={<Protected><ActivityReport /></Protected>} />
+            <Route path="/reports/sales" element={<Protected><SalesReport /></Protected>} />
+            <Route path="/reports/reseller" element={<Protected><ResellerReport /></Protected>} />
+            <Route path="/reports/ending" element={<Protected><EndingReport /></Protected>} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Suspense>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
