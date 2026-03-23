@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useClients } from "@/hooks/use-clients";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { formatMoney } from "@/lib/utils";
@@ -62,7 +63,7 @@ interface ContractStatus {
 const Contracts = () => {
   const { t } = useTranslation();
   const [contracts, setContracts] = useState<Contract[]>([]);
-  const [clients, setClients] = useState<{ id: string; name: string }[]>([]);
+  const { clients } = useClients();
   const [contractStatuses, setContractStatuses] = useState<ContractStatus[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState<"contract_number" | "start_date" | "end_date" | "created_at">("created_at");
@@ -106,7 +107,6 @@ const Contracts = () => {
 
   useEffect(() => {
     fetchContracts();
-    fetchClients();
     fetchContractStatuses();
   }, []);
 
@@ -118,17 +118,6 @@ const Contracts = () => {
 
     if (data) {
       setContractStatuses(data);
-    }
-  };
-
-  const fetchClients = async () => {
-    const { data } = await supabase
-      .from("clients")
-      .select("id, name")
-      .order("name");
-
-    if (data) {
-      setClients(data);
     }
   };
 

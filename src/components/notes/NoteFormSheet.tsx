@@ -1,11 +1,5 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,12 +12,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ClientCombobox } from "@/components/ui/client-combobox";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ListTodo, Plus } from "lucide-react";
 import { TaskFormSheet } from "@/components/tasks/TaskFormSheet";
 import { ContactFormDialog } from "@/components/clients/ContactFormDialog";
+import { FormDialogWrapper } from "@/components/forms/FormDialogWrapper";
+import { FormActions } from "@/components/forms/FormActions";
+import { useCurrentUser } from "@/hooks/use-current-user";
 
 interface Note {
   id: string;
@@ -87,7 +83,7 @@ export const NoteFormSheet = ({
 }: NoteFormSheetProps) => {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const { userId: currentUserId } = useCurrentUser();
   const [offers, setOffers] = useState<Offer[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [taskFormOpen, setTaskFormOpen] = useState(false);
@@ -108,17 +104,6 @@ export const NoteFormSheet = ({
     risks: "",
     next_step: "",
   });
-
-  // Get current user on mount
-  useEffect(() => {
-    const getCurrentUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setCurrentUserId(user.id);
-      }
-    };
-    getCurrentUser();
-  }, []);
 
   useEffect(() => {
     if (note) {
@@ -256,15 +241,12 @@ export const NoteFormSheet = ({
 
   return (
     <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-4xl max-h-[95vh] p-0 w-[95vw] sm:w-auto">
-          <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6">
-            <DialogTitle>
-              {note ? t("notes.editNote", "Edit Note") : t("notes.addNote", "Add Note")}
-            </DialogTitle>
-          </DialogHeader>
-
-        <ScrollArea className="max-h-[calc(95vh-80px)] px-4 sm:px-6">
+      <FormDialogWrapper
+        open={open}
+        onOpenChange={onOpenChange}
+        title={note ? t("notes.editNote", "Edit Note") : t("notes.addNote", "Add Note")}
+        maxWidth="max-w-4xl"
+      >
           <form onSubmit={handleSubmit} className="space-y-4 pb-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="space-y-2">
@@ -490,31 +472,19 @@ export const NoteFormSheet = ({
               </div>
             </div>
 
-            <Button
-              type="button"
-              onClick={handleCreateTask}
-              className="w-full sm:w-auto"
-            >
-              <ListTodo className="h-4 w-4 mr-2" />
-              {t("notes.createTask", "Create Task")}
-            </Button>
 
-            <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-4 border-t">
+            <FormActions onCancel={() => onOpenChange(false)} loading={loading}>
               <Button
                 type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
+                onClick={handleCreateTask}
+                className="w-full sm:w-auto"
               >
-                {t("common.cancel")}
+                <ListTodo className="h-4 w-4 mr-2" />
+                {t("notes.createTask", "Create Task")}
               </Button>
-              <Button type="submit" disabled={loading}>
-                {loading ? t("common.saving", "Saving...") : t("common.save")}
-              </Button>
-            </div>
+            </FormActions>
           </form>
-        </ScrollArea>
-      </DialogContent>
-    </Dialog>
+      </FormDialogWrapper>
 
       <TaskFormSheet
         open={taskFormOpen}

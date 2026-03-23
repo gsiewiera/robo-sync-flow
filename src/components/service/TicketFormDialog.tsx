@@ -5,12 +5,6 @@ import * as z from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
   Form,
   FormControl,
   FormField,
@@ -27,8 +21,11 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
 import { ClientCombobox } from "@/components/ui/client-combobox";
+import { FormDialogWrapper } from "@/components/forms/FormDialogWrapper";
+import { FormActions } from "@/components/forms/FormActions";
+import { useClients } from "@/hooks/use-clients";
+import { useSalespeople } from "@/hooks/use-salespeople";
 
 const formSchema = z.object({
   client_id: z.string().min(1, "Client is required"),
@@ -43,20 +40,10 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-interface Client {
-  id: string;
-  name: string;
-}
-
 interface Robot {
   id: string;
   serial_number: string;
   model: string;
-}
-
-interface Profile {
-  id: string;
-  full_name: string;
 }
 
 interface TicketFormDialogProps {
@@ -75,9 +62,9 @@ export function TicketFormDialog({
   initialRobotId,
 }: TicketFormDialogProps) {
   const { toast } = useToast();
-  const [clients, setClients] = useState<Client[]>([]);
+  const { clients } = useClients(open);
+  const { salespeople: profiles } = useSalespeople(open);
   const [robots, setRobots] = useState<Robot[]>([]);
-  const [profiles, setProfiles] = useState<Profile[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<FormValues>({
@@ -98,8 +85,6 @@ export function TicketFormDialog({
 
   useEffect(() => {
     if (open) {
-      fetchClients();
-      fetchProfiles();
       form.reset({
         client_id: initialClientId || "",
         robot_id: initialRobotId || "",
@@ -122,14 +107,6 @@ export function TicketFormDialog({
     }
   }, [selectedClientId]);
 
-  const fetchClients = async () => {
-    const { data } = await supabase
-      .from("clients")
-      .select("id, name")
-      .order("name");
-    if (data) setClients(data);
-  };
-
   const fetchRobots = async (clientId: string) => {
     const { data } = await supabase
       .from("robots")
@@ -137,14 +114,6 @@ export function TicketFormDialog({
       .eq("client_id", clientId)
       .order("serial_number");
     if (data) setRobots(data);
-  };
-
-  const fetchProfiles = async () => {
-    const { data } = await supabase
-      .from("profiles")
-      .select("id, full_name")
-      .order("full_name");
-    if (data) setProfiles(data);
   };
 
   const generateTicketNumber = async (): Promise<string> => {
@@ -198,61 +167,117 @@ export function TicketFormDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Create Service Ticket</DialogTitle>
-        </DialogHeader>
-
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="client_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Client *</FormLabel>
-                  <FormControl>
-                    <ClientCombobox
-                      clients={clients}
-                      value={field.value}
-                      onValueChange={field.onChange}
-                      placeholder="Select client..."
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="robot_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Robot *</FormLabel>
-                  <Select
+    <FormDialogWrapper
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Create Service Ticket"
+      maxWidth="max-w-lg"
+    >
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <FormField
+            control={form.control}
+            name="client_id"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Client *</FormLabel>
+                <FormControl>
+                  <ClientCombobox
+                    clients={clients}
                     value={field.value}
                     onValueChange={field.onChange}
-                    disabled={!selectedClientId || robots.length === 0}
-                  >
+                    placeholder="Select client..."
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="robot_id"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Robot *</FormLabel>
+                <Select
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  disabled={!selectedClientId || robots.length === 0}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder={
+                        !selectedClientId 
+                          ? "Select a client first" 
+                          : robots.length === 0 
+                            ? "No robots for this client" 
+                            : "Select robot..."
+                      } />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {robots.map((robot) => (
+                      <SelectItem key={robot.id} value={robot.id}>
+                        {robot.serial_number} - {robot.model}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="title"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Title *</FormLabel>
+                <FormControl>
+                  <Input {...field} placeholder="Brief description of the issue" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="description"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Description</FormLabel>
+                <FormControl>
+                  <Textarea
+                    {...field}
+                    placeholder="Detailed description of the issue..."
+                    rows={3}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <div className="grid grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="priority"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Priority</FormLabel>
+                  <Select value={field.value} onValueChange={field.onChange}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder={
-                          !selectedClientId 
-                            ? "Select a client first" 
-                            : robots.length === 0 
-                              ? "No robots for this client" 
-                              : "Select robot..."
-                        } />
+                        <SelectValue />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {robots.map((robot) => (
-                        <SelectItem key={robot.id} value={robot.id}>
-                          {robot.serial_number} - {robot.model}
-                        </SelectItem>
-                      ))}
+                      <SelectItem value="low">Low</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="high">High</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -262,143 +287,79 @@ export function TicketFormDialog({
 
             <FormField
               control={form.control}
-              name="title"
+              name="status"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Title *</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="Brief description of the issue" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      {...field}
-                      placeholder="Detailed description of the issue..."
-                      rows={3}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="priority"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Priority</FormLabel>
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="low">Low</SelectItem>
-                        <SelectItem value="medium">Medium</SelectItem>
-                        <SelectItem value="high">High</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Status</FormLabel>
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="open">Open</SelectItem>
-                        <SelectItem value="in_progress">In Progress</SelectItem>
-                        <SelectItem value="resolved">Resolved</SelectItem>
-                        <SelectItem value="closed">Closed</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="due_date"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Due Date</FormLabel>
-                  <FormControl>
-                    <Input type="date" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="assigned_to"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Assign To</FormLabel>
-                  <Select 
-                    value={field.value || "unassigned"} 
-                    onValueChange={(val) => field.onChange(val === "unassigned" ? "" : val)}
-                  >
+                  <FormLabel>Status</FormLabel>
+                  <Select value={field.value} onValueChange={field.onChange}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select assignee..." />
+                        <SelectValue />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="unassigned">Unassigned</SelectItem>
-                      {profiles.map((profile) => (
-                        <SelectItem key={profile.id} value={profile.id}>
-                          {profile.full_name}
-                        </SelectItem>
-                      ))}
+                      <SelectItem value="open">Open</SelectItem>
+                      <SelectItem value="in_progress">In Progress</SelectItem>
+                      <SelectItem value="resolved">Resolved</SelectItem>
+                      <SelectItem value="closed">Closed</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
                 </FormItem>
               )}
             />
+          </div>
 
-            <div className="flex justify-end gap-2 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Creating..." : "Create Ticket"}
-              </Button>
-            </div>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+          <FormField
+            control={form.control}
+            name="due_date"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Due Date</FormLabel>
+                <FormControl>
+                  <Input type="date" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="assigned_to"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Assign To</FormLabel>
+                <Select 
+                  value={field.value || "unassigned"} 
+                  onValueChange={(val) => field.onChange(val === "unassigned" ? "" : val)}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select assignee..." />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="unassigned">Unassigned</SelectItem>
+                    {profiles.map((profile) => (
+                      <SelectItem key={profile.id} value={profile.id}>
+                        {profile.full_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormActions
+            onCancel={() => onOpenChange(false)}
+            loading={isSubmitting}
+            submitLabel="Create Ticket"
+          />
+        </form>
+      </Form>
+    </FormDialogWrapper>
   );
 }

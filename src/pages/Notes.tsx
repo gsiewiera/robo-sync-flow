@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Search, ListTodo, TableIcon, Users, CalendarIcon, BarChart3 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useClients } from "@/hooks/use-clients";
+import { useSalespeople } from "@/hooks/use-salespeople";
 import { toast } from "sonner";
 import { TablePagination } from "@/components/ui/table-pagination";
 import {
@@ -71,22 +73,13 @@ interface Note {
   tasks?: { id: string; title: string; status: string }[] | null;
 }
 
-interface Client {
-  id: string;
-  name: string;
-}
-
-interface Profile {
-  id: string;
-  full_name: string;
-}
 
 const Notes = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [notes, setNotes] = useState<Note[]>([]);
-  const [clients, setClients] = useState<Client[]>([]);
-  const [salespeople, setSalespeople] = useState<Profile[]>([]);
+  const { clients } = useClients();
+  const { salespeople } = useSalespeople();
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [clientFilter, setClientFilter] = useState<string>("all");
@@ -103,8 +96,6 @@ const Notes = () => {
 
   useEffect(() => {
     fetchNotes();
-    fetchClients();
-    fetchSalespeople();
   }, []);
 
   const fetchNotes = async () => {
@@ -128,22 +119,6 @@ const Notes = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const fetchClients = async () => {
-    const { data } = await supabase
-      .from("clients")
-      .select("id, name")
-      .order("name");
-    setClients(data || []);
-  };
-
-  const fetchSalespeople = async () => {
-    const { data } = await supabase
-      .from("profiles")
-      .select("id, full_name")
-      .order("full_name");
-    setSalespeople(data || []);
   };
 
   const handleEdit = (note: Note) => {

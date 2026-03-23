@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
+import { useSalespeople } from "@/hooks/use-salespeople";
 import { useToast } from "@/hooks/use-toast";
 import { UserPlus, Phone, Mail, Building2, Calendar as CalendarIcon, Edit, AlertCircle, Clock, Plus, Eye, TrendingUp, ChevronDown } from "lucide-react";
 import { SearchableFilterDropdown } from "@/components/ui/searchable-filter-dropdown";
@@ -44,10 +45,6 @@ interface Lead {
   };
 }
 
-interface Salesperson {
-  id: string;
-  full_name: string;
-}
 
 const columns: ColumnConfig[] = [
   { key: "offer_number", label: "Offer #", defaultVisible: true },
@@ -70,7 +67,7 @@ const Leads = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isNewLeadOpen, setIsNewLeadOpen] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>("all");
-  const [salespeople, setSalespeople] = useState<Salesperson[]>([]);
+  const { salespeople } = useSalespeople();
   const [salespersonFilters, setSalespersonFilters] = useState<string[]>([]);
   const [visibleColumns, setVisibleColumns] = useState<string[]>(
     columns.filter(col => col.defaultVisible !== false).map(col => col.key)
@@ -95,23 +92,8 @@ const Leads = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchSalespeople();
-  }, []);
-
-  useEffect(() => {
     fetchLeads();
   }, [filterStatus, salespersonFilters]);
-
-  const fetchSalespeople = async () => {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("id, full_name")
-      .order("full_name");
-
-    if (data && !error) {
-      setSalespeople(data);
-    }
-  };
 
   const toggleSalespersonFilter = (salespersonId: string) => {
     setSalespersonFilters((prev) =>
