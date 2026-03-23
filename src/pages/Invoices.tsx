@@ -53,7 +53,7 @@ const COLUMNS: ColumnConfig[] = [
 
 const Invoices = () => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [clients, setClients] = useState<Client[]>([]);
+  const { clients } = useClients();
   const [isLoading, setIsLoading] = useState(true);
   const [selectedClient, setSelectedClient] = useState<string>("all");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
@@ -77,28 +77,9 @@ const Invoices = () => {
   });
 
   useEffect(() => {
-    fetchClients();
-  }, []);
-
-  useEffect(() => {
     fetchInvoices();
     resetPage();
   }, [selectedClient, selectedStatus, startDate, endDate]);
-
-  const fetchClients = async () => {
-    const { data, error } = await supabase
-      .from("clients")
-      .select("id, name")
-      .order("name");
-
-    if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to load clients",
-        variant: "destructive",
-      });
-      return;
-    }
 
     setClients(data || []);
   };

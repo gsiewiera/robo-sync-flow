@@ -116,9 +116,9 @@ const Tasks = () => {
   const [sortField, setSortField] = useState<"due_date" | "created_at">("due_date");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [userRole, setUserRole] = useState<string | null>(null);
-  const [employees, setEmployees] = useState<Profile[]>([]);
+  const { salespeople: employees } = useSalespeople();
   const [taskTitles, setTaskTitles] = useState<TaskTitleDictionary[]>([]);
-  const [clients, setClients] = useState<Client[]>([]);
+  const { clients } = useClients();
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<string | undefined>();
@@ -127,9 +127,7 @@ const Tasks = () => {
   const [pageSize, setPageSize] = useState(20);
   useEffect(() => {
     checkUserRole();
-    fetchEmployees();
     fetchTaskTitles();
-    fetchClients();
     fetchContracts();
   }, []);
   useEffect(() => {
@@ -150,28 +148,12 @@ const Tasks = () => {
       setUserRole(data.role);
     }
   };
-  const fetchEmployees = async () => {
-    const {
-      data
-    } = await supabase.from("profiles").select("id, full_name").order("full_name");
-    if (data) {
-      setEmployees(data);
-    }
-  };
   const fetchTaskTitles = async () => {
     const {
       data
     } = await supabase.from("task_title_dictionary").select("id, title").order("title");
     if (data) {
       setTaskTitles(data);
-    }
-  };
-  const fetchClients = async () => {
-    const {
-      data
-    } = await supabase.from("clients").select("id, name").order("name");
-    if (data) {
-      setClients(data);
     }
   };
   const fetchContracts = async () => {

@@ -73,8 +73,8 @@ const statusColors: Record<string, string> = {
 const Offers = () => {
   const { t } = useTranslation();
   const [offers, setOffers] = useState<Offer[]>([]);
-  const [clients, setClients] = useState<Client[]>([]);
-  const [salespeople, setSalespeople] = useState<Salesperson[]>([]);
+  const { clients } = useClients();
+  const { salespeople } = useSalespeople();
   const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState<"offer_number" | "total_price" | "created_at">("created_at");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
@@ -95,35 +95,11 @@ const Offers = () => {
 
   useEffect(() => {
     fetchOffers();
-    fetchClients();
-    fetchSalespeople();
   }, []);
-
-  const fetchSalespeople = async () => {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("id, full_name")
-      .order("full_name");
-
-    if (data && !error) {
-      setSalespeople(data);
-    }
-  };
 
   useEffect(() => {
     localStorage.setItem("offers-visible-columns", JSON.stringify(visibleColumns));
   }, [visibleColumns]);
-
-  const fetchClients = async () => {
-    const { data, error } = await supabase
-      .from("clients")
-      .select("id, name")
-      .order("name");
-
-    if (data && !error) {
-      setClients(data);
-    }
-  };
 
   const fetchOffers = async () => {
     const { data, error } = await supabase

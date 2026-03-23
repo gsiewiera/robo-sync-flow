@@ -71,7 +71,7 @@ const Leads = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isNewLeadOpen, setIsNewLeadOpen] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>("all");
-  const [salespeople, setSalespeople] = useState<Salesperson[]>([]);
+  const { salespeople } = useSalespeople();
   const [salespersonFilters, setSalespersonFilters] = useState<string[]>([]);
   const [visibleColumns, setVisibleColumns] = useState<string[]>(
     columns.filter(col => col.defaultVisible !== false).map(col => col.key)
@@ -96,23 +96,8 @@ const Leads = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchSalespeople();
-  }, []);
-
-  useEffect(() => {
     fetchLeads();
   }, [filterStatus, salespersonFilters]);
-
-  const fetchSalespeople = async () => {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("id, full_name")
-      .order("full_name");
-
-    if (data && !error) {
-      setSalespeople(data);
-    }
-  };
 
   const toggleSalespersonFilter = (salespersonId: string) => {
     setSalespersonFilters((prev) =>
