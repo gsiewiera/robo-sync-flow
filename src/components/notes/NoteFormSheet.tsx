@@ -472,14 +472,6 @@ export const NoteFormSheet = ({
               </div>
             </div>
 
-            <Button
-              type="button"
-              onClick={handleCreateTask}
-              className="w-full sm:w-auto"
-            >
-              <ListTodo className="h-4 w-4 mr-2" />
-              {t("notes.createTask", "Create Task")}
-            </Button>
 
             <FormActions onCancel={() => onOpenChange(false)} loading={loading}>
               <Button
