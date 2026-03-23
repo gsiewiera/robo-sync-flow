@@ -81,8 +81,6 @@ const Invoices = () => {
     resetPage();
   }, [selectedClient, selectedStatus, startDate, endDate]);
 
-    setClients(data || []);
-  };
 
   const fetchInvoices = async () => {
     setIsLoading(true);
