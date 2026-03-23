@@ -43,15 +43,6 @@ interface Offer {
   profiles: { full_name: string; id: string } | null;
 }
 
-interface Salesperson {
-  id: string;
-  full_name: string;
-}
-
-interface Client {
-  id: string;
-  name: string;
-}
 
 const COLUMN_CONFIG: ColumnConfig[] = [
   { key: "offer_number", label: "Offer Number", defaultVisible: true },

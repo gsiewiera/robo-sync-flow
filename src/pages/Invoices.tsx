@@ -35,10 +35,6 @@ interface Invoice {
   };
 }
 
-interface Client {
-  id: string;
-  name: string;
-}
 
 const COLUMNS: ColumnConfig[] = [
   { key: "invoice_number", label: "Invoice #", defaultVisible: true },

@@ -29,12 +29,6 @@ interface Task {
   contract_id: string | null;
   created_at: string | null;
 }
-interface Profile {
-  id: string;
-  full_name: string;
-}
-interface TaskTitleDictionary {
-  id: string;
   title: string;
 }
 interface Client {

@@ -73,15 +73,6 @@ interface Note {
   tasks?: { id: string; title: string; status: string }[] | null;
 }
 
-interface Client {
-  id: string;
-  name: string;
-}
-
-interface Profile {
-  id: string;
-  full_name: string;
-}
 
 const Notes = () => {
   const { t } = useTranslation();

@@ -45,10 +45,6 @@ interface Lead {
   };
 }
 
-interface Salesperson {
-  id: string;
-  full_name: string;
-}
 
 const columns: ColumnConfig[] = [
   { key: "offer_number", label: "Offer #", defaultVisible: true },
