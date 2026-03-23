@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useClients } from "@/hooks/use-clients";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { formatMoney } from "@/lib/utils";

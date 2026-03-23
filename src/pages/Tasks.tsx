@@ -7,6 +7,8 @@ import { useTranslation } from "react-i18next";
 import { Eye, Edit, Filter, X, ChevronDown, ArrowUpDown, ArrowUp, ArrowDown, Flag } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useClients } from "@/hooks/use-clients";
+import { useSalespeople } from "@/hooks/use-salespeople";
 import { TaskFormSheet } from "@/components/tasks/TaskFormSheet";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { TablePagination } from "@/components/ui/table-pagination";

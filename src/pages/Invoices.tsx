@@ -10,6 +10,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { supabase } from "@/integrations/supabase/client";
+import { useClients } from "@/hooks/use-clients";
 import { useToast } from "@/hooks/use-toast";
 import { FileText, CalendarIcon, X, Check, ChevronsUpDown } from "lucide-react";
 import { format } from "date-fns";

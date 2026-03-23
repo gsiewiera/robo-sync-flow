@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
+import { useSalespeople } from "@/hooks/use-salespeople";
 import { useToast } from "@/hooks/use-toast";
 import { UserPlus, Phone, Mail, Building2, Calendar as CalendarIcon, Edit, AlertCircle, Clock, Plus, Eye, TrendingUp, ChevronDown } from "lucide-react";
 import { SearchableFilterDropdown } from "@/components/ui/searchable-filter-dropdown";

@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useClients } from "@/hooks/use-clients";
+import { useSalespeople } from "@/hooks/use-salespeople";
 import { useNavigate } from "react-router-dom";
 import { formatMoney } from "@/lib/utils";
 import { ArrowUpDown, ArrowUp, ArrowDown, Eye, ChevronDown, Plus, Edit } from "lucide-react";
