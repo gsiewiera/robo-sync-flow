@@ -462,22 +462,18 @@ export const NoteFormSheet = ({
               {t("notes.createTask", "Create Task")}
             </Button>
 
-            <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-4 border-t">
+            <FormActions onCancel={() => onOpenChange(false)} loading={loading}>
               <Button
                 type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
+                onClick={handleCreateTask}
+                className="w-full sm:w-auto"
               >
-                {t("common.cancel")}
+                <ListTodo className="h-4 w-4 mr-2" />
+                {t("notes.createTask", "Create Task")}
               </Button>
-              <Button type="submit" disabled={loading}>
-                {loading ? t("common.saving", "Saving...") : t("common.save")}
-              </Button>
-            </div>
+            </FormActions>
           </form>
-        </ScrollArea>
-      </DialogContent>
-    </Dialog>
+      </FormDialogWrapper>
 
       <TaskFormSheet
         open={taskFormOpen}
