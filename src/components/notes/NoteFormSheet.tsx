@@ -1,11 +1,5 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,12 +12,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ClientCombobox } from "@/components/ui/client-combobox";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ListTodo, Plus } from "lucide-react";
 import { TaskFormSheet } from "@/components/tasks/TaskFormSheet";
 import { ContactFormDialog } from "@/components/clients/ContactFormDialog";
+import { FormDialogWrapper } from "@/components/forms/FormDialogWrapper";
+import { FormActions } from "@/components/forms/FormActions";
+import { useCurrentUser } from "@/hooks/use-current-user";
 
 interface Note {
   id: string;
