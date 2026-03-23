@@ -222,15 +222,12 @@ export const NoteFormSheet = ({
 
   return (
     <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-4xl max-h-[95vh] p-0 w-[95vw] sm:w-auto">
-          <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6">
-            <DialogTitle>
-              {note ? t("notes.editNote", "Edit Note") : t("notes.addNote", "Add Note")}
-            </DialogTitle>
-          </DialogHeader>
-
-        <ScrollArea className="max-h-[calc(95vh-80px)] px-4 sm:px-6">
+      <FormDialogWrapper
+        open={open}
+        onOpenChange={onOpenChange}
+        title={note ? t("notes.editNote", "Edit Note") : t("notes.addNote", "Add Note")}
+        maxWidth="max-w-4xl"
+      >
           <form onSubmit={handleSubmit} className="space-y-4 pb-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="space-y-2">
