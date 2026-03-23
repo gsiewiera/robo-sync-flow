@@ -83,38 +83,8 @@ export const NoteFormSheet = ({
 }: NoteFormSheetProps) => {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const { userId: currentUserId } = useCurrentUser();
   const [offers, setOffers] = useState<Offer[]>([]);
-  const [contacts, setContacts] = useState<Contact[]>([]);
-  const [taskFormOpen, setTaskFormOpen] = useState(false);
-  const [addContactOpen, setAddContactOpen] = useState(false);
-  const [formData, setFormData] = useState({
-    client_id: "",
-    contact_person: "",
-    offer_id: "",
-    note_date: new Date().toISOString().split("T")[0],
-    salesperson_id: "",
-    priority: "normal",
-    contact_type: "other",
-    note: "",
-    needs: "",
-    key_points: "",
-    commitments_us: "",
-    commitments_client: "",
-    risks: "",
-    next_step: "",
-  });
-
-  // Get current user on mount
-  useEffect(() => {
-    const getCurrentUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setCurrentUserId(user.id);
-      }
-    };
-    getCurrentUser();
-  }, []);
 
   useEffect(() => {
     if (note) {
