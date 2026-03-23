@@ -84,6 +84,7 @@ export const NoteFormSheet = ({
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const { userId: currentUserId } = useCurrentUser();
+  const [offers, setOffers] = useState<Offer[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [taskFormOpen, setTaskFormOpen] = useState(false);
   const [addContactOpen, setAddContactOpen] = useState(false);
