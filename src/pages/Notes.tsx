@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Search, ListTodo, TableIcon, Users, CalendarIcon, BarChart3 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useClients } from "@/hooks/use-clients";
+import { useSalespeople } from "@/hooks/use-salespeople";
 import { toast } from "sonner";
 import { TablePagination } from "@/components/ui/table-pagination";
 import {
