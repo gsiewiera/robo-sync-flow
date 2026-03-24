@@ -219,56 +219,6 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer, mode = "o
     }
   }, [open, offer, initialClientId]);
 
-  const fetchSalespeople = async () => {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("id, full_name")
-      .order("full_name");
-
-    if (error) {
-      console.error("Error loading salespeople:", error);
-      return;
-    }
-
-    setSalespeople(data || []);
-  };
-
-  const fetchClients = async () => {
-    const { data, error } = await supabase
-      .from("clients")
-      .select("id, name, primary_contact_name")
-      .order("name");
-
-    if (error) {
-      toast({
-        title: "Error loading clients",
-        description: error.message,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setClients(data || []);
-  };
-
-  const fetchResellers = async () => {
-    const { data, error } = await supabase
-      .from("resellers")
-      .select("id, name")
-      .eq("status", "active")
-      .order("name");
-
-    if (error) {
-      toast({
-        title: "Error loading resellers",
-        description: error.message,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setResellers(data || []);
-  };
 
   const fetchItems = async () => {
     const { data, error } = await supabase

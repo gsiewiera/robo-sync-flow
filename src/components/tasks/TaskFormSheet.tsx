@@ -264,27 +264,6 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
     }
   };
 
-  const fetchEmployees = async () => {
-    const { data } = await supabase
-      .from("profiles")
-      .select("id, full_name")
-      .order("full_name");
-
-    if (data) {
-      setEmployees(data);
-    }
-  };
-
-  const fetchClients = async () => {
-    const { data } = await supabase
-      .from("clients")
-      .select("id, name")
-      .order("name");
-
-    if (data) {
-      setClients(data);
-    }
-  };
 
   const fetchContracts = async () => {
     const { data } = await supabase

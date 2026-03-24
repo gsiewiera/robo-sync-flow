@@ -8,6 +8,7 @@ import { Plus, Search, ArrowUpDown, ArrowUp, ArrowDown, Eye, Edit, ChevronDown, 
 import { useState, useEffect, useMemo } from "react";
 import { ColumnVisibilityToggle, ColumnConfig } from "@/components/ui/column-visibility-toggle";
 import { supabase } from "@/integrations/supabase/client";
+import { useSalespeople } from "@/hooks/use-salespeople";
 import { useNavigate } from "react-router-dom";
 import { ClientFormDialog } from "@/components/clients/ClientFormDialog";
 import { Checkbox } from "@/components/ui/checkbox";

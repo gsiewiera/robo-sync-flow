@@ -12,6 +12,7 @@ import {
 import { ClientAISummary } from "@/components/clients/ClientAISummary";
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useSalespeople } from "@/hooks/use-salespeople";
 import { useParams, useNavigate } from "react-router-dom";
 import { ClientInlineEdit } from "@/components/clients/ClientInlineEdit";
 import { ContactFormDialog } from "@/components/clients/ContactFormDialog";
