@@ -42,17 +42,12 @@ interface ClientInlineEditProps {
 export function ClientInlineEdit({ client, onSave, onCancel }: ClientInlineEditProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [availableTags, setAvailableTags] = useState<any[]>([]);
+  const { tags: availableTags } = useClientTags();
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [resellers, setResellers] = useState<any[]>([]);
-  const [salespeople, setSalespeople] = useState<{ id: string; full_name: string }[]>([]);
-  const [sdmList, setSdmList] = useState<{ id: string; full_name: string }[]>([]);
-
-  // Dictionary data
-  const [clientTypes, setClientTypes] = useState<DictionaryItem[]>([]);
-  const [markets, setMarkets] = useState<DictionaryItem[]>([]);
-  const [segments, setSegments] = useState<DictionaryItem[]>([]);
-  const [clientSizes, setClientSizes] = useState<DictionaryItem[]>([]);
+  const { resellers } = useResellers();
+  const { salespeople } = useSalespeople();
+  const { sdmList } = useSdmList();
+  const { clientTypes, markets, segments, clientSizes } = useClientDictionaries();
 
   // Selected values for multi-select
   const [selectedClientTypes, setSelectedClientTypes] = useState<string[]>([]);
