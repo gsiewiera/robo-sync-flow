@@ -107,7 +107,6 @@ export function NewContractDialog({ open, onOpenChange, onSuccess, initialClient
 
   useEffect(() => {
     if (open) {
-      fetchClients();
       fetchRobotPricing();
       fetchItems();
       fetchLeaseMonths();
