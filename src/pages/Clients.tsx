@@ -65,9 +65,9 @@ const Clients = () => {
   const [availableTags, setAvailableTags] = useState<any[]>([]);
   const [selectedTagFilters, setSelectedTagFilters] = useState<string[]>([]);
   const [clientTags, setClientTags] = useState<Record<string, any[]>>({});
-  const [salespeople, setSalespeople] = useState<Salesperson[]>([]);
+  const { salespeople } = useSalespeople();
   const [salespersonFilters, setSalespersonFilters] = useState<string[]>([]);
-  const [salespersonMap, setSalespersonMap] = useState<Record<string, string>>({});
+  const salespersonMap = useMemo(() => Object.fromEntries(salespeople.map(s => [s.id, s.full_name])), [salespeople]);
   const [clientTypes, setClientTypes] = useState<{ id: string; name: string }[]>([]);
   const [selectedClientTypeFilters, setSelectedClientTypeFilters] = useState<string[]>([]);
   const [clientClientTypes, setClientClientTypes] = useState<Record<string, string[]>>({});
