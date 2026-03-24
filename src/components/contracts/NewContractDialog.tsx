@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { useClients } from "@/hooks/use-clients";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -80,7 +81,7 @@ export function NewContractDialog({ open, onOpenChange, onSuccess, initialClient
   const { toast } = useToast();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [clients, setClients] = useState<{ id: string; name: string }[]>([]);
+  const { clients, loading: clientsLoading } = useClients(open);
   const [selectedClientId, setSelectedClientId] = useState<string>("all");
   const [showClientForm, setShowClientForm] = useState(false);
   
@@ -106,7 +107,6 @@ export function NewContractDialog({ open, onOpenChange, onSuccess, initialClient
 
   useEffect(() => {
     if (open) {
-      fetchClients();
       fetchRobotPricing();
       fetchItems();
       fetchLeaseMonths();
@@ -132,10 +132,6 @@ export function NewContractDialog({ open, onOpenChange, onSuccess, initialClient
     }
   };
 
-  const fetchClients = async () => {
-    const { data } = await supabase.from("clients").select("id, name").order("name");
-    if (data) setClients(data);
-  };
 
   const fetchRobotPricing = async () => {
     const { data } = await supabase.from("robot_pricing").select("*").order("robot_model");
@@ -722,7 +718,7 @@ export function NewContractDialog({ open, onOpenChange, onSuccess, initialClient
         </DialogContent>
       </Dialog>
 
-      <ClientFormDialog open={showClientForm} onOpenChange={setShowClientForm} onSuccess={() => { fetchClients(); setShowClientForm(false); }} />
+      <ClientFormDialog open={showClientForm} onOpenChange={setShowClientForm} onSuccess={() => { setShowClientForm(false); }} />
     </>
   );
 }

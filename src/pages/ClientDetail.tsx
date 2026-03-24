@@ -12,6 +12,7 @@ import {
 import { ClientAISummary } from "@/components/clients/ClientAISummary";
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useSalespeople } from "@/hooks/use-salespeople";
 import { useParams, useNavigate } from "react-router-dom";
 import { ClientInlineEdit } from "@/components/clients/ClientInlineEdit";
 import { ContactFormDialog } from "@/components/clients/ContactFormDialog";
@@ -267,7 +268,7 @@ const ClientDetail = () => {
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
   const [isOfferDialogOpen, setIsOfferDialogOpen] = useState(false);
   const [isContractDialogOpen, setIsContractDialogOpen] = useState(false);
-  const [salespeople, setSalespeople] = useState<{ id: string; full_name: string }[]>([]);
+  const { salespeople } = useSalespeople();
   const [tickets, setTickets] = useState<ServiceTicket[]>([]);
   const [isTicketFormOpen, setIsTicketFormOpen] = useState(false);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
@@ -289,7 +290,6 @@ const ClientDetail = () => {
       fetchDocumentCategories();
       checkAdminRole();
       fetchAddresses();
-      fetchSalespeople();
       fetchTickets();
       fetchClientClassifications();
       fetchCampaigns();
@@ -348,15 +348,6 @@ const ClientDetail = () => {
     setIsAdmin(!!data);
   };
 
-  const fetchSalespeople = async () => {
-    const { data } = await supabase
-      .from("profiles")
-      .select("id, full_name")
-      .order("full_name");
-    if (data) {
-      setSalespeople(data);
-    }
-  };
 
   const fetchDocumentCategories = async () => {
     const { data } = await supabase

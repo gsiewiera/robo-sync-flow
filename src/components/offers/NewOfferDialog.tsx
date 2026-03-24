@@ -3,6 +3,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { supabase } from "@/integrations/supabase/client";
+import { useClients } from "@/hooks/use-clients";
+import { useSalespeople } from "@/hooks/use-salespeople";
+import { useResellers } from "@/hooks/use-resellers";
 import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
@@ -144,7 +147,7 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer, mode = "o
   const isEditMode = !!offer;
   const isLeadMode = mode === "lead" && !isEditMode;
   const { toast } = useToast();
-  const [clients, setClients] = useState<Client[]>([]);
+  const { clients } = useClients(open);
   const [robotPricing, setRobotPricing] = useState<RobotPricing[]>([]);
   const [leasePricing, setLeasePricing] = useState<LeasePricing[]>([]);
   const [availableLeaseMonths, setAvailableLeaseMonths] = useState<number[]>([]);
@@ -152,10 +155,10 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer, mode = "o
   const [itemSelections, setItemSelections] = useState<ItemSelection[]>([]);
   const [availableItems, setAvailableItems] = useState<Item[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [resellers, setResellers] = useState<any[]>([]);
+  const { resellers } = useResellers(open);
   const [clientContacts, setClientContacts] = useState<ClientContact[]>([]);
   const [isNewClientDialogOpen, setIsNewClientDialogOpen] = useState(false);
-  const [salespeople, setSalespeople] = useState<{ id: string; full_name: string }[]>([]);
+  const { salespeople } = useSalespeople(open);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -197,11 +200,8 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer, mode = "o
 
   useEffect(() => {
     if (open) {
-      fetchClients();
       fetchPricing();
-      fetchResellers();
       fetchItems();
-      fetchSalespeople();
       if (offer) {
         loadOfferData();
       } else {
@@ -219,56 +219,6 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer, mode = "o
     }
   }, [open, offer, initialClientId]);
 
-  const fetchSalespeople = async () => {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("id, full_name")
-      .order("full_name");
-
-    if (error) {
-      console.error("Error loading salespeople:", error);
-      return;
-    }
-
-    setSalespeople(data || []);
-  };
-
-  const fetchClients = async () => {
-    const { data, error } = await supabase
-      .from("clients")
-      .select("id, name, primary_contact_name")
-      .order("name");
-
-    if (error) {
-      toast({
-        title: "Error loading clients",
-        description: error.message,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setClients(data || []);
-  };
-
-  const fetchResellers = async () => {
-    const { data, error } = await supabase
-      .from("resellers")
-      .select("id, name")
-      .eq("status", "active")
-      .order("name");
-
-    if (error) {
-      toast({
-        title: "Error loading resellers",
-        description: error.message,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setResellers(data || []);
-  };
 
   const fetchItems = async () => {
     const { data, error } = await supabase
@@ -1422,7 +1372,6 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer, mode = "o
         open={isNewClientDialogOpen}
         onOpenChange={setIsNewClientDialogOpen}
         onSuccess={(newClientId?: string) => {
-          fetchClients();
           if (newClientId) {
             form.setValue("client_id", newClientId);
           }

@@ -8,6 +8,7 @@ import { Plus, Search, ArrowUpDown, ArrowUp, ArrowDown, Eye, Edit, ChevronDown, 
 import { useState, useEffect, useMemo } from "react";
 import { ColumnVisibilityToggle, ColumnConfig } from "@/components/ui/column-visibility-toggle";
 import { supabase } from "@/integrations/supabase/client";
+import { useSalespeople } from "@/hooks/use-salespeople";
 import { useNavigate } from "react-router-dom";
 import { ClientFormDialog } from "@/components/clients/ClientFormDialog";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -64,9 +65,9 @@ const Clients = () => {
   const [availableTags, setAvailableTags] = useState<any[]>([]);
   const [selectedTagFilters, setSelectedTagFilters] = useState<string[]>([]);
   const [clientTags, setClientTags] = useState<Record<string, any[]>>({});
-  const [salespeople, setSalespeople] = useState<Salesperson[]>([]);
+  const { salespeople } = useSalespeople();
   const [salespersonFilters, setSalespersonFilters] = useState<string[]>([]);
-  const [salespersonMap, setSalespersonMap] = useState<Record<string, string>>({});
+  const salespersonMap = useMemo(() => Object.fromEntries(salespeople.map(s => [s.id, s.full_name])), [salespeople]);
   const [clientTypes, setClientTypes] = useState<{ id: string; name: string }[]>([]);
   const [selectedClientTypeFilters, setSelectedClientTypeFilters] = useState<string[]>([]);
   const [clientClientTypes, setClientClientTypes] = useState<Record<string, string[]>>({});
@@ -107,24 +108,12 @@ const Clients = () => {
     fetchClients();
     fetchTags();
     fetchClientTags();
-    fetchSalespeople();
     fetchClientTypes();
     fetchMarkets();
     fetchClientClientTypes();
     fetchClientMarkets();
   }, []);
 
-  const fetchSalespeople = async () => {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("id, full_name")
-      .order("full_name");
-
-    if (data && !error) {
-      setSalespeople(data);
-      setSalespersonMap(Object.fromEntries(data.map(s => [s.id, s.full_name])));
-    }
-  };
 
   const toggleSalespersonFilter = (salespersonId: string) => {
     setSalespersonFilters((prev) =>

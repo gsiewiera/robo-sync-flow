@@ -1,5 +1,10 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useSalespeople } from "@/hooks/use-salespeople";
+import { useResellers } from "@/hooks/use-resellers";
+import { useSdmList } from "@/hooks/use-sdm-list";
+import { useClientDictionaries } from "@/hooks/use-client-dictionaries";
+import { useClientTags } from "@/hooks/use-client-tags";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -37,17 +42,12 @@ interface ClientInlineEditProps {
 export function ClientInlineEdit({ client, onSave, onCancel }: ClientInlineEditProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [availableTags, setAvailableTags] = useState<any[]>([]);
+  const { tags: availableTags } = useClientTags();
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [resellers, setResellers] = useState<any[]>([]);
-  const [salespeople, setSalespeople] = useState<{ id: string; full_name: string }[]>([]);
-  const [sdmList, setSdmList] = useState<{ id: string; full_name: string }[]>([]);
-
-  // Dictionary data
-  const [clientTypes, setClientTypes] = useState<DictionaryItem[]>([]);
-  const [markets, setMarkets] = useState<DictionaryItem[]>([]);
-  const [segments, setSegments] = useState<DictionaryItem[]>([]);
-  const [clientSizes, setClientSizes] = useState<DictionaryItem[]>([]);
+  const { resellers } = useResellers();
+  const { salespeople } = useSalespeople();
+  const { sdmList } = useSdmList();
+  const { clientTypes, markets, segments, clientSizes } = useClientDictionaries();
 
   // Selected values for multi-select
   const [selectedClientTypes, setSelectedClientTypes] = useState<string[]>([]);
@@ -74,11 +74,6 @@ export function ClientInlineEdit({ client, onSave, onCancel }: ClientInlineEditP
   });
 
   useEffect(() => {
-    fetchTags();
-    fetchResellers();
-    fetchSalespeople();
-    fetchSdmList();
-    fetchDictionaries();
     fetchClientTags();
     fetchClientClassifications();
     
@@ -101,19 +96,6 @@ export function ClientInlineEdit({ client, onSave, onCancel }: ClientInlineEditP
     });
   }, [client]);
 
-  const fetchDictionaries = async () => {
-    const [typesRes, marketsRes, segmentsRes, sizesRes] = await Promise.all([
-      supabase.from("client_type_dictionary").select("id, name").order("name"),
-      supabase.from("market_dictionary").select("id, name").order("name"),
-      supabase.from("segment_dictionary").select("id, name").order("name"),
-      supabase.from("client_size_dictionary").select("id, name").order("name"),
-    ]);
-
-    if (typesRes.data) setClientTypes(typesRes.data);
-    if (marketsRes.data) setMarkets(marketsRes.data);
-    if (segmentsRes.data) setSegments(segmentsRes.data);
-    if (sizesRes.data) setClientSizes(sizesRes.data);
-  };
 
   const fetchClientClassifications = async () => {
     const [typesRes, marketsRes, segmentsRes, sizesRes] = await Promise.all([
@@ -127,49 +109,6 @@ export function ClientInlineEdit({ client, onSave, onCancel }: ClientInlineEditP
     if (marketsRes.data) setSelectedMarkets(marketsRes.data.map(m => m.market_id));
     if (segmentsRes.data) setSelectedSegments(segmentsRes.data.map(s => s.segment_id));
     if (sizesRes.data && sizesRes.data.length > 0) setSelectedClientSize(sizesRes.data[0].size_id);
-  };
-
-  const fetchSalespeople = async () => {
-    const { data } = await supabase
-      .from("profiles")
-      .select("id, full_name")
-      .order("full_name");
-    if (data) setSalespeople(data);
-  };
-
-  const fetchSdmList = async () => {
-    const { data: roleData } = await supabase
-      .from("user_roles")
-      .select("user_id")
-      .eq("role", "service_delivery_manager");
-    
-    if (roleData && roleData.length > 0) {
-      const userIds = roleData.map(r => r.user_id);
-      const { data } = await supabase
-        .from("profiles")
-        .select("id, full_name")
-        .in("id", userIds)
-        .order("full_name");
-      
-      if (data) setSdmList(data);
-    }
-  };
-
-  const fetchTags = async () => {
-    const { data } = await supabase
-      .from("client_tags")
-      .select("*")
-      .order("name");
-    if (data) setAvailableTags(data);
-  };
-
-  const fetchResellers = async () => {
-    const { data } = await supabase
-      .from("resellers")
-      .select("id, name")
-      .eq("status", "active")
-      .order("name");
-    if (data) setResellers(data);
   };
 
   const fetchClientTags = async () => {

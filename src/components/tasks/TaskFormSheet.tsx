@@ -3,6 +3,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { supabase } from "@/integrations/supabase/client";
+import { useSalespeople } from "@/hooks/use-salespeople";
+import { useClients } from "@/hooks/use-clients";
 import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
@@ -120,8 +122,8 @@ interface TaskFormSheetProps {
 export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "create", initialValues }: TaskFormSheetProps) => {
   const [taskTitles, setTaskTitles] = useState<TaskTitleDictionary[]>([]);
   const [meetingTypes, setMeetingTypes] = useState<MeetingTypeDictionary[]>([]);
-  const [employees, setEmployees] = useState<Profile[]>([]);
-  const [clients, setClients] = useState<Client[]>([]);
+  const { salespeople: employees } = useSalespeople();
+  const { clients } = useClients();
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [offers, setOffers] = useState<Offer[]>([]);
   const [robots, setRobots] = useState<Robot[]>([]);
@@ -163,8 +165,6 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
   useEffect(() => {
     fetchTaskTitles();
     fetchMeetingTypes();
-    fetchEmployees();
-    fetchClients();
     fetchContracts();
     fetchOffers();
     fetchRobots();
@@ -264,27 +264,6 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
     }
   };
 
-  const fetchEmployees = async () => {
-    const { data } = await supabase
-      .from("profiles")
-      .select("id, full_name")
-      .order("full_name");
-
-    if (data) {
-      setEmployees(data);
-    }
-  };
-
-  const fetchClients = async () => {
-    const { data } = await supabase
-      .from("clients")
-      .select("id, name")
-      .order("name");
-
-    if (data) {
-      setClients(data);
-    }
-  };
 
   const fetchContracts = async () => {
     const { data } = await supabase
