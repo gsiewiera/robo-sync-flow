@@ -129,11 +129,6 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
 
   useEffect(() => {
     if (open) {
-      fetchTags();
-      fetchResellers();
-      fetchSalespeople();
-      fetchSdmList();
-      fetchDictionaries();
       if (client) {
         fetchClientTags();
         fetchClientClassifications();
