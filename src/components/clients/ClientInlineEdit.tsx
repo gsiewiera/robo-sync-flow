@@ -74,11 +74,6 @@ export function ClientInlineEdit({ client, onSave, onCancel }: ClientInlineEditP
   });
 
   useEffect(() => {
-    fetchTags();
-    fetchResellers();
-    fetchSalespeople();
-    fetchSdmList();
-    fetchDictionaries();
     fetchClientTags();
     fetchClientClassifications();
     
