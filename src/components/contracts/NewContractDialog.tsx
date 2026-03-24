@@ -718,7 +718,7 @@ export function NewContractDialog({ open, onOpenChange, onSuccess, initialClient
         </DialogContent>
       </Dialog>
 
-      <ClientFormDialog open={showClientForm} onOpenChange={setShowClientForm} onSuccess={() => { fetchClients(); setShowClientForm(false); }} />
+      <ClientFormDialog open={showClientForm} onOpenChange={setShowClientForm} onSuccess={() => { setShowClientForm(false); }} />
     </>
   );
 }
