@@ -268,7 +268,7 @@ const ClientDetail = () => {
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
   const [isOfferDialogOpen, setIsOfferDialogOpen] = useState(false);
   const [isContractDialogOpen, setIsContractDialogOpen] = useState(false);
-  const [salespeople, setSalespeople] = useState<{ id: string; full_name: string }[]>([]);
+  const { salespeople } = useSalespeople();
   const [tickets, setTickets] = useState<ServiceTicket[]>([]);
   const [isTicketFormOpen, setIsTicketFormOpen] = useState(false);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
