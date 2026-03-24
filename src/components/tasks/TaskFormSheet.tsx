@@ -165,8 +165,6 @@ export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "c
   useEffect(() => {
     fetchTaskTitles();
     fetchMeetingTypes();
-    fetchEmployees();
-    fetchClients();
     fetchContracts();
     fetchOffers();
     fetchRobots();
