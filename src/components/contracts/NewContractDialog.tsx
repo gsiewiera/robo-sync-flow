@@ -81,7 +81,7 @@ export function NewContractDialog({ open, onOpenChange, onSuccess, initialClient
   const { toast } = useToast();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [clients, setClients] = useState<{ id: string; name: string }[]>([]);
+  const { clients, loading: clientsLoading } = useClients(open);
   const [selectedClientId, setSelectedClientId] = useState<string>("all");
   const [showClientForm, setShowClientForm] = useState(false);
   
