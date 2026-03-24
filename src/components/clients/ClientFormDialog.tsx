@@ -3,6 +3,11 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { supabase } from "@/integrations/supabase/client";
+import { useSalespeople } from "@/hooks/use-salespeople";
+import { useResellers } from "@/hooks/use-resellers";
+import { useSdmList } from "@/hooks/use-sdm-list";
+import { useClientDictionaries } from "@/hooks/use-client-dictionaries";
+import { useClientTags } from "@/hooks/use-client-tags";
 import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
