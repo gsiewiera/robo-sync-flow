@@ -70,7 +70,7 @@ const ServiceDetail = () => {
   const [client, setClient] = useState<Client | null>(null);
   const [robot, setRobot] = useState<Robot | null>(null);
   const [assignee, setAssignee] = useState<Profile | null>(null);
-  const [profiles, setProfiles] = useState<Profile[]>([]);
+  const { salespeople: profiles } = useSalespeople();
   const [isEditing, setIsEditing] = useState(false);
   const [editStatus, setEditStatus] = useState("");
   const [editPriority, setEditPriority] = useState("");
