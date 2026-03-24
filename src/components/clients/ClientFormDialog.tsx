@@ -186,19 +186,6 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
     }
   }, [open, client]);
 
-  const fetchDictionaries = async () => {
-    const [typesRes, marketsRes, segmentsRes, sizesRes] = await Promise.all([
-      supabase.from("client_type_dictionary").select("id, name").order("name"),
-      supabase.from("market_dictionary").select("id, name").order("name"),
-      supabase.from("segment_dictionary").select("id, name").order("name"),
-      supabase.from("client_size_dictionary").select("id, name").order("name"),
-    ]);
-    
-    if (typesRes.data) setClientTypes(typesRes.data);
-    if (marketsRes.data) setMarkets(marketsRes.data);
-    if (segmentsRes.data) setSegments(segmentsRes.data);
-    if (sizesRes.data) setClientSizes(sizesRes.data);
-  };
 
   const fetchClientClassifications = async () => {
     if (!client?.id) return;
@@ -214,61 +201,6 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
     if (marketsRes.data) setSelectedMarkets(marketsRes.data.map(m => m.market_id));
     if (segmentsRes.data) setSelectedSegments(segmentsRes.data.map(s => s.segment_id));
     if (sizesRes.data && sizesRes.data.length > 0) setSelectedClientSize(sizesRes.data[0].size_id);
-  };
-
-  const fetchSalespeople = async () => {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("id, full_name")
-      .order("full_name");
-
-    if (data && !error) {
-      setSalespeople(data);
-    }
-  };
-
-  const fetchSdmList = async () => {
-    // Get users with service_delivery_manager role
-    const { data: roleData } = await supabase
-      .from("user_roles")
-      .select("user_id")
-      .eq("role", "service_delivery_manager");
-    
-    if (roleData && roleData.length > 0) {
-      const userIds = roleData.map(r => r.user_id);
-      const { data } = await supabase
-        .from("profiles")
-        .select("id, full_name")
-        .in("id", userIds)
-        .order("full_name");
-      
-      if (data) {
-        setSdmList(data);
-      }
-    }
-  };
-
-  const fetchTags = async () => {
-    const { data } = await supabase
-      .from("client_tags")
-      .select("*")
-      .order("name");
-    
-    if (data) {
-      setAvailableTags(data);
-    }
-  };
-
-  const fetchResellers = async () => {
-    const { data } = await supabase
-      .from("resellers")
-      .select("id, name")
-      .eq("status", "active")
-      .order("name");
-    
-    if (data) {
-      setResellers(data);
-    }
   };
 
   const fetchClientTags = async () => {

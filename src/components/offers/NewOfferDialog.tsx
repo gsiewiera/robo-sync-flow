@@ -1372,7 +1372,6 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer, mode = "o
         open={isNewClientDialogOpen}
         onOpenChange={setIsNewClientDialogOpen}
         onSuccess={(newClientId?: string) => {
-          fetchClients();
           if (newClientId) {
             form.setValue("client_id", newClientId);
           }
