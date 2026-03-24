@@ -108,7 +108,6 @@ const Clients = () => {
     fetchClients();
     fetchTags();
     fetchClientTags();
-    fetchSalespeople();
     fetchClientTypes();
     fetchMarkets();
     fetchClientClientTypes();
