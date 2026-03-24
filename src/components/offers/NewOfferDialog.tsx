@@ -147,7 +147,7 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer, mode = "o
   const isEditMode = !!offer;
   const isLeadMode = mode === "lead" && !isEditMode;
   const { toast } = useToast();
-  const [clients, setClients] = useState<Client[]>([]);
+  const { clients } = useClients(open);
   const [robotPricing, setRobotPricing] = useState<RobotPricing[]>([]);
   const [leasePricing, setLeasePricing] = useState<LeasePricing[]>([]);
   const [availableLeaseMonths, setAvailableLeaseMonths] = useState<number[]>([]);
@@ -155,10 +155,10 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer, mode = "o
   const [itemSelections, setItemSelections] = useState<ItemSelection[]>([]);
   const [availableItems, setAvailableItems] = useState<Item[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [resellers, setResellers] = useState<any[]>([]);
+  const { resellers } = useResellers(open);
   const [clientContacts, setClientContacts] = useState<ClientContact[]>([]);
   const [isNewClientDialogOpen, setIsNewClientDialogOpen] = useState(false);
-  const [salespeople, setSalespeople] = useState<{ id: string; full_name: string }[]>([]);
+  const { salespeople } = useSalespeople(open);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
