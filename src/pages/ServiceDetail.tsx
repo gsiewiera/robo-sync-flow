@@ -6,6 +6,7 @@ import { ArrowLeft, Wrench, User, Calendar, Pencil } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useParams, useNavigate } from "react-router-dom";
+import { useSalespeople } from "@/hooks/use-salespeople";
 import {
   Select,
   SelectContent,
