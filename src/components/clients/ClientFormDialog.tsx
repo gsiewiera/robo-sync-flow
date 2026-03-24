@@ -91,17 +91,12 @@ export function ClientFormDialog({ open, onOpenChange, onSuccess, client }: Clie
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isFetchingGus, setIsFetchingGus] = useState(false);
-  const [availableTags, setAvailableTags] = useState<any[]>([]);
+  const { tags: availableTags } = useClientTags(open);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [resellers, setResellers] = useState<any[]>([]);
-  const [salespeople, setSalespeople] = useState<{ id: string; full_name: string }[]>([]);
-  const [sdmList, setSdmList] = useState<{ id: string; full_name: string }[]>([]);
-  
-  // Dictionary data
-  const [clientTypes, setClientTypes] = useState<DictionaryItem[]>([]);
-  const [markets, setMarkets] = useState<DictionaryItem[]>([]);
-  const [segments, setSegments] = useState<DictionaryItem[]>([]);
-  const [clientSizes, setClientSizes] = useState<DictionaryItem[]>([]);
+  const { resellers } = useResellers(open);
+  const { salespeople } = useSalespeople(open);
+  const { sdmList } = useSdmList(open);
+  const { clientTypes, markets, segments, clientSizes } = useClientDictionaries(open);
   
   // Selected values for multi-select
   const [selectedClientTypes, setSelectedClientTypes] = useState<string[]>([]);
