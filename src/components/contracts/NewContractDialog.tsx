@@ -132,10 +132,6 @@ export function NewContractDialog({ open, onOpenChange, onSuccess, initialClient
     }
   };
 
-  const fetchClients = async () => {
-    const { data } = await supabase.from("clients").select("id, name").order("name");
-    if (data) setClients(data);
-  };
 
   const fetchRobotPricing = async () => {
     const { data } = await supabase.from("robot_pricing").select("*").order("robot_model");
