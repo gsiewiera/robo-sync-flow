@@ -348,15 +348,6 @@ const ClientDetail = () => {
     setIsAdmin(!!data);
   };
 
-  const fetchSalespeople = async () => {
-    const { data } = await supabase
-      .from("profiles")
-      .select("id, full_name")
-      .order("full_name");
-    if (data) {
-      setSalespeople(data);
-    }
-  };
 
   const fetchDocumentCategories = async () => {
     const { data } = await supabase

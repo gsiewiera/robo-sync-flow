@@ -114,17 +114,6 @@ const Clients = () => {
     fetchClientMarkets();
   }, []);
 
-  const fetchSalespeople = async () => {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("id, full_name")
-      .order("full_name");
-
-    if (data && !error) {
-      setSalespeople(data);
-      setSalespersonMap(Object.fromEntries(data.map(s => [s.id, s.full_name])));
-    }
-  };
 
   const toggleSalespersonFilter = (salespersonId: string) => {
     setSalespersonFilters((prev) =>
