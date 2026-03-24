@@ -122,8 +122,8 @@ interface TaskFormSheetProps {
 export const TaskFormSheet = ({ open, onOpenChange, onSuccess, taskId, mode = "create", initialValues }: TaskFormSheetProps) => {
   const [taskTitles, setTaskTitles] = useState<TaskTitleDictionary[]>([]);
   const [meetingTypes, setMeetingTypes] = useState<MeetingTypeDictionary[]>([]);
-  const [employees, setEmployees] = useState<Profile[]>([]);
-  const [clients, setClients] = useState<Client[]>([]);
+  const { salespeople: employees } = useSalespeople();
+  const { clients } = useClients();
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [offers, setOffers] = useState<Offer[]>([]);
   const [robots, setRobots] = useState<Robot[]>([]);
