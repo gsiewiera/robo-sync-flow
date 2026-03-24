@@ -200,11 +200,8 @@ export function NewOfferDialog({ open, onOpenChange, onSuccess, offer, mode = "o
 
   useEffect(() => {
     if (open) {
-      fetchClients();
       fetchPricing();
-      fetchResellers();
       fetchItems();
-      fetchSalespeople();
       if (offer) {
         loadOfferData();
       } else {
