@@ -79,17 +79,8 @@ const ServiceDetail = () => {
   useEffect(() => {
     if (id) {
       fetchTicketData();
-      fetchProfiles();
     }
   }, [id]);
-
-  const fetchProfiles = async () => {
-    const { data } = await supabase
-      .from("profiles")
-      .select("id, full_name")
-      .order("full_name");
-    if (data) setProfiles(data);
-  };
 
   const fetchTicketData = async () => {
     const { data: ticketData } = await supabase
