@@ -290,7 +290,6 @@ const ClientDetail = () => {
       fetchDocumentCategories();
       checkAdminRole();
       fetchAddresses();
-      fetchSalespeople();
       fetchTickets();
       fetchClientClassifications();
       fetchCampaigns();
